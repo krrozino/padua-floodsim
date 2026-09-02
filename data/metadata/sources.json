@@ -25,7 +25,27 @@
       "url": "https://geoportal.sgb.gov.br/server/rest/services/hidrologia/mancha_santo_antonio_de_padua/MapServer",
       "crs": "EPSG:4674",
       "formats": ["JSON", "GeoJSON", "PBF"],
-      "levelsCm": [300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550]
+      "levelsCm": [300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550],
+      "verifiedLayerIds": {
+        "300": 3,
+        "325": 4,
+        "350": 5,
+        "375": 6,
+        "400": 7,
+        "425": 8,
+        "450": 9,
+        "475": 10,
+        "500": 11,
+        "525": 12,
+        "550": 13
+      },
+      "liveValidation": {
+        "date": "2026-09-02",
+        "workflow": ".github/workflows/sgb-smoke.yml",
+        "script": "scripts/validate-sgb.mjs",
+        "result": "all-levels-passed",
+        "featureGeometry": "MultiPolygon"
+      }
     },
     {
       "id": "sgb-susceptibility-2015",
