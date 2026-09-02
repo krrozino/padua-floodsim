@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-02",
+  "areaOfInterest": {
+    "name": "Santo Antônio de Pádua - trecho urbano coberto pelas manchas SGB",
+    "crs": "EPSG:4674",
+    "bbox": [-42.20900097927306, -21.553311556725685, -42.14556243623249, -21.51245633890636],
+    "source": "sgb-flood-map-service-2024"
+  },
+  "sources": [
+    {
+      "id": "sgb-flood-study-2024",
+      "classification": "official_reference",
+      "institution": "Serviço Geológico do Brasil",
+      "title": "Delimitação da mancha de inundação do rio Pomba na zona urbana de Santo Antônio de Pádua - RJ",
+      "year": 2024,
+      "url": "https://rigeo.sgb.gov.br/handle/doc/25035",
+      "notes": "Referência técnica principal; cotas 300-550 cm em passos de 25 cm; estação RHN 58790002."
+    },
+    {
+      "id": "sgb-flood-map-service-2024",
+      "classification": "official_reference",
+      "institution": "Serviço Geológico do Brasil",
+      "title": "ArcGIS MapServer - mancha_santo_antonio_de_padua",
+      "url": "https://geoportal.sgb.gov.br/server/rest/services/hidrologia/mancha_santo_antonio_de_padua/MapServer",
+      "crs": "EPSG:4674",
+      "formats": ["JSON", "GeoJSON", "PBF"],
+      "levelsCm": [300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550]
+    },
+    {
+      "id": "sgb-susceptibility-2015",
+      "classification": "official_reference",
+      "institution": "CPRM / Serviço Geológico do Brasil",
+      "title": "Carta de suscetibilidade a movimentos gravitacionais de massa e inundação: Santo Antônio de Pádua - RJ",
+      "year": 2015,
+      "url": "https://rigeo.sgb.gov.br/handle/doc/15089",
+      "status": "metadata-known-files-not-yet-inventoried"
+    },
+    {
+      "id": "padua-neighborhoods-law-3864-2017",
+      "classification": "official_reference",
+      "institution": "Prefeitura Municipal de Santo Antônio de Pádua",
+      "title": "Lei nº 3.864/2017 - Planta Genérica de Valores",
+      "year": 2017,
+      "url": "https://santoantoniodepadua.itcast.com.br/portal/arquivo/1/2017/12-dezembro/lei_sancionada_no_3.864-17.pdf",
+      "status": "official-names-known-vector-boundaries-pending"
+    },
+    {
+      "id": "ibge-municipal-grid-2024",
+      "classification": "official_reference",
+      "institution": "IBGE",
+      "title": "Malha Municipal Digital 2024",
+      "year": 2024,
+      "url": "https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/15774-malhas.html"
+    },
+    {
+      "id": "inea-flood-alert-21304212020",
+      "classification": "observed",
+      "institution": "INEA",
+      "title": "Alerta de Cheias - Santo Antônio de Pádua",
+      "url": "https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.html",
+      "status": "gauge-reference-crosswalk-pending",
+      "warning": "Não associar diretamente nível INEA às cotas SGB antes de validar a referência das réguas."
+    }
+  ]
+}
