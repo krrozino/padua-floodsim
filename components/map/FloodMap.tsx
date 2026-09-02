@@ -78,7 +78,6 @@ export function FloodMap({
       zoom: 12.3,
       pitch: 18,
       bearing: 0,
-      attributionControl: true,
     });
 
     map.addControl(
