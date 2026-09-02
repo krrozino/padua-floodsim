@@ -1,7 +1,7 @@
 const MAP_SERVER =
   "https://geoportal.sgb.gov.br/server/rest/services/hidrologia/mancha_santo_antonio_de_padua/MapServer";
 
-const levels = [300, 400, 500, 550];
+const levels = [300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550];
 
 async function fetchJson(url) {
   const response = await fetch(url, {
@@ -64,4 +64,4 @@ for (const levelCm of levels) {
   );
 }
 
-console.log("SGB smoke validation passed.");
+console.log("SGB smoke validation passed for all official gauge levels.");
