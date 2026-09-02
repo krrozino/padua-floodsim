@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
 
 const MAP_STYLE = "https://demotiles.maplibre.org/style.json";
 const PADUA_CENTER: [number, number] = [-42.18, -21.54];
