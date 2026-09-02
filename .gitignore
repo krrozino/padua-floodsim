@@ -8,3 +8,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# GIS workspaces: keep raw/heavy data out of Git
+data/raw/**
+data/interim/**
+data/cache/**
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/cache/.gitkeep
