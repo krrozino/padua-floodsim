@@ -138,4 +138,4 @@ Até que os modelos sejam devidamente calibrados e validados, nenhuma visualiza�
 
 ## Status
 
-🟡 Planejamento e fundação do projeto.
+🟢 V1 inicial em desenvolvimento, com manchas oficiais do SGB integradas e primeiro deploy na Vercel em preparação.
