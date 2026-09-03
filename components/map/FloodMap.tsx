@@ -3,8 +3,27 @@
 import { useEffect, useRef } from "react";
 import * as maplibregl from "maplibre-gl";
 
-const MAP_STYLE = "https://demotiles.maplibre.org/style.json";
 const PADUA_CENTER: [number, number] = [-42.18, -21.54];
+
+const MAP_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {
+    osm: {
+      type: "raster",
+      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: "© OpenStreetMap contributors",
+    },
+  },
+  layers: [
+    {
+      id: "osm-base",
+      type: "raster",
+      source: "osm",
+    },
+  ],
+};
 
 export type FloodLayerStatus = {
   state: "loading" | "official" | "fallback";
@@ -58,6 +77,52 @@ function buildFallbackFloodData(level: number) {
   };
 }
 
+function ensureFloodLayer(map: maplibregl.Map, level: number) {
+  if (!map.getSource("flood-zone")) {
+    map.addSource("flood-zone", {
+      type: "geojson",
+      data: buildFallbackFloodData(level),
+    });
+  }
+
+  if (!map.getLayer("flood-zone-fill")) {
+    map.addLayer({
+      id: "flood-zone-fill",
+      type: "fill",
+      source: "flood-zone",
+      paint: {
+        "fill-color": "#087acb",
+        "fill-opacity": 0.42,
+        "fill-outline-color": "#075ba8",
+      },
+    });
+  }
+}
+
+function waitForStyle(map: maplibregl.Map, signal: AbortSignal) {
+  if (map.isStyleLoaded()) return Promise.resolve();
+
+  return new Promise<void>((resolve, reject) => {
+    const cleanup = () => {
+      map.off("style.load", handleStyleLoad);
+      signal.removeEventListener("abort", handleAbort);
+    };
+
+    const handleStyleLoad = () => {
+      cleanup();
+      resolve();
+    };
+
+    const handleAbort = () => {
+      cleanup();
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+
+    map.once("style.load", handleStyleLoad);
+    signal.addEventListener("abort", handleAbort, { once: true });
+  });
+}
+
 export function FloodMap({
   level,
   onStatusChange,
@@ -85,27 +150,17 @@ export function FloodMap({
       "top-left",
     );
 
-    map.on("load", () => {
-      map.addSource("flood-zone", {
-        type: "geojson",
-        data: buildFallbackFloodData(level),
-      });
+    const initializeFloodLayer = () => {
+      ensureFloodLayer(map, level);
+    };
 
-      map.addLayer({
-        id: "flood-zone-fill",
-        type: "fill",
-        source: "flood-zone",
-        paint: {
-          "fill-color": "#087acb",
-          "fill-opacity": 0.42,
-          "fill-outline-color": "#075ba8",
-        },
-      });
-    });
+    if (map.isStyleLoaded()) initializeFloodLayer();
+    else map.once("style.load", initializeFloodLayer);
 
     mapRef.current = map;
 
     return () => {
+      map.off("style.load", initializeFloodLayer);
       map.remove();
       mapRef.current = null;
     };
@@ -122,9 +177,14 @@ export function FloodMap({
       onStatusChange?.({ state: "loading", levelCm });
 
       try {
-        const response = await fetch(`/api/sgb/flood?level=${levelCm}`, {
+        const responsePromise = fetch(`/api/sgb/flood?level=${levelCm}`, {
           signal: controller.signal,
         });
+
+        await waitForStyle(map, controller.signal);
+        ensureFloodLayer(map, level);
+
+        const response = await responsePromise;
 
         if (!response.ok) {
           throw new Error(`Flood API returned ${response.status}`);
@@ -147,11 +207,13 @@ export function FloodMap({
       } catch (error) {
         if (controller.signal.aborted) return;
 
-        const source = map.getSource("flood-zone") as
-          | maplibregl.GeoJSONSource
-          | undefined;
-
-        source?.setData(buildFallbackFloodData(level));
+        if (map.isStyleLoaded()) {
+          ensureFloodLayer(map, level);
+          const source = map.getSource("flood-zone") as
+            | maplibregl.GeoJSONSource
+            | undefined;
+          source?.setData(buildFallbackFloodData(level));
+        }
 
         onStatusChange?.({
           state: "fallback",
@@ -164,16 +226,10 @@ export function FloodMap({
       }
     };
 
-    const runUpdate = () => {
-      void update();
-    };
-
-    if (map.isStyleLoaded()) runUpdate();
-    else map.once("load", runUpdate);
+    void update();
 
     return () => {
       controller.abort();
-      map.off("load", runUpdate);
     };
   }, [level, onStatusChange]);
 
