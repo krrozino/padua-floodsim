@@ -4,6 +4,19 @@
 
 Active.
 
+## Required context
+
+Before implementation, read:
+
+- `AGENTS.md`;
+- `docs/ACADEMIC_METHODOLOGY.md`;
+- `docs/ACADEMIC_INTEGRATION_NOTE.md`;
+- `docs/ARCHITECTURE.md`;
+- `docs/DATA_SOURCES.md`;
+- `docs/FLOOD_MODEL.md`.
+
+This milestone is primarily **engineering/product work**. It must preserve the academic methodology, but it does **not** authorize premature implementation of the custom DEM flood model, INEA-to-terrain conversion or definitive neighborhood impact classification.
+
 ## Problem
 
 The current production screen is largely demonstrative:
@@ -36,6 +49,7 @@ Deliver a coherent map experience where geographic UI behaves as part of the map
 - If verified neighborhood coordinates/polygons are not yet available, do not invent authoritative geometry.
 - Either use explicitly marked temporary georeferenced point features or hide neighborhood severity until real boundaries are integrated.
 - Any temporary points must pan/zoom with MapLibre.
+- Do not calculate definitive neighborhood impact percentages in this milestone.
 
 ### Navigation
 
@@ -52,23 +66,31 @@ Do not leave dead clickable controls.
 ### Slider
 
 - Use only SGB-supported scenario stages: 3.00 m through 5.50 m at 0.25 m increments.
-- Clearly label the value as an SGB scenario/reference stage, not as the current INEA river level.
+- Clearly label the value as an **SGB scenario/reference stage**, not as the current INEA river level and not as the future custom FloodSim DEM simulation cota.
 - Updating the slider must update the map layer, loading state and displayed scenario metadata.
 
 ## Out of scope
 
 - real INEA-to-SGB gauge conversion;
+- INEA-to-DEM translation curve;
 - flood depth computation;
 - custom DEM flood model;
 - definitive neighborhood impact percentages;
 - hydrodynamic simulation;
+- validation metrics for the future custom model;
 - new major product modules.
 
 ## Scientific/UI wording constraints
 
-- SGB polygons represent official mapped flood extent scenarios; do not call them custom simulation depth.
+The academic baseline is `docs/ACADEMIC_METHODOLOGY.md`.
+
+For this milestone:
+
+- SGB polygons represent official mapped flood-extent reference scenarios; do not call them custom FloodSim simulation depth.
+- Keep SGB reference scenarios distinct from future custom DEM-derived FloodSim simulations.
 - The real-time panel remains mock until live data integration is implemented.
 - Do not imply that the selected SGB stage equals the INEA live gauge reading.
+- Do not claim prediction, street-level real depth, water velocity, damage, casualties or evacuation need.
 - Keep the research/non-official warning accessible.
 
 ## Acceptance criteria
@@ -79,10 +101,11 @@ Do not leave dead clickable controls.
 4. Selecting at least 3.00 m, 4.25 m and 5.50 m successfully updates the SGB flood geometry.
 5. SGB request failures show an understandable error/fallback state rather than endless loading.
 6. Every visible nav control has real behavior or a deliberate disabled state.
-7. `npm run typecheck` passes.
-8. `npm run build` passes.
-9. The result is checked in a real browser before PR approval.
-10. No Vercel preview deployment is required for implementation.
+7. SGB scenario wording is not confused with observed INEA data or the future custom DEM model.
+8. `npm run typecheck` passes.
+9. `npm run build` passes.
+10. The result is checked in a real browser before PR approval.
+11. No Vercel preview deployment is required for implementation.
 
 ## Suggested ownership
 
@@ -95,6 +118,8 @@ Own the browser-facing work:
 - browser validation;
 - removal of fake fixed-position map labels.
 
+Do not expand the scientific model during this task.
+
 ### Codex — review and hardening
 
 After the first implementation:
@@ -104,7 +129,8 @@ After the first implementation:
 - identify race conditions and stale requests;
 - add or improve tests where practical;
 - verify API contracts and TypeScript boundaries;
-- confirm no misleading data semantics were introduced.
+- confirm no misleading data semantics were introduced;
+- verify compliance with `docs/ACADEMIC_METHODOLOGY.md`.
 
 ## Handoff checklist
 
@@ -115,11 +141,13 @@ Antigravity should report:
 - stages tested;
 - screenshots or concise visual verification notes;
 - validation command results;
-- remaining limitations.
+- remaining limitations;
+- confirmation that SGB/INEA/custom-model semantics remain separated.
 
 Codex should report findings grouped as:
 
 - blocking defects;
 - correctness/regression risks;
+- scientific/semantic risks;
 - maintainability improvements;
 - optional enhancements.
