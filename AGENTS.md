@@ -13,6 +13,8 @@ The project is academic and experimental. Never present simulated outputs as off
 Before changing code, read the relevant project docs:
 
 - `README.md`
+- `docs/ACADEMIC_METHODOLOGY.md` — canonical scientific baseline
+- `docs/ACADEMIC_INTEGRATION_NOTE.md`
 - `docs/ARCHITECTURE.md`
 - `docs/DATA_SOURCES.md`
 - `docs/FLOOD_MODEL.md`
@@ -21,6 +23,16 @@ Before changing code, read the relevant project docs:
 - active execution plans under `docs/exec-plans/active/`
 
 Use this file as a map, not as the entire specification.
+
+If implementation convenience conflicts with `docs/ACADEMIC_METHODOLOGY.md`, preserve the scientific constraint and document the engineering tradeoff instead of silently weakening the methodology.
+
+## Scientific baseline
+
+`docs/ACADEMIC_METHODOLOGY.md` defines the current academic scope, allowed claims, experimental roadmap and validation strategy.
+
+The custom scientific model is intentionally simple at first: elevation threshold plus approximate hydraulic connectivity to the Rio Pomba, with reproducible inputs and historical validation. Do not introduce hydrodynamic complexity unless the project has data and a clear experimental need for it.
+
+Official SGB flood polygons currently used in the web application are reference scenarios. They are not the same artifact as future custom DEM-derived FloodSim simulations and must remain distinguishable in code, metadata and UI wording.
 
 ## Scientific constraints
 
@@ -40,6 +52,8 @@ Do not implement the naive rule `DEM <= water level => flooded` as a scientific 
 Prefer simple, reproducible and validatable methods before adding hydrodynamic complexity.
 
 Official SGB flood polygons are valid reference scenarios and should be kept separate from future custom DEM-derived simulations.
+
+The project must not claim street-level real depth, water velocity, damage, casualties, evacuation need or flood prediction without data and a model that support those claims.
 
 ## Architecture boundaries
 
@@ -67,6 +81,7 @@ Important parameters must be explicit and reproducible.
 - Buttons that look interactive must have real behavior, routing, state changes, or be visibly disabled with an explanation.
 - Mock hydrological values must be clearly identified as mock/demo data.
 - Official SGB flood extent must not be labeled as flood depth unless depth was actually computed.
+- A scenario stage must not be presented as an observed INEA level unless a validated translation has been implemented.
 
 ## Data rules
 
@@ -74,6 +89,8 @@ Important parameters must be explicit and reproducible.
 - Preserve original source data when practical; keep derived assets separate.
 - Do not commit very large raw rasters/ZIPs when a reproducible download/process script is preferable.
 - Inspect CRS, datum, units and resolution before combining datasets.
+- `docs/DATA_SOURCES.md` is the evolving technical inventory of sources actually verified for Pádua.
+- The initial source list inside `docs/ACADEMIC_METHODOLOGY.md` is historical planning context, not a replacement for the verified inventory.
 
 ## Git workflow
 
@@ -116,6 +133,8 @@ npm run build
 Run additional tests or smoke checks when the task touches SGB integration, geospatial processing or browser behavior.
 
 A successful build alone does not prove the map works. Interactive/map work should also be checked in a browser.
+
+For future scientific model work, validation must follow the methodology baseline: reproducible inputs, comparison against an independent reference, comparison with the naive below-cota baseline, quantitative metrics and sensitivity analysis where applicable.
 
 ## Agent roles
 
