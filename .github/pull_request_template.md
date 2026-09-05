@@ -20,6 +20,18 @@ Descreva objetivamente o que mudou e por quê.
 - [ ] Não adicionei secrets, tokens ou dados sensíveis
 - [ ] Atualizei documentação quando necessário
 
+## Sincronização e deploy
+
+- [ ] O último checkpoint relevante foi commitado
+- [ ] O último commit foi enviado para o GitHub
+- [ ] `npm run repo:sync-check` confirma que a branch local está sincronizada com o upstream
+- [ ] Não deixei trabalho importante apenas em uma máquina
+- [ ] Nenhum deploy da Vercel foi disparado para esta branch
+
+Branch:
+
+Remote HEAD SHA:
+
 ## Risco e impacto
 
 Descreva riscos, migrações, variáveis de ambiente ou impacto em produção. Use `N/A` se não houver.
