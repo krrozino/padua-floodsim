@@ -266,7 +266,7 @@ test("methodology modal displays official SGB 2024 parameters, gauge zero, 11 sc
   for (const stage of ["3,00 m", "4,25 m", "5,50 m"]) {
     await page.getByRole("button", { name: stage, exact: true }).click();
     await expect(page.locator(".slider-card")).toContainText(stage);
-    expect(await modal.isVisible()).toBe(false);
+    await expect(modal).not.toBeVisible();
   }
 
   // 9. Mobile viewport (390x844) validation
