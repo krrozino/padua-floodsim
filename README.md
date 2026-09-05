@@ -1,5 +1,11 @@
 # Pádua FloodSim
 
+**Escopo atual da V1:** visualização da extensão oficial SGB por cota, de 3,00 a
+5,50 m. Não calcula profundidade, risco de bairro ou métricas de impacto. Bairros
+são sete pontos aproximados neutros; o painel INEA é mock/demo e usa referência
+separada. As funcionalidades científicas abaixo são planejadas. Veja a
+[revisão e validação do PR #17](docs/PR17_REVIEW.md).
+
 Plataforma experimental de simulação e monitoramento de enchentes para **Santo Antônio de Pádua - RJ**, com foco no **Rio Pomba**.
 
 ## Visão do projeto

@@ -1,11 +1,8 @@
 const SGB_MAP_SERVER =
   "https://geoportal.sgb.gov.br/server/rest/services/hidrologia/mancha_santo_antonio_de_padua/MapServer";
 
-export const SGB_FLOOD_LEVELS_CM = [
-  300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550,
-] as const;
-
-export type SgbFloodLevelCm = (typeof SGB_FLOOD_LEVELS_CM)[number];
+export { SGB_FLOOD_LEVELS_CM, type SgbFloodLevelCm } from "./stages";
+import { SGB_FLOOD_LEVELS_CM, type SgbFloodLevelCm } from "./stages";
 
 type ArcGisLayer = {
   id: number;
@@ -43,6 +40,7 @@ export async function fetchSgbFloodLayer(
   levelCm: SgbFloodLevelCm,
 ): Promise<SgbFloodResult> {
   const metadataResponse = await fetch(`${SGB_MAP_SERVER}?f=pjson`, {
+    signal: AbortSignal.timeout(30_000),
     next: { revalidate: 86_400 },
   });
 
@@ -71,6 +69,7 @@ export async function fetchSgbFloodLayer(
   queryUrl.searchParams.set("f", "geojson");
 
   const geometryResponse = await fetch(queryUrl, {
+    signal: AbortSignal.timeout(30_000),
     next: { revalidate: 3_600 },
   });
 

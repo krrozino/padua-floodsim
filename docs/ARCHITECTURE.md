@@ -1,5 +1,17 @@
 # Arquitetura inicial
 
+## Implementação V1 revisada (PR #17)
+
+`lib/sgb/useSgbFlood.ts` consulta o cenário independentemente do carregamento do
+mapa. `FloodMap` cria layers em `style.load` e aplica os dados e toggles atuais;
+nenhuma geometria substituta é produzida em loading/erro. Metadados de cota e
+altitude publicada ficam em `lib/sgb/stages.ts`.
+
+Os sete pontos de bairros são referências aproximadas neutras (mock), sem risco
+ou limites territoriais. Métricas de bairro, rua e área permanecem indisponíveis.
+As responsabilidades geoespaciais descritas abaixo são a evolução planejada,
+não cálculos já implementados. Veja [revisão do PR #17](PR17_REVIEW.md).
+
 ## Objetivo
 
 Definir uma arquitetura simples para o MVP e permitir evolução posterior para processamento geoespacial e monitoramento hidrológico real.
