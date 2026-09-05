@@ -203,7 +203,7 @@ export function FloodDashboard() {
             </div>
             <div className="slider-value-group">
               <b>{level.toFixed(2).replace(".", ",")} m</b>
-              {ortometricElevation && (
+              {Number.isFinite(ortometricElevation) && (
                 <span className="elev-label">
                   Alt. ortométrica: {ortometricElevation.toFixed(2).replace(".", ",")} m
                 </span>
