@@ -1,147 +1,236 @@
 # Pádua FloodSim
 
-**Escopo atual da V1:** visualização da extensão oficial SGB por cota, de 3,00 a
-5,50 m. Não calcula profundidade, risco de bairro ou métricas de impacto. Bairros
-são sete pontos aproximados neutros; o painel INEA é mock/demo e usa referência
-separada. As funcionalidades científicas abaixo são planejadas. Veja a
-[revisão e validação do PR #17](docs/PR17_REVIEW.md).
+Projeto acadêmico e experimental de computação aplicada à visualização e ao estudo de enchentes em **Santo Antônio de Pádua, RJ**, com foco no **Rio Pomba**.
 
-Plataforma experimental de simulação e monitoramento de enchentes para **Santo Antônio de Pádua - RJ**, com foco no **Rio Pomba**.
+**Produção:** https://padua-floodsim.vercel.app  
+**Estado de referência deste README:** 05 de setembro de 2026  
+**Versão publicada:** V1 — visualização interativa de cenários oficiais SGB
 
-## Visão do projeto
+> O Pádua FloodSim não é um sistema oficial de alerta, previsão ou evacuação. A aplicação não substitui INEA, Defesa Civil, Serviço Geológico do Brasil (SGB) ou outras fontes oficiais.
 
-O Pádua FloodSim pretende transformar dados topográficos e hidrológicos em uma visualização simples e interativa dos impactos de uma cheia na área urbana.
+## Estado atual
 
-O usuário poderá alterar manualmente o nível do Rio Pomba em uma régua e observar, no mapa, como diferentes cenários podem afetar bairros, ruas e áreas da cidade. O projeto também prevê uma área separada para acompanhamento do nível observado do rio em tempo real.
+A V1 publicada permite explorar no mapa as **11 manchas de inundação oficiais do SGB** para Santo Antônio de Pádua, entre **3,00 m e 5,50 m**, em intervalos de **0,25 m**.
 
-## Experiência principal
+A aplicação atualmente oferece:
 
-- Mapa topográfico de Santo Antônio de Pádua.
-- Rio Pomba destacado no mapa.
-- Slider para alterar o nível simulado da água.
-- Mancha de inundação correspondente ao cenário selecionado.
-- Profundidade representada por diferentes tons de azul.
-- Nomes dos bairros com classificação visual de criticidade.
-- Painel com bairros, ruas e área potencialmente afetados.
-- Painel separado de monitoramento do nível observado do rio.
-- Tendência de subida, estabilidade ou descida.
-- Dados pluviométricos quando disponíveis.
+- mapa interativo com MapLibre;
+- pan, zoom e recentralização;
+- slider discreto para os 11 cenários oficiais SGB;
+- atalhos para 3,00 m, 4,25 m e 5,50 m;
+- carregamento da extensão oficial correspondente à cota selecionada;
+- exibição de cota local e altitude ortométrica documentada;
+- estados de loading, sucesso, camada vazia e erro;
+- retry e proteção contra respostas antigas;
+- botão **Fonte e metodologia** com proveniência científica;
+- toggles de camada;
+- sete pontos aproximados e neutros de bairros para referência visual;
+- painel demonstrativo INEA explicitamente marcado como `MOCK / DEMO`;
+- aviso persistente de caráter acadêmico/experimental.
 
-## Escala visual inicial de profundidade
+## O que a V1 não faz
 
-| Profundidade | Classificação |
+A camada SGB integrada representa **extensão de inundação publicada**, não profundidade.
+
+A V1 não calcula:
+
+- profundidade da água;
+- velocidade da correnteza;
+- risco ou severidade oficial por bairro;
+- população afetada;
+- dano material;
+- ruas afetadas;
+- previsão de quando uma cota será atingida;
+- necessidade de evacuação;
+- conversão automática entre leitura INEA e cota SGB.
+
+Métricas sem dados suficientes são apresentadas como indisponíveis em vez de serem estimadas por regras arbitrárias.
+
+## Referência oficial SGB usada na V1
+
+A principal fonte da interface atual é o estudo:
+
+**Serviço Geológico do Brasil — SGB.** *Delimitação da mancha de inundação do rio Pomba na zona urbana de Santo Antônio de Pádua - RJ*, 2024.
+
+Metadados documentados:
+
+- estação: Santo Antônio de Pádua II;
+- RHN: `58790002`;
+- zero da régua: 79,709 m de altitude ortométrica;
+- datum vertical: `hgeoHNOR_IMBITUBA`;
+- cenários: 300 cm a 550 cm, de 25 em 25 cm;
+- serviço cartográfico web em SIRGAS 2000 / `EPSG:4674`.
+
+Veja [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) para proveniência, URLs e inventário técnico.
+
+## Classificação dos dados
+
+O projeto separa explicitamente quatro tipos de informação:
+
+| Classe | Significado |
 | --- | --- |
-| 0 a 0,20 m | Muito raso |
-| 0,20 a 0,50 m | Raso |
-| 0,50 a 1,00 m | Moderado |
-| 1,00 a 2,00 m | Profundo |
-| acima de 2,00 m | Muito profundo |
+| `observed` | medição observada em uma fonte oficial, com timestamp e metadados |
+| `official_reference` | produto oficial publicado e apenas visualizado/reutilizado pelo FloodSim |
+| `derived` | resultado calculado pelo projeto a partir de dados de origem identificada |
+| `simulated` | resultado produzido pelo modelo experimental próprio |
 
-A classificação de bairros será uma métrica própria do sistema e poderá variar de azul a vermelho conforme a severidade do cenário.
+Na V1 atual, as manchas SGB são `official_reference`. Os sete pontos de bairro e o painel INEA ainda são demonstrativos/mocks. Ainda não existe resultado `simulated` do modelo próprio em produção.
 
-## MVP
+## Metodologia acadêmica
 
-A primeira versão deve provar o conceito com o menor número possível de dependências:
+O futuro modelo experimental próprio foi deliberadamente mantido simples e validável:
 
-1. dashboard responsivo;
-2. mapa navegável;
-3. bairros e Rio Pomba representados;
-4. slider de nível da água;
-5. cenários de inundação pré-processados;
-6. legenda de profundidade;
-7. painel de impacto;
-8. dados hidrológicos mockados;
-9. aviso claro de caráter experimental.
+1. preparar um DEM com CRS/datum documentados;
+2. definir o Rio Pomba como origem hidráulica;
+3. marcar células elegíveis por elevação;
+4. manter somente células conectadas hidraulicamente ao rio, usando conectividade de grade;
+5. gerar a mancha experimental;
+6. comparar com referências independentes;
+7. medir falsos positivos, falsos negativos e métricas espaciais;
+8. documentar sensibilidade, limitações e incerteza.
 
-No MVP, o navegador não precisa calcular toda a hidráulica em tempo real. Os cenários podem ser gerados previamente e carregados conforme o nível selecionado.
+A regra `DEM <= nível => inundado` não é aceita como modelo final porque ignora conectividade e barreiras topográficas.
 
-## Evolução planejada
+A metodologia completa está em [`docs/ACADEMIC_METHODOLOGY.md`](docs/ACADEMIC_METHODOLOGY.md).
 
-### V0 — Protótipo visual
+## Bairros
 
-Interface, mapa e dados mockados para validar a experiência.
+A Lei Municipal nº 3.864/2017 foi usada para confirmar a lista dos **27 bairros oficiais** do município.
 
-### V1 — Simulação geográfica
+Ainda falta obter um arquivo vetorial oficial dos limites ou produzir uma camada derivada e documentada a partir das fontes municipais. Até isso ocorrer:
 
-Integração com topografia real, bairros, ruas e manchas de inundação derivadas de dados geoespaciais.
+- não existe cálculo territorial por bairro;
+- não existe índice de cor proporcional à área atingida;
+- os sete pontos exibidos no mapa não representam polígonos ou fronteiras;
+- nenhum bairro recebe classificação de risco.
 
-### V2 — Monitoramento
+A próxima fase relevante é a issue #10, seguida da #20, para calcular a interseção real entre bairros e manchas SGB.
 
-Integração com fontes oficiais para exibir nível observado do Rio Pomba e pluviometria.
+## Monitoramento INEA
 
-### V3 — Histórico e alertas
+O painel de monitoramento da interface atual é **fictício e demonstrativo**.
 
-Histórico de leituras, comparação de eventos e mecanismos de aviso.
+A integração real só será implementada após identificar e documentar:
 
-### V4 — Modelagem avançada
+- estação exata;
+- coordenadas;
+- referência/zero da régua;
+- datum ou referência vertical;
+- política de atualização;
+- relação, se existir, com a referência usada pelo SGB.
 
-Estudo de modelos hidráulicos/hidrodinâmicos, previsão e visualização 3D.
+Não é assumido que `5,00 m` no INEA seja equivalente a `500 cm` na referência dos cenários SGB.
 
-## Stack inicial
+## Arquitetura
 
-### Front-end
-
-- Next.js
-- TypeScript
-- Tailwind CSS
-- MapLibre GL JS
-
-### Processamento geoespacial
-
-- Python
-- GeoPandas
-- Rasterio
-- GDAL
-
-### Formatos de dados
-
-- GeoJSON
-- GeoTIFF / raster de elevação
-- tiles quando necessário
-
-### Infraestrutura futura
-
-- FastAPI ou Node.js
-- PostgreSQL + PostGIS
-
-## Estrutura planejada
+A arquitetura conceitual separa:
 
 ```text
-padua-floodsim/
-├── app/
-├── components/
-│   ├── dashboard/
-│   ├── map/
-│   ├── monitoring/
-│   └── simulation/
-├── data/
-│   ├── flood-zones/
-│   └── mock/
-├── docs/
-├── lib/
-├── public/
-└── scripts/
-    └── gis/
+fontes de dados
+    -> aquisição
+    -> normalização
+    -> terreno/hidrografia
+    -> simulação
+    -> classificação espacial
+    -> aplicação/API
+    -> visualização
 ```
 
-## Fontes de dados candidatas
+Na V1 atual, o fluxo implementado é principalmente:
 
-O projeto deve priorizar dados públicos e oficiais, como os disponibilizados por:
+```text
+SGB ArcGIS MapServer
+    -> adaptador/proxy Next.js
+    -> aquisição do cenário
+    -> estado da aplicação
+    -> source/layers MapLibre
+    -> mapa + status + proveniência
+```
 
-- INEA;
-- Serviço Geológico do Brasil (SGB);
-- ANA;
-- IBGE;
-- Prefeitura e Defesa Civil, quando houver dados públicos adequados.
+O algoritmo científico futuro permanecerá fora dos componentes de visualização.
 
-Cada integração deverá ser documentada, incluindo origem, datum/referencial, frequência de atualização, licença e limitações.
+Veja [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## Segurança e responsabilidade
+## Stack atual
 
-O Pádua FloodSim é inicialmente uma ferramenta **experimental, educacional e de pesquisa**. Simulações e estimativas não substituem avisos oficiais de órgãos como INEA e Defesa Civil.
+- Next.js 16.3.4;
+- React 19.2.8;
+- TypeScript 5.9;
+- Tailwind CSS 4.3.3;
+- MapLibre GL JS 6.7.0;
+- Playwright para testes E2E;
+- GitHub Actions;
+- SonarCloud;
+- Vercel para produção.
 
-Até que os modelos sejam devidamente calibrados e validados, nenhuma visualização deve ser apresentada como previsão oficial ou garantia de segurança.
+Para o pipeline geoespacial futuro estão previstos Python, GeoPandas, Rasterio, GDAL, Shapely e PyProj, conforme necessidade experimental.
 
-## Status
+## Qualidade e segurança
 
-🟢 V1 inicial em desenvolvimento, com manchas oficiais do SGB integradas e primeiro deploy na Vercel em preparação.
+O repositório possui mecanismos de validação que incluem:
+
+- typecheck e build em GitHub Actions;
+- secret scanning;
+- Dependabot;
+- validação do serviço oficial SGB;
+- smoke test dos 11 cenários oficiais;
+- testes E2E com Playwright;
+- SonarCloud como Quality Gate.
+
+Os marcos recentes de V1 passaram por CI, Security e SonarCloud antes do merge.
+
+## Deploy
+
+Deploys automáticos por push estão desabilitados para evitar publicações intermediárias e consumo desnecessário do limite da Vercel.
+
+Fluxo de produção:
+
+```text
+feature branch
+    -> testes/CI
+    -> Pull Request
+    -> revisão
+    -> merge em main
+    -> um deploy deliberado de produção
+    -> smoke test
+```
+
+A release publicada em 05/09/2026 corresponde ao commit:
+
+`80e70b7ce1a142658908f73650cd727e3b946bff`
+
+Deployment Vercel:
+
+`dpl_E9id232r8XHXdu2pLB7YVKMBB6Ny`
+
+## Documentação
+
+A documentação principal está organizada em [`docs/`](docs/README.md).
+
+Documentos de referência:
+
+- [`docs/PROJECT_REPORT.md`](docs/PROJECT_REPORT.md) — histórico consolidado e relatório de tudo implementado até a data de corte;
+- [`docs/ACADEMIC_METHODOLOGY.md`](docs/ACADEMIC_METHODOLOGY.md) — metodologia científica;
+- [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) — fontes e proveniência;
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — arquitetura;
+- [`docs/FLOOD_MODEL.md`](docs/FLOOD_MODEL.md) — fundação do modelo experimental;
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — próximos ciclos e critérios de passagem;
+- [`docs/PR17_REVIEW.md`](docs/PR17_REVIEW.md) — revisão do marco de interatividade.
+
+## Roadmap resumido
+
+- **V0 — concluída:** fundação da aplicação e mapa interativo.
+- **V1A — concluída:** 11 referências oficiais SGB integradas e UI refinada.
+- **V1B — próxima:** limites dos 27 bairros e sobreposição territorial real.
+- **V1C — planejada:** modelo experimental próprio com DEM + conectividade.
+- **V2 — planejada:** monitoramento observado INEA, sem mistura de referenciais.
+- **V3 — planejada:** telas de dados, bairros, comparação e histórico.
+- **V4 — futura:** modelagem hidrodinâmica avançada apenas se os dados justificarem.
+
+Consulte [`docs/ROADMAP.md`](docs/ROADMAP.md) para os critérios completos.
+
+## Responsabilidade de uso
+
+O Pádua FloodSim é uma ferramenta de pesquisa, experimentação e visualização científica. Nenhum mapa, painel ou cálculo produzido pelo projeto deve ser interpretado como alerta operacional oficial.
+
+Em eventos reais, consulte sempre os canais oficiais da Defesa Civil, INEA, SGB e demais órgãos competentes.
