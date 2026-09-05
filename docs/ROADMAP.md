@@ -25,8 +25,8 @@ Objetivo: usar produtos oficiais existentes como baseline geográfico e fonte ex
 - [x] Distinguir extensão oficial de profundidade, dano, população afetada e previsão.
 - [x] Implementar retry, estados de erro/vazio e proteção contra respostas antigas.
 - [x] Validar consumo dos 11 cenários publicados.
-- [ ] Refinar apresentação do status/fonte do cenário sem cobrir o mapa (#19).
-- [ ] Manter acesso claro à fonte e metodologia na interface (#19).
+- [x] Refinar apresentação do status/fonte do cenário sem cobrir o mapa (#19).
+- [x] Manter acesso claro à fonte e metodologia na interface (#19).
 
 ## V1B — Bairros e impacto espacial derivado
 

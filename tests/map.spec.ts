@@ -211,3 +211,41 @@ test("real SGB scenarios, neutral neighborhoods, pan/zoom/center, popup and mobi
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await expect(page.getByText("Não equivale à régua do INEA.", { exact: false })).toBeVisible();
 });
+
+test("methodology modal displays official SGB 2024 parameters, gauge zero, 11 scenarios and dismisses correctly", async ({ page }) => {
+  await page.route("**/api/sgb/flood?*", route => route.fulfill({ json: payload(425) }));
+  await page.goto("/");
+
+  const modal = page.locator(".methodology-modal");
+  await expect(modal).not.toBeVisible();
+
+  // 1. Open from the slider status bar
+  await page.getByRole("button", { name: "Fonte e metodologia ℹ" }).click();
+  await expect(modal).toBeVisible();
+  await expect(modal).toContainText("Delimitação da mancha de inundação do rio Pomba");
+  await expect(modal).toContainText("58790002");
+  await expect(modal).toContainText("79,709 m");
+  await expect(modal).toContainText("hgeoHNOR_IMBITUBA");
+  await expect(modal).toContainText("11 cenários modelados");
+  await expect(modal).toContainText("Extensão, não profundidade");
+  await expect(modal).toContainText("official_reference");
+
+  // 2. Dismiss via Escape key
+  await page.keyboard.press("Escape");
+  await expect(modal).not.toBeVisible();
+
+  // 3. Open from the sidebar card
+  await page.getByRole("button", { name: "Metodologia e parâmetros completos ℹ" }).click();
+  await expect(modal).toBeVisible();
+
+  // 4. Dismiss via "Entendido, fechar" primary button
+  await page.getByRole("button", { name: "Entendido, fechar" }).click();
+  await expect(modal).not.toBeVisible();
+
+  // 5. Open again and dismiss via close "✕" button
+  await page.getByRole("button", { name: "Fonte e metodologia ℹ" }).click();
+  await expect(modal).toBeVisible();
+  await page.getByRole("button", { name: "Fechar painel de metodologia" }).click();
+  await expect(modal).not.toBeVisible();
+});
+
