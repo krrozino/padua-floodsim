@@ -6,32 +6,7 @@ import {
   type FloodLayerStatus,
 } from "@/components/map/FloodMap";
 import { REFERENCE_NEIGHBORHOODS } from "@/lib/map/neighborhoods";
-
-const SGB_STAGE_ELEVATIONS: Record<number, number> = {
-  300: 82.71,
-  325: 82.96,
-  350: 83.21,
-  375: 83.46,
-  400: 83.71,
-  425: 83.96,
-  450: 84.21,
-  475: 84.46,
-  500: 84.71,
-  525: 84.96,
-  550: 85.21,
-};
-
-function impactFor(level: number) {
-  const severity = Math.max(0, level - 2.5);
-  return {
-    neighborhoods: Math.min(
-      REFERENCE_NEIGHBORHOODS.length,
-      Math.round(severity * 1.7),
-    ),
-    roads: Math.max(0, Math.round(severity * 22)),
-    area: Math.max(0, severity * 1.06),
-  };
-}
+import { SGB_STAGE_ELEVATIONS, type SgbFloodLevelCm } from "@/lib/sgb/stages";
 
 function formatMetersFromCm(levelCm: number) {
   return (levelCm / 100).toFixed(2).replace(".", ",");
@@ -48,14 +23,20 @@ export function FloodDashboard() {
   const realtimeCardRef = useRef<HTMLElement | null>(null);
 
   const levelCm = Math.round(level * 100);
-  const ortometricElevation = SGB_STAGE_ELEVATIONS[levelCm];
-  const impact = useMemo(() => impactFor(level), [level]);
+  const ortometricElevation = SGB_STAGE_ELEVATIONS[levelCm as SgbFloodLevelCm];
 
   const handleRetry = useCallback(() => {
     setRetryToken((prev) => prev + 1);
   }, []);
 
+  const mapPanelRef = useRef<HTMLElement | null>(null);
+  const handleScrollToMap = () => {
+    mapPanelRef.current?.scrollIntoView({ block: "start" });
+    mapPanelRef.current?.focus({ preventScroll: true });
+  };
+
   const handleScrollToRealtime = useCallback(() => {
+    realtimeCardRef.current?.focus({ preventScroll: true });
     realtimeCardRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
@@ -63,6 +44,7 @@ export function FloodDashboard() {
   }, []);
 
   const mapBadge = useMemo(() => {
+    if (layerStatus.levelCm !== levelCm) return "Carregando mancha oficial do SGB...";
     if (layerStatus.state === "official") {
       return `Mancha oficial SGB · cota local ${formatMetersFromCm(layerStatus.levelCm)} m${
         ortometricElevation
@@ -70,11 +52,12 @@ export function FloodDashboard() {
           : ""
       }`;
     }
-    if (layerStatus.state === "fallback") {
-      return "Geoportal SGB indisponível · exibindo fallback demonstrativo";
+    if (layerStatus.state === "error") {
+      return "Mancha SGB indisponível · nenhuma extensão exibida";
     }
+    if (layerStatus.state === "empty") return "SGB retornou uma camada vazia · nenhuma extensão exibida";
     return "Carregando mancha oficial do SGB...";
-  }, [layerStatus, ortometricElevation]);
+  }, [layerStatus, ortometricElevation, levelCm]);
 
   return (
     <main className="shell">
@@ -85,7 +68,7 @@ export function FloodDashboard() {
             ≈
           </div>
           <div>
-            <strong>Pádua FloodSim</strong>
+            <h1>Pádua FloodSim</h1>
             <span>Santo Antônio de Pádua, RJ · Foco no Rio Pomba</span>
           </div>
         </div>
@@ -94,7 +77,8 @@ export function FloodDashboard() {
           <button
             type="button"
             className="nav-btn active"
-            title="Visualização cartográfica ativa"
+            title="Ir para o mapa"
+            onClick={handleScrollToMap}
           >
             Mapa
           </button>
@@ -137,7 +121,8 @@ export function FloodDashboard() {
         <button
           type="button"
           className="sidebar-btn active"
-          title="Visualização principal do mapa interativo"
+          title="Ir para o mapa"
+          onClick={handleScrollToMap}
         >
           Mapa
         </button>
@@ -184,7 +169,7 @@ export function FloodDashboard() {
       </aside>
 
       {/* Main Interactive Map Section */}
-      <section className="map-panel">
+      <section className="map-panel" ref={mapPanelRef} tabIndex={-1} aria-label="Mapa e cenários SGB">
         <FloodMap
           level={level}
           onStatusChange={setLayerStatus}
@@ -193,8 +178,8 @@ export function FloodDashboard() {
 
         {/* Status Badge */}
         <div className={`demo-badge ${layerStatus.state}`}>
-          <span>{mapBadge}</span>
-          {layerStatus.state === "fallback" && (
+          <span role="status" aria-live="polite">{mapBadge}</span>
+          {(layerStatus.state === "error" || layerStatus.state === "empty") && (
             <button
               type="button"
               className="badge-retry-btn"
@@ -233,39 +218,43 @@ export function FloodDashboard() {
             max="5.5"
             step="0.25"
             value={level}
+            aria-valuetext={`${level.toFixed(2).replace(".", ",")} metros, cenário SGB`}
             onChange={(event) => setLevel(Number(event.target.value))}
           />
 
           <div className="slider-scale">
-            <span>3,00 m (1º dano)</span>
+            <span>3,00 m — primeiro cenário SGB disponível</span>
             <span>4,25 m</span>
-            <span>5,50 m (máx. modelada)</span>
+            <span>5,50 m</span>
           </div>
 
           {/* Quick Stage Shortcuts */}
-          <div className="quick-stages" aria-label="Atalhos rápidos para cotas de teste">
+          <div className="quick-stages" role="group" aria-label="Atalhos rápidos para cotas de teste">
             <span className="quick-stages-label">Testar cotas:</span>
             <button
               type="button"
               className={`stage-chip ${level === 3.0 ? "active" : ""}`}
+              aria-pressed={level === 3.0}
               onClick={() => setLevel(3.0)}
-              title="Cota 3,00 m (Primeiro dano / atenção SGB)"
+              title="3,00 m — primeiro cenário SGB disponível"
             >
               3,00 m
             </button>
             <button
               type="button"
               className={`stage-chip ${level === 4.25 ? "active" : ""}`}
+              aria-pressed={level === 4.25}
               onClick={() => setLevel(4.25)}
-              title="Cota 4,25 m (Cenário intermediário próximo a cheia histórica)"
+              title="4,25 m — cenário SGB disponível"
             >
               4,25 m
             </button>
             <button
               type="button"
               className={`stage-chip ${level === 5.5 ? "active" : ""}`}
+              aria-pressed={level === 5.5}
               onClick={() => setLevel(5.5)}
-              title="Cota 5,50 m (Cota máxima modelada pelo SGB)"
+              title="5,50 m — maior cota disponível no MapServer"
             >
               5,50 m
             </button>
@@ -275,18 +264,19 @@ export function FloodDashboard() {
 
       {/* Right Information & Monitoring Panel */}
       <aside className="right-panel">
+        <p className="research-warning">Projeto acadêmico e experimental. Não é previsão nem alerta oficial; consulte INEA e Defesa Civil. O futuro modelo DEM permanece separado dos cenários SGB.</p>
         {/* Real-time Monitoring Card (Explicitly MOCK) */}
-        <article ref={realtimeCardRef} id="realtime-card" className="card realtime">
+        <article ref={realtimeCardRef} id="realtime-card" tabIndex={-1} className="card realtime">
           <div className="card-heading">
-            <strong>Nível em tempo real</strong>
+            <strong>Monitoramento demonstrativo</strong>
             <span className="live-mock">
               <i /> MOCK / DEMO
             </span>
           </div>
-          <h3>Rio Pomba · Estação INEA</h3>
+          <h2>Rio Pomba · Estação INEA</h2>
           <div className="river-grid">
             <div>
-              <span>Nível simulado</span>
+              <span>Nível fictício</span>
               <b>4,35 m</b>
             </div>
             <div>
@@ -342,29 +332,30 @@ export function FloodDashboard() {
             <strong>Bairros de referência</strong>
           </div>
           <p className="neighborhood-explainer">
-            Os nomes no mapa correspondem aos 27 bairros oficiais (Lei Municipal nº 3.864/2017).
-            Como os limites poligonais vetoriais ainda estão pendentes de disponibilização
-            pela Prefeitura, são exibidos como <strong>pontos de referência georreferenciados</strong>{" "}
-            no mapa (não são polígonos inventados).
+            Os 7 bairros exibidos pertencem à lista dos 27 bairros oficiais do município
+            (Lei Municipal nº 3.864/2017). As posições são referências aproximadas
+            (mock), não limites territoriais. Nenhum bairro possui risco calculado.
+            A classificação depende de limites validados e interseção GIS.
           </p>
+          <p className="neighborhood-explainer">{REFERENCE_NEIGHBORHOODS.map((item) => item.name).join(", ")}</p>
         </article>
 
         {/* Estimated Metrics Card */}
         <article className="metrics">
           <div>
             <span>Bairros potencialmente afetados</span>
-            <b>{impact.neighborhoods}</b>
-            <small>estimativa preliminar mock até limites oficiais</small>
+            <b>Indisponível</b>
+            <small>pendente: limites de bairros validados e interseção GIS</small>
           </div>
           <div>
             <span>Ruas com trechos na mancha</span>
-            <b>{impact.roads}</b>
-            <small>estimativa preliminar mock até integração viária OSM</small>
+            <b>Indisponível</b>
+            <small>pendente: malha viária integrada e interseção GIS</small>
           </div>
           <div>
-            <span>Área alagada estimada</span>
-            <b>{impact.area.toFixed(2).replace(".", ",")} km²</b>
-            <small>estimativa preliminar mock; cálculo GIS pendente</small>
+            <span>Área da mancha</span>
+            <b>Indisponível</b>
+            <small>pendente: cálculo GIS real em CRS métrico</small>
           </div>
         </article>
       </aside>

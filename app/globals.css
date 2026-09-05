@@ -2,13 +2,13 @@
 
 :root {
   --navy: #0f2f5f;
-  --blue: #1d74f5;
+  --blue: #1764d2;
   --border: #dbe5ef;
-  --muted: #66768a;
+  --muted: #526174;
   --panel: #ffffff;
   --bg: #eef3f8;
-  --danger: #e23b35;
-  --warning: #ef7c18;
+  --danger: #bd2824;
+  --warning: #a34d05;
 }
 
 * { box-sizing: border-box; }
@@ -48,7 +48,7 @@ a { color: inherit; }
   border-radius: 14px; color: white; background: var(--navy);
   font-weight: 800; font-size: 30px; line-height: 1;
 }
-.brand strong { display: block; font-size: 21px; color: var(--navy); }
+.brand h1 { display: block; font-size: 21px; color: var(--navy); }
 .brand span { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); }
 .topnav { display: flex; justify-content: center; gap: 8px; }
 .topnav .nav-btn, .sidebar .sidebar-btn {
@@ -163,7 +163,7 @@ a { color: inherit; }
 }
 
 .demo-badge {
-  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  position: absolute; top: 130px; left: 50%; transform: translateX(-50%);
   z-index: 5; padding: 8px 14px; border-radius: 999px;
   background: rgba(255,255,255,.94); border: 1px solid #9aa9b8;
   color: #506176; font-size: 11px; font-weight: 700;
@@ -174,7 +174,7 @@ a { color: inherit; }
 }
 .demo-badge.official { border-color: #60a5fa; color: #0758a8; background: rgba(239,247,255,.97); }
 .demo-badge.loading { border-color: #9aa9b8; color: #506176; }
-.demo-badge.fallback { border-color: #e1a34b; color: #8a550d; background: rgba(255,249,236,.97); }
+.demo-badge.error { border-color: #e1a34b; color: #8a550d; background: rgba(255,249,236,.97); }
 
 .badge-retry-btn {
   background: #fef3c7;
@@ -248,7 +248,7 @@ a { color: inherit; }
 .card { padding: 16px; }
 .card-heading { display: flex; justify-content: space-between; align-items: center; color: var(--navy); }
 .live-mock { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #b45309; font-weight: 700; background: #fef3c7; padding: 2px 8px; border-radius: 999px; border: 1px solid #fde68a; }
-.realtime h3 { margin: 18px 0 13px; color: var(--navy); }
+.realtime h2 { margin: 18px 0 13px; color: var(--navy); }
 .river-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 .river-grid > div { background: white; padding: 13px; min-height: 78px; }
 .river-grid span { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
@@ -310,14 +310,42 @@ a { color: inherit; }
   .right-panel { border-left: 0; padding: 12px; }
   .slider-card { bottom: 14px; }
   .status-pill { font-size: 0; padding: 10px; }
-  .brand strong { font-size: 18px; }
+  .brand h1 { font-size: 18px; }
 }
 
 @media (max-width: 520px) {
   .topbar { padding: 10px 12px; }
   .brand-mark { width: 40px; height: 40px; }
   .map-panel { min-height: 520px; }
-  .slider-title span { display: none; }
+  .slider-title { align-items: start; }
+  .slider-title strong { font-size: 13px; }
   .slider-value-group b { font-size: 22px; }
   .demo-badge { width: calc(100% - 28px); text-align: center; }
 }
+
+:focus-visible { outline: 3px solid #1d74f5; outline-offset: 3px; }
+.research-warning { font-size: 12px; line-height: 1.5; color: #334155; }
+.metrics b { font-size: 13px; }
+.metrics small, .realtime > small { color: #526174; }
+.slider-scale { gap: 14px; }
+.slider-scale > span { flex: 1; }
+.slider-scale > span:last-child { text-align: right; }
+.quick-stages { flex-wrap: wrap; }
+.map-resource-error { position: absolute; top: 195px; left: 14px; right: 14px; z-index: 8; padding: 8px; background: #fff7ed; border: 1px solid #c27828; border-radius: 8px; font-size: 12px; }
+.map-resource-error button { margin-left: 8px; text-decoration: underline; }
+.maplibregl-popup-content { color: #334155; font-size: 12px; padding: 16px; }
+.demo-badge { width: calc(100% - 28px); justify-content: center; border-radius: 10px; }
+@media (max-width: 1100px) and (min-width: 821px) {
+  .topbar { grid-template-columns: 230px 1fr; gap: 8px; }
+  .status-pill { display: none; }
+  .topnav .nav-btn { padding: 6px; }
+}
+@media (max-width: 520px) {
+  .slider-card { width: calc(100% - 24px); padding: 12px; bottom: 28px; }
+  .slider-value-group { min-width: 85px; }
+  .slider-scale { font-size: 10px; }
+  .map-panel { min-height: 650px; }
+}
+
+.brand h1 { margin: 0; }
+.maplibregl-ctrl-attrib a { text-decoration: underline; }

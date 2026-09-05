@@ -4,9 +4,11 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import * as maplibregl from "maplibre-gl";
 import {
   buildNeighborhoodPointsGeoJSON,
-  REFERENCE_NEIGHBORHOODS,
-  type NeighborhoodSeverity,
+  NEIGHBORHOOD_DISCLAIMER,
 } from "@/lib/map/neighborhoods";
+
+import { useSgbFlood, EMPTY_FLOOD, type FloodLayerStatus, type FloodGeometry } from "@/lib/sgb/useSgbFlood";
+export type { FloodLayerStatus } from "@/lib/sgb/useSgbFlood";
 
 export const PADUA_CENTER: [number, number] = [-42.18, -21.539];
 
@@ -35,63 +37,11 @@ const MAP_STYLE: maplibregl.StyleSpecification = {
   ],
 };
 
-export type FloodLayerStatus = {
-  state: "loading" | "official" | "fallback";
-  levelCm: number;
-  layerName?: string;
-  message?: string;
-};
-
-type SgbFloodApiResponse = {
-  classification: "official_reference";
-  provider: string;
-  levelCm: number;
-  layerId: number;
-  layerName: string;
-  geojson: unknown;
-};
-
-function buildFallbackFloodData(level: number) {
-  const spread = 0.0014 + Math.max(0, level - 2.5) * 0.00085;
-
-  const corridor = (width: number) => [
-    [-42.205, -21.545 - width],
-    [-42.196, -21.541 - width],
-    [-42.188, -21.544 - width],
-    [-42.18, -21.548 - width],
-    [-42.171, -21.546 - width],
-    [-42.162, -21.541 - width],
-    [-42.154, -21.543 - width],
-    [-42.154, -21.543 + width],
-    [-42.162, -21.541 + width],
-    [-42.171, -21.546 + width],
-    [-42.18, -21.548 + width],
-    [-42.188, -21.544 + width],
-    [-42.196, -21.541 + width],
-    [-42.205, -21.545 + width],
-    [-42.205, -21.545 - width],
-  ];
-
-  return {
-    type: "FeatureCollection" as const,
-    features: [
-      {
-        type: "Feature" as const,
-        properties: { classification: "mock" },
-        geometry: {
-          type: "Polygon" as const,
-          coordinates: [corridor(spread)],
-        },
-      },
-    ],
-  };
-}
-
-function ensureFloodLayers(map: maplibregl.Map, initialLevel: number) {
+function ensureFloodLayers(map: maplibregl.Map) {
   if (!map.getSource("flood-zone")) {
     map.addSource("flood-zone", {
       type: "geojson",
-      data: buildFallbackFloodData(initialLevel),
+      data: EMPTY_FLOOD,
     });
   }
 
@@ -100,6 +50,7 @@ function ensureFloodLayers(map: maplibregl.Map, initialLevel: number) {
       id: "flood-zone-fill",
       type: "fill",
       source: "flood-zone",
+      layout: { visibility: "none" },
       paint: {
         "fill-color": "#087acb",
         "fill-opacity": 0.45,
@@ -112,6 +63,7 @@ function ensureFloodLayers(map: maplibregl.Map, initialLevel: number) {
       id: "flood-zone-line",
       type: "line",
       source: "flood-zone",
+      layout: { visibility: "none" },
       paint: {
         "line-color": "#034c8c",
         "line-width": 2,
@@ -121,19 +73,14 @@ function ensureFloodLayers(map: maplibregl.Map, initialLevel: number) {
   }
 }
 
-function ensureNeighborhoodLayers(map: maplibregl.Map, level: number) {
-  const data = buildNeighborhoodPointsGeoJSON(level);
+function ensureNeighborhoodLayers(map: maplibregl.Map) {
+  const data = buildNeighborhoodPointsGeoJSON();
 
   if (!map.getSource("neighborhood-points")) {
     map.addSource("neighborhood-points", {
       type: "geojson",
       data,
     });
-  } else {
-    const source = map.getSource(
-      "neighborhood-points",
-    ) as maplibregl.GeoJSONSource;
-    source.setData(data);
   }
 
   if (!map.getLayer("neighborhood-points-circle")) {
@@ -141,6 +88,7 @@ function ensureNeighborhoodLayers(map: maplibregl.Map, level: number) {
       id: "neighborhood-points-circle",
       type: "circle",
       source: "neighborhood-points",
+      layout: { visibility: "none" },
       paint: {
         "circle-radius": [
           "interpolate",
@@ -153,7 +101,7 @@ function ensureNeighborhoodLayers(map: maplibregl.Map, level: number) {
           16,
           12,
         ],
-        "circle-color": ["get", "color"],
+        "circle-color": "#64748b",
         "circle-stroke-width": 2,
         "circle-stroke-color": "#ffffff",
       },
@@ -166,6 +114,7 @@ function ensureNeighborhoodLayers(map: maplibregl.Map, level: number) {
       type: "symbol",
       source: "neighborhood-points",
       layout: {
+        visibility: "none",
         "text-field": ["get", "name"],
         "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
         "text-size": [
@@ -207,227 +156,120 @@ export function FloodMap({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const onStatusChangeRef = useRef(onStatusChange);
-  const isMapReadyRef = useRef(false);
+  const [renderedData, setRenderedData] = useState<FloodGeometry | null>(null);
+  const [readyMap, setReadyMap] = useState<maplibregl.Map | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [mapRetry, setMapRetry] = useState(0);
+  const [showFlood, setShowFlood] = useState(true);
+  const [showNeighborhoods, setShowNeighborhoods] = useState(true);
+  const { status, geojson } = useSgbFlood(level, retryToken);
 
   useEffect(() => {
     onStatusChangeRef.current = onStatusChange;
   }, [onStatusChange]);
-
-  const [showFlood, setShowFlood] = useState(true);
-  const [showNeighborhoods, setShowNeighborhoods] = useState(true);
-
-  // Initialize MapLibre
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    onStatusChangeRef.current?.(status);
+  }, [status]);
 
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: MAP_STYLE,
-      center: PADUA_CENTER,
-      zoom: 12.8,
-      pitch: 15,
-      bearing: 0,
-    });
-
-    map.addControl(
-      new maplibregl.NavigationControl({ visualizePitch: true }),
-      "top-left",
-    );
-
-    const initLayers = () => {
-      isMapReadyRef.current = true;
-      ensureFloodLayers(map, level);
-      ensureNeighborhoodLayers(map, level);
-    };
-
-    if (map.isStyleLoaded()) {
-      initLayers();
-    } else {
-      map.once("load", initLayers);
+  // Style readiness only controls rendering; the SGB request starts independently.
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let map: maplibregl.Map;
+    setMapError(null);
+    try {
+      map = new maplibregl.Map({
+        container: containerRef.current,
+        style: MAP_STYLE,
+        center: PADUA_CENTER,
+        zoom: 12.8,
+        pitch: 15,
+        bearing: 0,
+        locale: {
+          "NavigationControl.ZoomIn": "Aproximar",
+          "NavigationControl.ZoomOut": "Afastar",
+          "NavigationControl.ResetBearing": "Orientar para o norte",
+        },
+      });
+    } catch {
+      setMapError("Não foi possível iniciar o mapa. Verifique o suporte a WebGL.");
+      return;
     }
-
-    if (typeof window !== "undefined") {
-      (window as unknown as { _paduaMap?: maplibregl.Map })._paduaMap = map;
-    }
-
-    // Interactive popup for neighborhood points
-    map.on("click", "neighborhood-points-circle", (e) => {
-      if (!e.features || e.features.length === 0) return;
-      const feature = e.features[0];
-      const coords = (
-        feature.geometry as GeoJSON.Point
-      ).coordinates.slice() as [number, number];
-      const props = feature.properties as {
-        name: string;
-        threshold: number;
-        severity: NeighborhoodSeverity;
-        severityLabel: string;
-        color: string;
-        margin: string;
-        disclaimer: string;
-      };
-
-      if (popupRef.current) {
-        popupRef.current.remove();
-      }
-
-      popupRef.current = new maplibregl.Popup({ offset: 12 })
-        .setLngLat(coords)
-        .setHTML(
-          `
-          <div style="font-family: inherit; min-width: 180px; padding: 4px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-              <strong style="font-size: 14px; color: #0f2f5f;">${props.name}</strong>
-              <span style="background: ${props.color}; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 999px;">
-                ${props.severityLabel}
-              </span>
-            </div>
-            <div style="font-size: 11px; color: #4b5563; margin-top: 6px;">
-              <span>${props.margin}</span> · <span>Cota referencial: ${props.threshold.toFixed(2).replace(".", ",")} m</span>
-            </div>
-            <div style="margin-top: 8px; font-size: 10px; line-height: 1.35; color: #6b7280; background: #f3f4f6; padding: 6px; border-radius: 6px; border: 1px solid #e5e7eb;">
-              ⚠️ ${props.disclaimer}
-            </div>
-          </div>
-        `,
-        )
-        .addTo(map);
-    });
-
-    map.on("mouseenter", "neighborhood-points-circle", () => {
-      map.getCanvas().style.cursor = "pointer";
-    });
-
-    map.on("mouseleave", "neighborhood-points-circle", () => {
-      map.getCanvas().style.cursor = "";
-    });
-
     mapRef.current = map;
-
-    return () => {
-      if (typeof window !== "undefined") {
-        delete (window as unknown as { _paduaMap?: maplibregl.Map })._paduaMap;
-      }
-      if (popupRef.current) {
-        popupRef.current.remove();
-        popupRef.current = null;
-      }
-      map.off("load", initLayers);
-      map.remove();
-      mapRef.current = null;
-    };
-  }, []);
-
-  // Update flood and neighborhood layer data when level or retryToken changes
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    const controller = new AbortController();
-    const levelCm = Math.round(level * 100);
-
-    const updateFlood = async () => {
-      onStatusChangeRef.current?.({ state: "loading", levelCm });
-
+    map.getCanvas().setAttribute("aria-label", "Mapa interativo de Santo Antônio de Pádua");
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-left");
+    const initLayers = () => {
       try {
-        if (!isMapReadyRef.current) {
-          await new Promise<void>((resolve) => {
-            map.once("load", () => resolve());
-          });
-        }
-        if (controller.signal.aborted) return;
-
-        ensureFloodLayers(map, level);
-        ensureNeighborhoodLayers(map, level);
-
-        const response = await fetch(`/api/sgb/flood?level=${levelCm}`, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Flood API returned ${response.status}`);
-        }
-
-        const payload = (await response.json()) as SgbFloodApiResponse;
-        if (controller.signal.aborted) return;
-
-        const source = map.getSource("flood-zone") as
-          | maplibregl.GeoJSONSource
-          | undefined;
-
-        source?.setData(
-          payload.geojson as Parameters<maplibregl.GeoJSONSource["setData"]>[0],
-        );
-
-        onStatusChangeRef.current?.({
-          state: "official",
-          levelCm: payload.levelCm,
-          layerName: payload.layerName,
-        });
-      } catch (error) {
-        if (controller.signal.aborted) return;
-
-        if (map.isStyleLoaded()) {
-          ensureFloodLayers(map, level);
-          const source = map.getSource("flood-zone") as
-            | maplibregl.GeoJSONSource
-            | undefined;
-          source?.setData(buildFallbackFloodData(level));
-        }
-
-        onStatusChangeRef.current?.({
-          state: "fallback",
-          levelCm,
-          message:
-            error instanceof Error
-              ? error.message
-              : "Falha ao consultar manchas oficiais do SGB",
-        });
+        ensureFloodLayers(map);
+        ensureNeighborhoodLayers(map);
+        setReadyMap(map);
+      } catch {
+        setMapError("Não foi possível inicializar as camadas. Tente recarregar o mapa.");
       }
     };
-
-    void updateFlood();
-
-    return () => {
-      controller.abort();
+    const onError = () => setMapError(
+      "Um recurso do mapa falhou. A base ou os rótulos podem estar incompletos; a consulta SGB é independente.",
+    );
+    const onClick = (event: maplibregl.MapLayerMouseEvent) => {
+      const feature = event.features?.[0];
+      if (!feature || feature.geometry.type !== "Point") return;
+      popupRef.current?.remove();
+      const content = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = String(feature.properties?.name ?? "Bairro de referência");
+      const description = document.createElement("p");
+      description.textContent = NEIGHBORHOOD_DISCLAIMER;
+      content.append(title, description);
+      popupRef.current = new maplibregl.Popup({ offset: 12 })
+        .setLngLat(feature.geometry.coordinates.slice(0, 2) as [number, number])
+        .setDOMContent(content).addTo(map);
     };
-  }, [level, retryToken]);
+    const onEnter = () => { map.getCanvas().style.cursor = "pointer"; };
+    const onLeave = () => { map.getCanvas().style.cursor = ""; };
+    map.on("error", onError);
+    map.on("style.load", initLayers);
+    map.on("click", "neighborhood-points-circle", onClick);
+    map.on("mouseenter", "neighborhood-points-circle", onEnter);
+    map.on("mouseleave", "neighborhood-points-circle", onLeave);
+    return () => {
+      popupRef.current?.remove();
+      popupRef.current = null;
+      map.off("error", onError);
+      map.off("style.load", initLayers);
+      map.off("click", "neighborhood-points-circle", onClick);
+      map.off("mouseenter", "neighborhood-points-circle", onEnter);
+      map.off("mouseleave", "neighborhood-points-circle", onLeave);
+      mapRef.current = null;
+      map.remove();
+    };
+  }, [mapRetry]);
 
-  // Toggle flood layer visibility
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!readyMap || readyMap !== mapRef.current) return;
+    const source = readyMap.getSource("flood-zone") as maplibregl.GeoJSONSource;
+    // MapLibre queues replacements in order; cleanup suppresses stale completion/errors.
+    let active = true;
+    void source.setData(geojson).then(() => {
+      if (active) setRenderedData(geojson);
+    }).catch(() => {
+      if (active) setMapError("Falha ao desenhar a camada SGB. Tente recarregar o mapa.");
+    });
+    return () => { active = false; };
+  }, [readyMap, geojson]);
 
-    const visibility = showFlood ? "visible" : "none";
-    if (map.getLayer("flood-zone-fill")) {
-      map.setLayoutProperty("flood-zone-fill", "visibility", visibility);
-    }
-    if (map.getLayer("flood-zone-line")) {
-      map.setLayoutProperty("flood-zone-line", "visibility", visibility);
-    }
-  }, [showFlood]);
-
-  // Toggle neighborhood layer visibility
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
-
-    const visibility = showNeighborhoods ? "visible" : "none";
-    if (map.getLayer("neighborhood-points-circle")) {
-      map.setLayoutProperty(
-        "neighborhood-points-circle",
-        "visibility",
-        visibility,
-      );
+    if (!readyMap || readyMap !== mapRef.current) return;
+    for (const id of ["flood-zone-fill", "flood-zone-line"]) {
+      readyMap.setLayoutProperty(id, "visibility", showFlood && renderedData === geojson ? "visible" : "none");
     }
-    if (map.getLayer("neighborhood-points-label")) {
-      map.setLayoutProperty(
-        "neighborhood-points-label",
-        "visibility",
-        visibility,
-      );
+    for (const id of ["neighborhood-points-circle", "neighborhood-points-label"]) {
+      readyMap.setLayoutProperty(id, "visibility", showNeighborhoods ? "visible" : "none");
     }
-  }, [showNeighborhoods]);
+    if (!showNeighborhoods) {
+      popupRef.current?.remove();
+      popupRef.current = null;
+      readyMap.getCanvas().style.cursor = "";
+    }
+  }, [readyMap, showFlood, showNeighborhoods, renderedData, geojson]);
 
   // Handler to recenter the map
   const handleRecenter = useCallback(() => {
@@ -438,7 +280,7 @@ export function FloodMap({
       zoom: 12.8,
       pitch: 15,
       bearing: 0,
-      essential: true,
+      essential: false,
     });
   }, []);
 
@@ -447,11 +289,18 @@ export function FloodMap({
       <div
         ref={containerRef}
         className="map-canvas"
-        aria-label="Mapa interativo de Santo Antônio de Pádua"
+        role="group"
+        aria-label="Visualização cartográfica"
       />
 
+      {mapError && <div className="map-resource-error" role="status">
+        <span>{mapError}</span>
+        <button type="button" onClick={() => { setReadyMap(null); setMapRetry((value) => value + 1); }}>
+          Recarregar mapa
+        </button>
+      </div>}
       {/* Map layer & navigation controls overlay */}
-      <div className="map-controls-panel" aria-label="Controles do mapa">
+      <div className="map-controls-panel" role="group" aria-label="Controles do mapa">
         <button
           type="button"
           className="map-ctrl-btn"

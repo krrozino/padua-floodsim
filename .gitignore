@@ -17,3 +17,8 @@ data/cache/**
 !data/raw/.gitkeep
 !data/interim/.gitkeep
 !data/cache/.gitkeep
+
+# Generated from the pinned maplibre-gl package by install/dev/build
+/public/maplibre/
+/test-results/
+/playwright-report/
