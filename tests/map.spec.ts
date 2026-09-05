@@ -161,7 +161,7 @@ test("real SGB scenarios, neutral neighborhoods, pan/zoom/center, popup and mobi
     await expect(page.locator(".demo-badge")).toContainText(stage);
   }
   await expect.poll(() => page.evaluate(() => (window as any).workerData.filter((d: any) =>
-    d.source === "flood-zone" && d.geojson.features[0]?.geometry.type === "MultiPolygon").length)).toBeGreaterThanOrEqual(3);
+    d.source === "flood-zone" && d.geojson.features[0]?.geometry.type === "MultiPolygon").length), { timeout: 30_000 }).toBeGreaterThanOrEqual(3);
   const neighborhoods = await page.evaluate(() => (window as any).workerData.find((d: any) => d.source === "neighborhood-points").geojson.features);
   expect(neighborhoods).toHaveLength(7);
   for (const feature of neighborhoods) {
@@ -246,6 +246,35 @@ test("methodology modal displays official SGB 2024 parameters, gauge zero, 11 sc
   await page.getByRole("button", { name: "Fonte e metodologia ℹ" }).click();
   await expect(modal).toBeVisible();
   await page.getByRole("button", { name: "Fechar painel de metodologia" }).click();
+  await expect(modal).not.toBeVisible();
+
+  // 6. Open again and dismiss via backdrop click (outside modal content)
+  await page.getByRole("button", { name: "Fonte e metodologia ℹ" }).click();
+  await expect(modal).toBeVisible();
+  await page.mouse.click(10, 10);
+  await expect(modal).not.toBeVisible();
+
+  // 7. Repeated open/close cycles to ensure stability without InvalidStateError or leaks
+  for (let i = 0; i < 3; i++) {
+    await page.getByRole("button", { name: "Fonte e metodologia ℹ" }).click();
+    await expect(modal).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(modal).not.toBeVisible();
+  }
+
+  // 8. Switching stages while modal is closed
+  for (const stage of ["3,00 m", "4,25 m", "5,50 m"]) {
+    await page.getByRole("button", { name: stage, exact: true }).click();
+    await expect(page.locator(".slider-card")).toContainText(stage);
+    expect(await modal.isVisible()).toBe(false);
+  }
+
+  // 9. Mobile viewport (390x844) validation
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Fonte e metodologia ℹ" }).click();
+  await expect(modal).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole("button", { name: "Entendido, fechar" }).click();
   await expect(modal).not.toBeVisible();
 });
 

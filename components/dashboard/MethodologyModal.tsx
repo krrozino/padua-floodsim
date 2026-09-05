@@ -3,11 +3,14 @@
 import { useEffect, useRef } from "react";
 
 export interface MethodologyModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
 }
 
-export function MethodologyModal({ isOpen, onClose }: MethodologyModalProps) {
+export function MethodologyModal({
+  isOpen,
+  onClose,
+}: Readonly<MethodologyModalProps>) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
 
   useEffect(() => {
@@ -16,28 +19,67 @@ export function MethodologyModal({ isOpen, onClose }: MethodologyModalProps) {
 
     if (isOpen) {
       if (!dialog.open) {
-        dialog.showModal();
+        try {
+          dialog.showModal();
+        } catch {
+          // Safeguard against unexpected DOM state transitions
+        }
       }
-    } else {
-      if (dialog.open) {
+    } else if (dialog.open) {
+      try {
         dialog.close();
+      } catch {
+        // Safeguard against unexpected DOM state transitions
       }
     }
   }, [isOpen]);
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    // If the user clicked directly on the dialog backdrop (outside modal content)
-    if (e.target === dialogRef.current) {
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const handleCancel = (e: Event) => {
+      // Native Escape triggers 'cancel' on modal dialogs.
+      // Prevent browser default closing so React state manages dismissal deterministically.
+      e.preventDefault();
       onClose();
-    }
-  };
+    };
+
+    const handleDialogClick = (e: MouseEvent) => {
+      // A click directly on the dialog backdrop (outside the inner content box)
+      if (e.target !== dialog) return;
+      const rect = dialog.getBoundingClientRect();
+      const isInside = (
+        rect.top <= e.clientY &&
+        e.clientY <= rect.top + rect.height &&
+        rect.left <= e.clientX &&
+        e.clientX <= rect.left + rect.width
+      );
+      if (!isInside) {
+        onClose();
+      }
+    };
+
+    dialog.addEventListener("cancel", handleCancel);
+    dialog.addEventListener("click", handleDialogClick);
+
+    return () => {
+      dialog.removeEventListener("cancel", handleCancel);
+      dialog.removeEventListener("click", handleDialogClick);
+      if (dialog.open) {
+        try {
+          dialog.close();
+        } catch {
+          // Safeguard on unmount
+        }
+      }
+    };
+  }, [onClose]);
 
   return (
     <dialog
       ref={dialogRef}
       className="methodology-modal"
-      onClose={onClose}
-      onClick={handleBackdropClick}
       aria-labelledby="methodology-modal-title"
     >
       <div className="methodology-modal-content">
