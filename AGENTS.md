@@ -20,6 +20,7 @@ Before changing code, read the relevant project docs:
 - `docs/FLOOD_MODEL.md`
 - `docs/ROADMAP.md`
 - `docs/AGENT_WORKFLOW.md`
+- `docs/DEVELOPMENT_WORKFLOW.md`
 - active execution plans under `docs/exec-plans/active/`
 
 Use this file as a map, not as the entire specification.
@@ -108,6 +109,33 @@ Prefer one agent/task per branch. Do not let Antigravity and Codex edit the same
 
 Open a PR into `main` only after the task is coherent and locally validated.
 
+## Autonomous operator rule
+
+When Antigravity or Codex has terminal access, routine repository operations belong to the agent, not to the user.
+
+The agent must handle its own:
+
+- `git status` / branch inspection;
+- fetch/pull and safe branch switching;
+- branch creation when the task requires it;
+- dependency installation;
+- validation commands;
+- commit and push;
+- PR creation/update when appropriate;
+- CI/Security/Sonar inspection when available.
+
+Do not ask the user to run routine Git commands merely because the agent can run them itself.
+
+At task start, assume the local clone may be stale. Synchronize safely before editing and never blindly reset or overwrite unexpected local-only work.
+
+At task end, leave meaningful work pushed to GitHub and report the remote SHA.
+
+Production release is also agent-operated when the current prompt explicitly authorizes publication. In that case the agent should merge the approved PR, synchronize `main`, trigger exactly one Vercel production deployment, verify the deployed commit and report the result.
+
+If a one-time browser/OAuth authentication step cannot be completed autonomously, ask the user only for that approval rather than handing them the terminal workflow.
+
+The full contract is defined in `docs/DEVELOPMENT_WORKFLOW.md`.
+
 ## Vercel policy
 
 Automatic Git deployments are disabled.
@@ -116,7 +144,9 @@ Do not manually deploy intermediate agent work.
 
 Expected flow:
 
-`feature branch -> tests/CI -> PR -> review -> merge main -> one manual Vercel production deploy`
+`feature branch -> tests/CI -> PR -> review -> merge main -> one deliberate Vercel production deploy`
+
+A production deploy is allowed only after explicit publication approval. Once approved, the agent should execute the deployment itself rather than asking the user for CLI commands.
 
 ## Validation
 
@@ -155,4 +185,6 @@ It should have, as applicable:
 - no misleading scientific claims;
 - documentation updated when assumptions or data sources change;
 - clear fallback/error behavior;
-- a focused PR ready for review.
+- a focused PR ready for review;
+- the latest meaningful commit pushed to GitHub;
+- production deployed only when explicitly authorized.
