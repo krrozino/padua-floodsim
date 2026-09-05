@@ -5,6 +5,7 @@ import {
   FloodMap,
   type FloodLayerStatus,
 } from "@/components/map/FloodMap";
+import { MethodologyModal } from "@/components/dashboard/MethodologyModal";
 import { REFERENCE_NEIGHBORHOODS } from "@/lib/map/neighborhoods";
 import { SGB_STAGE_ELEVATIONS, type SgbFloodLevelCm } from "@/lib/sgb/stages";
 
@@ -14,6 +15,7 @@ function formatMetersFromCm(levelCm: number) {
 
 export function FloodDashboard() {
   const [level, setLevel] = useState(4.25);
+  const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
   const [layerStatus, setLayerStatus] = useState<FloodLayerStatus>({
     state: "loading",
     levelCm: 425,
@@ -176,28 +178,42 @@ export function FloodDashboard() {
           retryToken={retryToken}
         />
 
-        {/* Status Badge */}
-        <div className={`demo-badge ${layerStatus.state}`}>
-          <span role="status" aria-live="polite">{mapBadge}</span>
-          {(layerStatus.state === "error" || layerStatus.state === "empty") && (
-            <button
-              type="button"
-              className="badge-retry-btn"
-              onClick={handleRetry}
-              title="Tentar carregar novamente a mancha do SGB"
-            >
-              Tentar novamente
-            </button>
-          )}
-        </div>
-
         {/* Bottom Slider & Scenario Controls */}
         <div className="slider-card">
+          {/* Integrated Scenario Status Bar */}
+          <div className="slider-status-bar">
+            <div className={`demo-badge ${layerStatus.state}`}>
+              <span className="classification-pill" title="Classificação de proveniência: dado oficial publicado">
+                official_reference
+              </span>
+              <span role="status" aria-live="polite">{mapBadge}</span>
+              {(layerStatus.state === "error" || layerStatus.state === "empty") && (
+                <button
+                  type="button"
+                  className="badge-retry-btn"
+                  onClick={handleRetry}
+                  title="Tentar carregar novamente a mancha do SGB"
+                >
+                  Tentar novamente
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              className="methodology-trigger-btn"
+              onClick={() => setIsMethodologyOpen(true)}
+              title="Ver detalhes de fonte, estação e metodologia oficial SGB (2024)"
+            >
+              Fonte e metodologia ℹ
+            </button>
+          </div>
+
           <div className="slider-title">
             <div>
               <strong>Cota do cenário oficial SGB</strong>
               <span>
-                Estação RHN 58790002 · Manchas oficiais de 25 em 25 cm (SGB 2024).
+                Serviço Geológico do Brasil — SGB · Estação RHN 58790002 · Manchas oficiais de 25 em 25 cm.
                 Não equivale à régua do INEA.
               </span>
             </div>
@@ -316,14 +332,24 @@ export function FloodDashboard() {
               </small>
             </div>
           </div>
-          <a
-            className="source-link"
-            href="https://rigeo.sgb.gov.br/handle/doc/25035"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Ver relatório técnico do SGB (2024) ↗
-          </a>
+          <div className="source-links-group">
+            <button
+              type="button"
+              className="methodology-link-btn"
+              onClick={() => setIsMethodologyOpen(true)}
+              title="Abrir detalhes completos de metodologia e parâmetros da modelagem SGB"
+            >
+              Metodologia e parâmetros completos ℹ
+            </button>
+            <a
+              className="source-link"
+              href="https://rigeo.sgb.gov.br/handle/doc/25035"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Ver relatório técnico do SGB (2024) ↗
+            </a>
+          </div>
         </article>
 
         {/* Neighborhood Reference Disclaimer Card */}
@@ -359,6 +385,12 @@ export function FloodDashboard() {
           </div>
         </article>
       </aside>
+
+      {/* Official SGB Methodology and Scientific Attribution Modal */}
+      <MethodologyModal
+        isOpen={isMethodologyOpen}
+        onClose={() => setIsMethodologyOpen(false)}
+      />
     </main>
   );
 }
