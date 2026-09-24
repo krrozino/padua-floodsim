@@ -2,7 +2,7 @@
 
 Este documento registra as fontes escolhidas/candidatas e os requisitos de rastreabilidade dos dados usados pelo Pádua FloodSim.
 
-Última revisão: **2026-09-02**.
+Última revisão: **2026-09-23**.
 
 ## Regras
 
@@ -18,9 +18,23 @@ Todo dataset incorporado ao projeto deve registrar, quando aplicável:
 - datum vertical, quando houver elevação ou nível d'água;
 - unidade de medida;
 - licença/condições de uso;
+- permissão de redistribuição, quando aplicável;
 - limitações conhecidas.
 
 Também deve ser classificado como `observed`, `official_reference`, `derived` ou `mock`.
+
+### Regra de proveniência e redistribuição
+
+A existência pública de um relatório, artigo, serviço GIS ou dataset não será tratada automaticamente como autorização irrestrita de redistribuição.
+
+Para cada fonte, o projeto deve distinguir:
+
+- **citar/consultar** a fonte;
+- **consumir** um serviço ou arquivo conforme seus termos;
+- **produzir derivados**;
+- **redistribuir** o arquivo original ou derivado.
+
+Quando a licença ou autorização não estiver clara, manter somente metadados, URL e instruções de aquisição até a situação ser resolvida. A fonte original deve ser preferida a cópias recebidas de terceiros.
 
 ---
 
@@ -34,7 +48,9 @@ Também deve ser classificado como `observed`, `official_reference`, `derived` o
 **Autores:** Marcos Figueiredo Salviano; Luna Gripp Simões Alves  
 **URL:** https://rigeo.sgb.gov.br/handle/doc/25035  
 **Relatório:** https://rigeo.sgb.gov.br/bitstream/doc/25035/1/relatorio_sa_padua.pdf  
-**Classificação:** `official_reference`
+**Classificação:** `official_reference`  
+**Uso no FloodSim:** referência técnica e cenários oficiais da V1  
+**Redistribuição:** verificar e registrar separadamente as condições do relatório e do serviço GIS antes de publicar cópias locais; atribuição ao SGB e autores é obrigatória na documentação do projeto.
 
 O estudo produziu manchas para **11 cotas locais**, entre **300 cm e 550 cm**, em intervalos de **25 cm**:
 
@@ -356,6 +372,20 @@ Informações úteis para pesquisa:
 - dados topográficos municipais/PAE citados como fonte de melhor ajuste em parte da pesquisa.
 
 Esta fonte serve como **referência metodológica**, não como substituição dos produtos oficiais do SGB/Prefeitura.
+
+### Regra para dados citados na dissertação
+
+A dissertação menciona bases topográficas obtidas junto à Prefeitura/PAE. Essas bases **não devem ser tratadas como propriedade do autor da dissertação nem copiadas para o FloodSim apenas por terem sido utilizadas na pesquisa**.
+
+Antes de usar exatamente esses arquivos:
+
+1. identificar o provedor/titular original;
+2. preferir solicitação ou download diretamente da Prefeitura/órgão responsável;
+3. registrar licença ou autorização;
+4. confirmar se derivados podem ser publicados;
+5. manter a dissertação como referência metodológica e bibliográfica, independentemente da aquisição dos dados.
+
+**Status de incorporação da base municipal/PAE citada na dissertação:** `not_acquired / authorization_pending`.
 
 ---
 
