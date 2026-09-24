@@ -2,6 +2,11 @@ cff-version: 1.2.0
 message: "Se utilizar o Pádua FloodSim em trabalho acadêmico, apresentação ou pesquisa, cite este software e a versão/commit utilizado."
 title: "Pádua FloodSim"
 type: software
+version: "0.1.0-academic"
+date-released: 2026-09-23
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.22928810"
 authors:
   - family-names: "Carrozino"
     given-names: "Sérgio Izaque Pinheiro"
