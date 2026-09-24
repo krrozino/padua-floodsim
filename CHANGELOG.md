@@ -2,7 +2,7 @@
 
 Todas as mudanças relevantes do Pádua FloodSim serão registradas neste arquivo.
 
-## [0.1.0-academic] — planejada para 2026-09-23
+## [0.1.0-academic] — 2026-09-23
 
 Primeira versão acadêmica de referência do Pádua FloodSim.
 
