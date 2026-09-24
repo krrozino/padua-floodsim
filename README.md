@@ -18,6 +18,15 @@ Se utilizar o software em trabalho acadêmico, apresentação ou pesquisa, consu
 - [Política de autoria e proveniência](docs/AUTHORSHIP_AND_DATA_PROVENANCE.md)
 - [Trabalhos relacionados e delimitação da contribuição](docs/RELATED_WORK.md)
 
+### DOI
+
+A primeira versão acadêmica arquivada no Zenodo possui DOI persistente:
+
+- **v0.1.0-academic:** https://doi.org/10.5281/zenodo.22928810
+- **Todas as versões / conceito:** https://doi.org/10.5281/zenodo.22928809
+
+Para reproduzir ou citar resultados desta versão, prefira o DOI específico da release.
+
 O projeto **não reivindica originalidade sobre a ideia genérica de estudar ou modelar enchentes em Santo Antônio de Pádua**. Sua contribuição pretendida está na integração computacional, rastreabilidade, experimentação metodológica e visualização interativa dos cenários.
 
 ## Visão do projeto
