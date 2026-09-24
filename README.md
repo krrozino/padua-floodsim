@@ -10,7 +10,7 @@ Plataforma experimental de simulação e monitoramento de enchentes para **Santo
 
 ## Autoria e citação
 
-O Pádua FloodSim é desenvolvido e mantido por **[@krrozino](https://github.com/krrozino)**. O histórico Git deste repositório registra a evolução técnica e acadêmica do projeto.
+O Pádua FloodSim é desenvolvido e mantido por **Sérgio Izaque Pinheiro Carrozino ([@krrozino](https://github.com/krrozino))**, ORCID **0009-0002-8421-2694**. O histórico Git deste repositório registra a evolução técnica e acadêmica do projeto.
 
 Se utilizar o software em trabalho acadêmico, apresentação ou pesquisa, consulte o arquivo [`CITATION.cff`](CITATION.cff) e informe também a versão, tag ou commit utilizado.
 
