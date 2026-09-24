@@ -3,7 +3,9 @@ message: "Se utilizar o Pádua FloodSim em trabalho acadêmico, apresentação o
 title: "Pádua FloodSim"
 type: software
 authors:
-  - alias: "krrozino"
+  - family-names: "Carrozino"
+    given-names: "Sérgio Izaque Pinheiro"
+    orcid: "https://orcid.org/0009-0002-8421-2694"
     website: "https://github.com/krrozino"
 repository-code: "https://github.com/krrozino/padua-floodsim"
 url: "https://padua-floodsim.vercel.app"
