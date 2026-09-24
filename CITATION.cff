@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "Se utilizar o Pádua FloodSim em trabalho acadêmico, apresentação ou pesquisa, cite este software e a versão/commit utilizado."
+title: "Pádua FloodSim"
+type: software
+authors:
+  - alias: "krrozino"
+    website: "https://github.com/krrozino"
+repository-code: "https://github.com/krrozino/padua-floodsim"
+url: "https://padua-floodsim.vercel.app"
+abstract: "Plataforma acadêmica e experimental para visualização e estudo de cenários de inundação do Rio Pomba em Santo Antônio de Pádua, RJ, com separação explícita entre dados oficiais, observados, processados e resultados simulados."
+keywords:
+  - inundação
+  - geoprocessamento
+  - Santo Antônio de Pádua
+  - Rio Pomba
+  - visualização geoespacial
+  - flood mapping
