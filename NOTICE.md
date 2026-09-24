@@ -4,9 +4,9 @@
 
 O **Pádua FloodSim** é um projeto acadêmico e experimental desenvolvido no repositório `krrozino/padua-floodsim`.
 
-A autoria técnica do software, da arquitetura da aplicação, da documentação própria e das implementações desenvolvidas neste repositório é atribuída ao mantenedor **@krrozino**, conforme o histórico verificável de commits, branches, pull requests e releases do GitHub.
+A autoria técnica do software, da arquitetura da aplicação, da documentação própria e das implementações desenvolvidas neste repositório é atribuída a **Sérgio Izaque Pinheiro Carrozino (@krrozino)**, conforme o histórico verificável de commits, branches, pull requests e releases do GitHub.
 
-A identificação acadêmica completa do autor e eventual ORCID podem ser acrescentados ao `CITATION.cff` quando definidos para publicação formal.
+**ORCID:** https://orcid.org/0009-0002-8421-2694
 
 ## Como citar
 
