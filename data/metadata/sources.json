@@ -1,10 +1,15 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-02",
+  "updatedAt": "2026-09-23",
   "areaOfInterest": {
     "name": "Santo Antônio de Pádua - trecho urbano coberto pelas manchas SGB",
     "crs": "EPSG:4674",
-    "bbox": [-42.20900097927306, -21.553311556725685, -42.14556243623249, -21.51245633890636],
+    "bbox": [
+      -42.20900097927306,
+      -21.553311556725685,
+      -42.14556243623249,
+      -21.51245633890636
+    ],
     "source": "sgb-flood-map-service-2024"
   },
   "sources": [
@@ -15,7 +20,8 @@
       "title": "Delimitação da mancha de inundação do rio Pomba na zona urbana de Santo Antônio de Pádua - RJ",
       "year": 2024,
       "url": "https://rigeo.sgb.gov.br/handle/doc/25035",
-      "notes": "Referência técnica principal; cotas 300-550 cm em passos de 25 cm; estação RHN 58790002."
+      "notes": "Referência técnica principal; cotas 300-550 cm em passos de 25 cm; estação RHN 58790002.",
+      "rightsStatus": "public-reference; attribution required; verify redistribution terms before bundling local copies"
     },
     {
       "id": "sgb-flood-map-service-2024",
@@ -24,8 +30,24 @@
       "title": "ArcGIS MapServer - mancha_santo_antonio_de_padua",
       "url": "https://geoportal.sgb.gov.br/server/rest/services/hidrologia/mancha_santo_antonio_de_padua/MapServer",
       "crs": "EPSG:4674",
-      "formats": ["JSON", "GeoJSON", "PBF"],
-      "levelsCm": [300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550],
+      "formats": [
+        "JSON",
+        "GeoJSON",
+        "PBF"
+      ],
+      "levelsCm": [
+        300,
+        325,
+        350,
+        375,
+        400,
+        425,
+        450,
+        475,
+        500,
+        525,
+        550
+      ],
       "verifiedLayerIds": {
         "300": 3,
         "325": 4,
@@ -45,7 +67,8 @@
         "script": "scripts/validate-sgb.mjs",
         "result": "all-levels-passed",
         "featureGeometry": "MultiPolygon"
-      }
+      },
+      "rightsStatus": "public GIS service; verify service/data redistribution terms before publishing mirrored copies"
     },
     {
       "id": "sgb-susceptibility-2015",
@@ -54,7 +77,8 @@
       "title": "Carta de suscetibilidade a movimentos gravitacionais de massa e inundação: Santo Antônio de Pádua - RJ",
       "year": 2015,
       "url": "https://rigeo.sgb.gov.br/handle/doc/15089",
-      "status": "metadata-known-files-not-yet-inventoried"
+      "status": "metadata-known-files-not-yet-inventoried",
+      "rightsStatus": "license.txt identified; full license review pending before incorporation"
     },
     {
       "id": "padua-neighborhoods-law-3864-2017",
@@ -80,7 +104,27 @@
       "title": "Alerta de Cheias - Santo Antônio de Pádua",
       "url": "https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.html",
       "status": "gauge-reference-crosswalk-pending",
-      "warning": "Não associar diretamente nível INEA às cotas SGB antes de validar a referência das réguas."
+      "warning": "Não associar diretamente nível INEA às cotas SGB antes de validar a referência das réguas.",
+      "rightsStatus": "observation source; integration/access conditions to be documented before automated production use"
+    }
+  ],
+  "provenancePolicy": {
+    "preferOriginalProvider": true,
+    "redistributeOnlyWhenAuthorized": true,
+    "unclearRightsAction": "store-metadata-and-acquisition-instructions-only",
+    "academicReferenceDoesNotImplyDatasetPermission": true
+  },
+  "relatedAcademicReferences": [
+    {
+      "id": "simiqueli-uff-dissertation-2024",
+      "type": "academic_reference",
+      "author": "Raul Simiqueli",
+      "institution": "Universidade Federal Fluminense",
+      "year": 2024,
+      "defenseDate": "2024-08-29",
+      "url": "https://mcct.uff.br/wp-content/uploads/sites/454/2025/04/Dissertacao-Raul-Simiqueli-defendeu-em-29-08-2024.pdf",
+      "use": "methodological reference and related work",
+      "datasetPolicy": "Do not copy municipal/PAE datasets cited by the dissertation without obtaining them from the original provider or documenting explicit authorization."
     }
   ]
 }
