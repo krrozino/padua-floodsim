@@ -8,6 +8,18 @@ separada. As funcionalidades científicas abaixo são planejadas. Veja a
 
 Plataforma experimental de simulação e monitoramento de enchentes para **Santo Antônio de Pádua - RJ**, com foco no **Rio Pomba**.
 
+## Autoria e citação
+
+O Pádua FloodSim é desenvolvido e mantido por **[@krrozino](https://github.com/krrozino)**. O histórico Git deste repositório registra a evolução técnica e acadêmica do projeto.
+
+Se utilizar o software em trabalho acadêmico, apresentação ou pesquisa, consulte o arquivo [`CITATION.cff`](CITATION.cff) e informe também a versão, tag ou commit utilizado.
+
+- [Aviso de autoria, citação e dados de terceiros](NOTICE.md)
+- [Política de autoria e proveniência](docs/AUTHORSHIP_AND_DATA_PROVENANCE.md)
+- [Trabalhos relacionados e delimitação da contribuição](docs/RELATED_WORK.md)
+
+O projeto **não reivindica originalidade sobre a ideia genérica de estudar ou modelar enchentes em Santo Antônio de Pádua**. Sua contribuição pretendida está na integração computacional, rastreabilidade, experimentação metodológica e visualização interativa dos cenários.
+
 ## Visão do projeto
 
 O Pádua FloodSim pretende transformar dados topográficos e hidrológicos em uma visualização simples e interativa dos impactos de uma cheia na área urbana.
@@ -135,6 +147,12 @@ O projeto deve priorizar dados públicos e oficiais, como os disponibilizados po
 - Prefeitura e Defesa Civil, quando houver dados públicos adequados.
 
 Cada integração deverá ser documentada, incluindo origem, datum/referencial, frequência de atualização, licença e limitações.
+
+Dados ou arquivos citados em artigos, dissertações e relatórios **não são automaticamente redistribuíveis**. Quando a fonte efetiva for uma Prefeitura, PAE, laboratório ou outro terceiro, o projeto deve preferir a aquisição diretamente do provedor original e registrar as condições de uso antes de incorporar o arquivo.
+
+## Licença do código
+
+Este repositório ainda **não possui uma licença open source selecionada**. Não presuma autorização genérica para copiar, modificar, redistribuir ou relicenciar o código apenas por o repositório ser público. Uma política de licença explícita será definida antes de eventual distribuição aberta formal.
 
 ## Segurança e responsabilidade
 
