@@ -10,7 +10,8 @@
     "postinstall": "node scripts/sync-maplibre.mjs",
     "predev": "node scripts/sync-maplibre.mjs",
     "prebuild": "node scripts/sync-maplibre.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "repo:sync-check": "node scripts/check-repo-sync.mjs"
   },
   "dependencies": {
     "maplibre-gl": "6.7.0",
