@@ -1,143 +1,296 @@
-# Arquitetura inicial
+# Arquitetura — Research Phase
 
-## Implementação V1 revisada (PR #17)
+## Estado atual
 
-`lib/sgb/useSgbFlood.ts` consulta o cenário independentemente do carregamento do
-mapa. `FloodMap` cria layers em `style.load` e aplica os dados e toggles atuais;
-nenhuma geometria substituta é produzida em loading/erro. Metadados de cota e
-altitude publicada ficam em `lib/sgb/stages.ts`.
+A V1 implementada continua centrada na visualização das manchas oficiais SGB.
 
-Os sete pontos de bairros são referências aproximadas neutras (mock), sem risco
-ou limites territoriais. Métricas de bairro, rua e área permanecem indisponíveis.
-As responsabilidades geoespaciais descritas abaixo são a evolução planejada,
-não cálculos já implementados. Veja [revisão do PR #17](PR17_REVIEW.md).
+`lib/sgb/useSgbFlood.ts` consulta o cenário e `FloodMap` renderiza as camadas no MapLibre. Metadados de cotas oficiais ficam em `lib/sgb/stages.ts`.
 
-## Objetivo
+Os pontos atuais de bairros são referências aproximadas/mock e não representam limites territoriais nem risco.
 
-Definir uma arquitetura simples para o MVP e permitir evolução posterior para processamento geoespacial e monitoramento hidrológico real.
+Esta documentação descreve também a **arquitetura alvo de pesquisa**, que ainda não está toda implementada.
 
 ## Princípios
 
-1. **Pré-processar antes de calcular no navegador.**
-2. Separar claramente dados observados, dados simulados e previsões.
-3. Manter a camada de visualização independente do processamento GIS.
-4. Preservar metadados de origem e referencial espacial dos datasets.
-5. Tratar toda saída como experimental até existir validação suficiente.
+1. Dados brutos são preservados.
+2. Proveniência acompanha cada transformação.
+3. Modelos temporais e espaciais são independentes.
+4. A interface não contém a lógica científica principal.
+5. Observação, processamento, referência, simulação e previsão são categorias distintas.
+6. Falha de dado nunca deve ser convertida silenciosamente em valor estimado.
+7. Modelos e parâmetros importantes são versionados.
+8. A tradução nível -> mapa só ocorre após compatibilidade de referência validada.
 
 ## Visão geral
 
 ```text
-Fontes oficiais / dados GIS
-          |
-          v
-    scripts/gis (Python)
- GeoPandas / Rasterio / GDAL
-          |
-          v
- Dados processados versionados
- GeoJSON / raster / tiles
-          |
-          v
-      Next.js
-          |
-   MapLibre GL JS
-          |
-          v
- Dashboard + simulação
+                  FONTES
+        +-----------+-----------+
+        |                       |
+        v                       v
+hidrologia/chuva           GIS/topografia
+        |                       |
+        +-----------+-----------+
+                    |
+                    v
+           aquisição + catálogo
+                    |
+                    v
+              normalização
+          temporal + espacial
+             /             \
+            v               v
+   modelo temporal      modelo espacial
+      forecast          flood scenario
+            \               /
+             \             /
+              v           v
+          tradução espaço-temporal
+                    |
+                    v
+           impacto/classificação
+                    |
+                    v
+               API/camada
+                    |
+                    v
+               Next.js
+                    |
+                    v
+              MapLibre/UI
 ```
 
-## Front-end
+## 1. Aquisição
 
 Responsável por:
 
-- renderização do mapa;
-- slider do nível da água;
-- seleção de cenários;
-- legenda de profundidade;
-- classificação visual dos bairros;
-- cards de métricas;
-- painel de monitoramento;
-- avisos sobre fonte e caráter experimental.
+- baixar/consultar fontes;
+- registrar URL e instituição;
+- registrar data de acesso;
+- registrar licença/condições;
+- checksum quando aplicável;
+- guardar identificadores de estação;
+- preservar arquivos brutos quando permitido.
 
-O front-end não deve assumir que um nível observado equivale automaticamente a uma mancha validada. Essa relação deverá ser produzida pela camada de processamento.
+Não contém lógica de previsão ou simulação.
 
-## Camada geoespacial
+## 2. Catálogo e proveniência
 
-Scripts Python deverão processar:
+Cada fonte deve informar, conforme aplicável:
 
-- Modelo Digital de Elevação;
-- área de interesse;
-- hidrografia;
+- `source_id`;
+- instituição;
+- estação/dataset;
+- unidade;
+- frequência;
+- timezone;
+- CRS;
+- datum vertical;
+- gauge zero;
+- resolução;
+- período;
+- licença;
+- qualidade/status.
+
+## 3. Normalização temporal
+
+Responsável por:
+
+- timezone;
+- unidades;
+- frequência/amostragem;
+- gaps;
+- flags de qualidade;
+- resampling quando metodologicamente permitido;
+- construção de defasagens/features.
+
+Saída é `processed`, nunca `forecast`.
+
+## 4. Normalização geoespacial
+
+Responsável por:
+
+- reprojeção;
+- recorte;
+- nodata;
+- resolução;
+- alinhamento de grades;
+- transformação de datum quando explicitamente suportada.
+
+## 5. Modelo temporal
+
+Implementação científica separada da aplicação.
+
+Entradas possíveis:
+
+- nível em Pádua;
+- histórico recente;
+- montante;
+- Barra do Braúna;
+- precipitação;
+- outras variáveis validadas.
+
+Saída conceitual:
+
+```text
+Forecast
+- issuedAt
+- targetTime
+- horizon
+- targetStation
+- predictedLevel
+- intervalLow
+- intervalHigh
+- modelVersion
+- inputSnapshotId
+- metricsReference
+```
+
+O módulo deve permitir backtesting offline e reprodução das previsões.
+
+## 6. Modelo espacial
+
+Duas famílias devem permanecer separadas.
+
+### Official reference
+
+Manchas publicadas pelo SGB.
+
+### Experimental simulation
+
+Modelo FloodSim de cota + conectividade e futuros experimentos.
+
+Saída deve incluir:
+
+- tipo da camada;
+- cota/referência;
+- fonte/modelo;
+- versão;
+- parâmetros;
+- geometria/raster;
+- métricas quando aplicável.
+
+## 7. Crosswalk hidrológico/geodésico
+
+Componente crítico entre nível e espaço.
+
+Responsável por responder:
+
+> Este valor de nível pode ser comparado ou transformado para a referência usada pela camada espacial?
+
+Não deve existir fallback implícito.
+
+Estados possíveis:
+
+- `validated`;
+- `provisional`;
+- `unsupported`;
+- `unknown`.
+
+Somente `validated` pode alimentar automaticamente cenário futuro de usuário.
+
+## 8. Tradução espaço-temporal
+
+Recebe:
+
+- observação ou forecast;
+- crosswalk validado;
+- catálogo de cenários.
+
+Produz uma representação espacial identificando claramente se é:
+
+- `official_reference`;
+- `derived`;
+- `simulated`.
+
+Se a previsão tiver faixa de incerteza, o tradutor deve preservar essa informação.
+
+## 9. Impacto espacial
+
+Responsável por:
+
+- interseção com bairros;
+- área/percentual territorial;
+- vias;
+- equipamentos públicos, quando confiáveis;
+- consulta de ponto.
+
+Não deve inferir pessoas, danos ou necessidade de evacuação sem dados/modelos próprios para isso.
+
+## 10. API/aplicação
+
+Responsável por contratos de leitura e apresentação.
+
+Não executa treinamento científico no request.
+
+Endpoints futuros devem expor metadados suficientes para a UI apresentar:
+
+- fonte;
+- timestamp;
+- estado stale;
+- categoria;
+- modelo/versão;
+- horizonte;
+- incerteza.
+
+## 11. Front-end
+
+Responsável por:
+
+- mapa;
+- linha temporal;
+- cards de nível/tendência;
+- visualização da chuva;
+- seleção de cenário;
 - bairros;
-- malha viária;
-- manchas oficiais, quando disponíveis;
-- cenários derivados do modelo experimental.
+- comparação;
+- histórico;
+- explicabilidade;
+- avisos de responsabilidade.
 
-Saídas esperadas:
+O front-end não decide cientificamente qual mancha corresponde a uma régua incompatível.
 
-```text
-data/
-├── neighborhoods.geojson
-├── river.geojson
-├── roads.geojson
-├── flood-zones/
-│   ├── 3.00.geojson
-│   ├── 3.25.geojson
-│   ├── 3.50.geojson
-│   └── ...
-└── metadata/
-```
+## Persistência
 
-## Monitoramento
+O MVP pode continuar sem backend persistente para a referência SGB.
 
-Dados observados do rio devem ser tratados separadamente dos cenários simulados.
+A Research Phase provavelmente exigirá persistência para:
 
-Modelo conceitual:
+- séries históricas;
+- snapshots de inputs;
+- previsões emitidas;
+- avaliações previsto x observado;
+- registros de experimentos.
 
-```text
-ObservedRiverLevel
-- source
-- stationId
-- timestamp
-- level
-- rainfall1h
-- rainfall24h
-- quality/status
-```
+Tecnologias candidatas só serão escolhidas quando houver necessidade concreta.
 
-O front-end poderá então mostrar:
+## Processamento pesado
 
-- nível atual;
-- tendência recente;
-- última atualização;
-- chuva acumulada;
-- limiares publicados pela fonte.
+GDAL/Rasterio, treinamento de modelos e backtesting não devem ocorrer em cada request da Vercel.
 
-## Backend
+Preferir jobs/pipelines offline ou serviço dedicado.
 
-O MVP pode funcionar sem backend persistente.
+## Observabilidade científica
 
-Quando necessário, considerar:
+Além de logs de software, registrar:
 
-- FastAPI para serviços geoespaciais e ingestão;
-- PostgreSQL + PostGIS para dados espaciais e históricos;
-- tarefas agendadas para ingestão de leituras.
+- versão do modelo;
+- versão dos dados;
+- atraso da fonte;
+- percentual de dados ausentes;
+- erros de ingestão;
+- métricas do modelo;
+- divergência previsto x observado.
 
-## Deploy
-
-### MVP
-
-- Vercel para o front-end;
-- dados estáticos servidos junto à aplicação ou via storage/CDN.
-
-### Evolução
-
-Processamento pesado deverá ocorrer fora da Vercel, evitando executar GDAL/Rasterio em cada requisição.
-
-## Responsabilidade
+## Segurança
 
 A interface deve diferenciar visualmente:
 
-- **Observado**: leitura proveniente de fonte oficial;
-- **Simulado**: cenário calculado pelo Pádua FloodSim;
-- **Projetado/previsto**: somente quando houver metodologia específica e explicitamente documentada.
+- observado;
+- previsto;
+- oficial;
+- derivado;
+- simulado;
+- mock.
+
+Nenhum módulo técnico transforma o projeto em serviço oficial de alerta.
