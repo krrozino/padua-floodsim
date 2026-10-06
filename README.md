@@ -1,16 +1,76 @@
 # Pádua FloodSim
 
-**Escopo atual da V1:** visualização da extensão oficial SGB por cota, de 3,00 a
-5,50 m. Não calcula profundidade, risco de bairro ou métricas de impacto. Bairros
-são sete pontos aproximados neutros; o painel INEA é mock/demo e usa referência
-separada. As funcionalidades científicas abaixo são planejadas. Veja a
-[revisão e validação do PR #17](docs/PR17_REVIEW.md).
+Plataforma acadêmica e experimental de **monitoramento, previsão de curto prazo e visualização espacial de cheias do Rio Pomba** em **Santo Antônio de Pádua - RJ**.
 
-Plataforma experimental de simulação e monitoramento de enchentes para **Santo Antônio de Pádua - RJ**, com foco no **Rio Pomba**.
+> **Importante:** o Pádua FloodSim não é um sistema oficial de alerta e não substitui INEA, Defesa Civil, Serviço Geológico do Brasil (SGB), ANA ou outras fontes oficiais.
+
+## Estado atual da aplicação
+
+A aplicação V1 disponível hoje usa como referência as **11 manchas oficiais do SGB entre 3,00 m e 5,50 m**, em intervalos de 25 cm.
+
+No estado atual:
+
+- a mancha exibida é `official_reference`, não uma previsão FloodSim;
+- não há profundidade real calculada a partir das manchas SGB;
+- não há previsão temporal validada;
+- os bairros ainda não possuem polígonos oficiais integrados;
+- o painel INEA existente é mock/demo e permanece separado das manchas;
+- a equivalência entre régua INEA e referência SGB **não está validada**.
+
+Veja [a revisão técnica da V1](docs/PR17_REVIEW.md).
+
+## Research Phase — desde 05/10/2026
+
+A fase científica formal organiza o projeto em três pilares:
+
+```text
+MONITORAR -> PREVER -> TRADUZIR EM IMPACTO ESPACIAL
+```
+
+### 1. Monitorar
+
+Exibir nível observado do Rio Pomba, tendência, horário, fonte e precipitação relevante, com rastreabilidade.
+
+A meta de produto é permitir que uma pessoa dentro ou fora de Pádua compreenda visualmente a condição do rio.
+
+### 2. Prever
+
+Desenvolver e avaliar modelos estatísticos de curto prazo para estimar a evolução do nível em Santo Antônio de Pádua.
+
+Horizontes iniciais candidatos:
+
+- +1 h;
+- +2 h;
+- +3 h;
+- +4 h;
+- +5 h;
+- +10 h.
+
+A pesquisa investigará dados locais, precipitação e informações de montante, incluindo a relação com **UHE Barra do Braúna Jusante (58788600)**.
+
+Nenhuma previsão deverá ser publicada como certeza ou alerta operacional.
+
+### 3. Traduzir em impacto espacial
+
+Após compatibilizar e validar as referências de nível, transformar observações/previsões em cenários espaciais e, futuramente, em métricas por bairro.
+
+## Documentos centrais
+
+- [Project Charter](docs/PROJECT_CHARTER.md) — missão, objetivos e escopo do produto/pesquisa;
+- [Metodologia acadêmica](docs/ACADEMIC_METHODOLOGY.md) — base científica;
+- [Modelo espacial de inundação](docs/FLOOD_MODEL.md) — referência SGB e modelo topográfico experimental;
+- [Modelo de previsão](docs/FORECAST_MODEL.md) — linha de pesquisa temporal;
+- [Fontes de dados](docs/DATA_SOURCES.md) — proveniência e compatibilidade;
+- [Arquitetura](docs/ARCHITECTURE.md) — separação entre aquisição, modelos e interface;
+- [Plano do artigo](docs/ARTICLE_PLAN_RBMET.md) — desenho científico em discussão;
+- [Roadmap](docs/ROADMAP.md) — ordem de execução;
+- [Governança](docs/GOVERNANCE.md) — GitHub, Notion, Chat e Work;
+- [Diário de pesquisa](docs/RESEARCH_LOG.md) — marcos consolidados;
+- [Uso de IA](docs/AI_USAGE.md) — transparência sobre apoio de IA.
 
 ## Autoria e citação
 
-O Pádua FloodSim é desenvolvido e mantido por **Sérgio Izaque Pinheiro Carrozino ([@krrozino](https://github.com/krrozino))**, ORCID **0009-0002-8421-2694**. O histórico Git deste repositório registra a evolução técnica e acadêmica do projeto.
+O Pádua FloodSim é desenvolvido e mantido por **Sérgio Izaque Pinheiro Carrozino ([@krrozino](https://github.com/krrozino))**, ORCID **0009-0002-8421-2694**.
 
 Se utilizar o software em trabalho acadêmico, apresentação ou pesquisa, consulte o arquivo [`CITATION.cff`](CITATION.cff) e informe também a versão, tag ou commit utilizado.
 
@@ -20,155 +80,98 @@ Se utilizar o software em trabalho acadêmico, apresentação ou pesquisa, consu
 
 ### DOI
 
-A primeira versão acadêmica arquivada no Zenodo possui DOI persistente:
-
 - **v0.1.0-academic:** https://doi.org/10.5281/zenodo.22928810
 - **Todas as versões / conceito:** https://doi.org/10.5281/zenodo.22928809
 
-Para reproduzir ou citar resultados desta versão, prefira o DOI específico da release.
+O projeto não reivindica originalidade sobre a ideia genérica de estudar ou mapear enchentes em Santo Antônio de Pádua. A contribuição pretendida está na integração reproduzível de monitoramento, previsão, processamento geoespacial, validação e visualização interativa.
 
-O projeto **não reivindica originalidade sobre a ideia genérica de estudar ou modelar enchentes em Santo Antônio de Pádua**. Sua contribuição pretendida está na integração computacional, rastreabilidade, experimentação metodológica e visualização interativa dos cenários.
+## Referência espacial oficial
 
-## Visão do projeto
+O SGB publicou em 2024 manchas vetoriais para Santo Antônio de Pádua correspondentes às cotas:
 
-O Pádua FloodSim pretende transformar dados topográficos e hidrológicos em uma visualização simples e interativa dos impactos de uma cheia na área urbana.
+```text
+300, 325, 350, 375, 400, 425, 450, 475, 500, 525 e 550 cm
+```
 
-O usuário poderá alterar manualmente o nível do Rio Pomba em uma régua e observar, no mapa, como diferentes cenários podem afetar bairros, ruas e áreas da cidade. O projeto também prevê uma área separada para acompanhamento do nível observado do rio em tempo real.
+Essas manchas são usadas como **referência oficial**, e não como resultado próprio do FloodSim.
 
-## Experiência principal
+O estudo SGB utiliza a estação Santo Antônio de Pádua II (`58790002`) e documenta seu referencial vertical. Consulte [`docs/FLOOD_MODEL.md`](docs/FLOOD_MODEL.md).
 
-- Mapa topográfico de Santo Antônio de Pádua.
-- Rio Pomba destacado no mapa.
-- Slider para alterar o nível simulado da água.
-- Mancha de inundação correspondente ao cenário selecionado.
-- Profundidade representada por diferentes tons de azul.
-- Nomes dos bairros com classificação visual de criticidade.
-- Painel com bairros, ruas e área potencialmente afetados.
-- Painel separado de monitoramento do nível observado do rio.
-- Tendência de subida, estabilidade ou descida.
-- Dados pluviométricos quando disponíveis.
+## Pesquisa de previsão
 
-## Escala visual inicial de profundidade
+Relatórios do SAH-Pomba já avaliaram previsões para Santo Antônio de Pádua utilizando dados de montante. Em relatório de 2021, o modelo preferencial usa **UHE Barra do Braúna Jusante (58788600)** com deslocamento de 8 horas.
 
-| Profundidade | Classificação |
-| --- | --- |
-| 0 a 0,20 m | Muito raso |
-| 0,20 a 0,50 m | Raso |
-| 0,50 a 1,00 m | Moderado |
-| 1,00 a 2,00 m | Profundo |
-| acima de 2,00 m | Muito profundo |
+O FloodSim não herda automaticamente o desempenho desse modelo. Essa relação será tratada como **benchmark e hipótese a ser reavaliada** com dados e protocolo próprios.
 
-A classificação de bairros será uma métrica própria do sistema e poderá variar de azul a vermelho conforme a severidade do cenário.
+Consulte [`docs/FORECAST_MODEL.md`](docs/FORECAST_MODEL.md).
 
-## MVP
+## Arquitetura conceitual
 
-A primeira versão deve provar o conceito com o menor número possível de dependências:
+```text
+fontes observadas / oficiais
+          |
+          v
+aquisição + catálogo de proveniência
+          |
+          v
+normalização temporal/geoespacial
+          |
+          +-------------------+
+          |                   |
+          v                   v
+modelo temporal        modelo espacial
+(previsão)             (cenários)
+          |                   |
+          +---------+---------+
+                    |
+                    v
+          tradução espaço-temporal
+                    |
+                    v
+             API / aplicação
+                    |
+                    v
+                MapLibre
+```
 
-1. dashboard responsivo;
-2. mapa navegável;
-3. bairros e Rio Pomba representados;
-4. slider de nível da água;
-5. cenários de inundação pré-processados;
-6. legenda de profundidade;
-7. painel de impacto;
-8. dados hidrológicos mockados;
-9. aviso claro de caráter experimental.
+Modelos científicos não devem ser acoplados aos componentes visuais.
 
-No MVP, o navegador não precisa calcular toda a hidráulica em tempo real. Os cenários podem ser gerados previamente e carregados conforme o nível selecionado.
+## Stack
 
-## Evolução planejada
+### Aplicação
 
-### V0 — Protótipo visual
-
-Interface, mapa e dados mockados para validar a experiência.
-
-### V1 — Simulação geográfica
-
-Integração com topografia real, bairros, ruas e manchas de inundação derivadas de dados geoespaciais.
-
-### V2 — Monitoramento
-
-Integração com fontes oficiais para exibir nível observado do Rio Pomba e pluviometria.
-
-### V3 — Histórico e alertas
-
-Histórico de leituras, comparação de eventos e mecanismos de aviso.
-
-### V4 — Modelagem avançada
-
-Estudo de modelos hidráulicos/hidrodinâmicos, previsão e visualização 3D.
-
-## Stack inicial
-
-### Front-end
-
-- Next.js
-- TypeScript
-- Tailwind CSS
-- MapLibre GL JS
+- Next.js;
+- TypeScript;
+- Tailwind CSS;
+- MapLibre GL JS.
 
 ### Processamento geoespacial
 
-- Python
-- GeoPandas
-- Rasterio
-- GDAL
+- Python;
+- GeoPandas;
+- Rasterio;
+- GDAL.
 
-### Formatos de dados
+### Pesquisa estatística
 
-- GeoJSON
-- GeoTIFF / raster de elevação
-- tiles quando necessário
+A stack será definida de acordo com o protocolo experimental. Bibliotecas e versões deverão ser registradas nas execuções reproduzíveis.
 
-### Infraestrutura futura
+## Tipos de informação
 
-- FastAPI ou Node.js
-- PostgreSQL + PostGIS
+O projeto diferencia:
 
-## Estrutura planejada
+- `observed`;
+- `processed`;
+- `official_reference`;
+- `derived`;
+- `simulated`;
+- `forecast`;
+- `mock`.
 
-```text
-padua-floodsim/
-├── app/
-├── components/
-│   ├── dashboard/
-│   ├── map/
-│   ├── monitoring/
-│   └── simulation/
-├── data/
-│   ├── flood-zones/
-│   └── mock/
-├── docs/
-├── lib/
-├── public/
-└── scripts/
-    └── gis/
-```
+A interface deve deixar claro ao usuário qual categoria está sendo apresentada.
 
-## Fontes de dados candidatas
+## Responsabilidade
 
-O projeto deve priorizar dados públicos e oficiais, como os disponibilizados por:
+O objetivo social inclui melhorar a compreensão antecipada de cenários de cheia. Entretanto, o sistema não deve emitir ordens como evacuar, retirar móveis ou considerar uma residência segura.
 
-- INEA;
-- Serviço Geológico do Brasil (SGB);
-- ANA;
-- IBGE;
-- Prefeitura e Defesa Civil, quando houver dados públicos adequados.
-
-Cada integração deverá ser documentada, incluindo origem, datum/referencial, frequência de atualização, licença e limitações.
-
-Dados ou arquivos citados em artigos, dissertações e relatórios **não são automaticamente redistribuíveis**. Quando a fonte efetiva for uma Prefeitura, PAE, laboratório ou outro terceiro, o projeto deve preferir a aquisição diretamente do provedor original e registrar as condições de uso antes de incorporar o arquivo.
-
-## Licença do código
-
-Este repositório ainda **não possui uma licença open source selecionada**. Não presuma autorização genérica para copiar, modificar, redistribuir ou relicenciar o código apenas por o repositório ser público. Uma política de licença explícita será definida antes de eventual distribuição aberta formal.
-
-## Segurança e responsabilidade
-
-O Pádua FloodSim é inicialmente uma ferramenta **experimental, educacional e de pesquisa**. Simulações e estimativas não substituem avisos oficiais de órgãos como INEA e Defesa Civil.
-
-Até que os modelos sejam devidamente calibrados e validados, nenhuma visualização deve ser apresentada como previsão oficial ou garantia de segurança.
-
-## Status
-
-🟢 V1 inicial em desenvolvimento, com manchas oficiais do SGB integradas e primeiro deploy na Vercel em preparação.
+Resultados experimentais devem apresentar fonte, horário, versão, incerteza e direcionamento para autoridades oficiais quando houver decisões de emergência.
