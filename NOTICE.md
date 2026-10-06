@@ -27,10 +27,12 @@ Os dados, mapas, relatórios, APIs, serviços GIS, imagens, bases cartográficas
 O Pádua FloodSim deve sempre distinguir:
 
 - dado observado;
+- dado processado;
 - referência oficial;
-- dado processado/derivado;
-- dado mock;
-- resultado simulado.
+- dado derivado;
+- resultado simulado;
+- previsão estatística;
+- dado mock.
 
 A presença de uma fonte na documentação não significa que seus arquivos possam ser redistribuídos pelo projeto.
 
@@ -48,4 +50,4 @@ Quando a origem real for uma Prefeitura, órgão público, empresa, laboratório
 
 ## Natureza do projeto
 
-O Pádua FloodSim não é sistema oficial de alerta, previsão ou evacuação. Resultados experimentais não substituem INEA, Defesa Civil, Serviço Geológico do Brasil ou outras autoridades competentes.
+O Pádua FloodSim não é sistema oficial de alerta ou evacuação. O projeto pode pesquisar e apresentar **previsões estatísticas experimentais**, mas elas não constituem previsão oficial e não substituem INEA, Defesa Civil, Serviço Geológico do Brasil, ANA ou outras autoridades competentes. O sistema não deve emitir instruções operacionais de evacuação, permanência ou retirada de bens.
