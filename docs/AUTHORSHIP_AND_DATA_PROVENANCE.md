@@ -1,6 +1,6 @@
 # Política de autoria, atribuição e proveniência
 
-Última revisão: **2026-09-23**.
+Última revisão: **2026-10-05**.
 
 ## Objetivo
 
@@ -31,7 +31,7 @@ Todo dataset ou artefato derivado incorporado ao projeto deve registrar, quando 
 - URL de origem;
 - data de acesso;
 - versão/data da fonte;
-- classificação: `observed`, `official_reference`, `derived` ou `mock`;
+- classificação: `observed`, `processed`, `official_reference`, `derived`, `simulated`, `forecast` ou `mock`;
 - CRS horizontal;
 - datum vertical;
 - unidade;
@@ -40,6 +40,8 @@ Todo dataset ou artefato derivado incorporado ao projeto deve registrar, quando 
 - permissão de redistribuição;
 - checksum do arquivo bruto, quando armazenado localmente;
 - script/commit que produziu o derivado;
+- versão do modelo e horizonte, quando for `forecast`;
+- snapshot/período dos inputs, quando aplicável;
 - limitações conhecidas.
 
 ## Regra de aquisição
@@ -77,6 +79,7 @@ Ao apresentar resultados:
 - não chamar mancha oficial do SGB de "simulação do FloodSim";
 - não apresentar dado de estação como resultado próprio;
 - identificar resultados calculados pelo projeto como simulados/derivados;
+- identificar previsões como experimentais, com horizonte, versão e incerteza/limitação;
 - citar trabalhos acadêmicos utilizados na metodologia;
 - informar versão/tag/commit do FloodSim usado para gerar o resultado.
 
@@ -90,4 +93,5 @@ Antes de criar uma release destinada a apresentação, evento ou publicação, c
 4. nenhum dataset de redistribuição incerta incluído;
 5. versão/tag definida;
 6. documentação de limitações atualizada;
-7. separação entre oficial, observado e simulado preservada.
+7. separação entre observado, processado, oficial, derivado, simulado, forecast e mock preservada;
+8. previsões utilizadas na publicação apontam para protocolo, versão e avaliação reproduzível.

@@ -4,125 +4,206 @@ This repository is the source of truth for the Pádua FloodSim academic project.
 
 ## Mission
 
-Build an experimental flood simulation and visualization system for Santo Antônio de Pádua, RJ, focused on the Rio Pomba.
+Build an experimental and reproducible platform to **monitor, forecast and spatially interpret** Rio Pomba flood conditions in Santo Antônio de Pádua, RJ.
 
-The project is academic and experimental. Never present simulated outputs as official warnings or as substitutes for INEA, Defesa Civil, SGB or other official sources.
+Core identity:
+
+```text
+MONITOR -> FORECAST -> TRANSLATE TO SPATIAL IMPACT
+```
+
+The project is academic and experimental. Never present outputs as official warnings or as substitutes for INEA, Defesa Civil, SGB, ANA or other official sources.
 
 ## Read first
 
-Before changing code, read the relevant project docs:
+Before changing code or scientific behavior, read the relevant docs:
 
 - `README.md`
+- `docs/PROJECT_CHARTER.md` — mission, users and product/research scope
 - `docs/ACADEMIC_METHODOLOGY.md` — canonical scientific baseline
-- `docs/ACADEMIC_INTEGRATION_NOTE.md`
-- `docs/ARCHITECTURE.md`
+- `docs/FORECAST_MODEL.md` — temporal prediction research rules
+- `docs/FLOOD_MODEL.md` — spatial model and SGB reference rules
 - `docs/DATA_SOURCES.md`
-- `docs/FLOOD_MODEL.md`
+- `docs/ARCHITECTURE.md`
 - `docs/ROADMAP.md`
+- `docs/ARTICLE_PLAN_RBMET.md`
+- `docs/VALIDATION_PROTOCOL.md`
+- `docs/experiments/README.md`
+- `docs/GOVERNANCE.md`
+- `docs/AI_USAGE.md`
 - `docs/AGENT_WORKFLOW.md`
 - active execution plans under `docs/exec-plans/active/`
 
 Use this file as a map, not as the entire specification.
 
-If implementation convenience conflicts with `docs/ACADEMIC_METHODOLOGY.md`, preserve the scientific constraint and document the engineering tradeoff instead of silently weakening the methodology.
-
 ## Scientific baseline
 
-`docs/ACADEMIC_METHODOLOGY.md` defines the current academic scope, allowed claims, experimental roadmap and validation strategy.
+The project now has two coupled research tracks:
 
-The custom scientific model is intentionally simple at first: elevation threshold plus approximate hydraulic connectivity to the Rio Pomba, with reproducible inputs and historical validation. Do not introduce hydrodynamic complexity unless the project has data and a clear experimental need for it.
+1. **temporal:** observations and short-term statistical forecasts;
+2. **spatial:** official SGB scenarios plus a custom DEM/connectivity research model.
 
-Official SGB flood polygons currently used in the web application are reference scenarios. They are not the same artifact as future custom DEM-derived FloodSim simulations and must remain distinguishable in code, metadata and UI wording.
+They only become an integrated space-time product when gauge/reference compatibility has been demonstrated.
 
-## Scientific constraints
+### Spatial model
+
+Start simple: elevation threshold plus approximate hydraulic connectivity to the Rio Pomba, with reproducible inputs and quantitative validation.
+
+Do not implement `DEM <= water level => flooded` as the final scientific model. It may be implemented only as an explicit baseline.
+
+Official SGB polygons are `official_reference`, never custom FloodSim simulations.
+
+### Forecast model
+
+Forecasting must progress from simple baselines to more complex models.
+
+At minimum compare against:
+
+- persistence;
+- recent trend;
+- local-history model;
+- upstream-enhanced model when data permits.
+
+Barra do Braúna is a research candidate because prior SAH-Pomba work used UHE Barra do Braúna Jusante (`58788600`) for Santo Antônio de Pádua. Do not treat prior reported performance as guaranteed FloodSim performance.
+
+No temporal model may power public future scenarios until it has:
+
+- reproducible data;
+- temporal/event holdout validation;
+- per-horizon metrics;
+- missing-data behavior;
+- uncertainty or an explicit uncertainty limitation;
+- experimental labeling.
+
+## Information classes
 
 Always distinguish:
 
-- observed data;
-- processed data;
-- inferred data;
-- simulated results.
+- `observed`;
+- `processed`;
+- `official_reference`;
+- `derived`;
+- `simulated`;
+- `forecast`;
+- `mock`.
 
-Do not mix river-stage references, gauge zeros, vertical datums or CRS values without an explicit documented transformation.
+Never silently convert one category into another.
 
-The INEA scale and the SGB stage reference are not assumed equivalent.
+## Gauge and datum constraints
 
-Do not implement the naive rule `DEM <= water level => flooded` as a scientific flood model. A custom model must at minimum consider hydraulic connectivity to the river and topographic barriers.
+Do not mix:
 
-Prefer simple, reproducible and validatable methods before adding hydrodynamic complexity.
+- station identifiers;
+- gauge zeros;
+- vertical datums;
+- stage values;
+- DEM elevations;
+- CRS values;
 
-Official SGB flood polygons are valid reference scenarios and should be kept separate from future custom DEM-derived simulations.
+without explicit documented transformation.
 
-The project must not claim street-level real depth, water velocity, damage, casualties, evacuation need or flood prediction without data and a model that support those claims.
+The INEA scale and the SGB/RHN stage reference are **not assumed equivalent**.
+
+A forecast level cannot trigger a spatial scenario until the relevant crosswalk has been validated.
+
+## Claims and safety
+
+The project must not claim, without adequate model/data/validation:
+
+- exact street-level water depth;
+- water velocity;
+- damage or casualties;
+- evacuation need;
+- that a property is safe;
+- that a forecast is an official warning.
+
+The application may support situational understanding and preparation, but must direct emergency decisions to official authorities.
 
 ## Architecture boundaries
 
 Keep these concerns separate:
 
 1. data acquisition;
-2. normalization and CRS/datum handling;
-3. terrain processing;
-4. flood simulation;
-5. impact classification;
-6. application/API;
-7. visualization.
+2. provenance/catalog;
+3. temporal/geospatial normalization;
+4. terrain/hydrography processing;
+5. spatial flood simulation;
+6. temporal forecasting;
+7. space-time translation;
+8. impact classification;
+9. API/application;
+10. visualization.
 
-Do not couple the flood algorithm to MapLibre components.
+Do not couple scientific algorithms to MapLibre components.
 
-Geospatial processing belongs in reusable modules/scripts, not inside UI components.
-
-Important parameters must be explicit and reproducible.
+Important parameters, model versions and data versions must be explicit and reproducible.
 
 ## Frontend rules
 
 - Stack: Next.js + TypeScript + MapLibre.
-- Geographic objects and labels must be georeferenced map layers/sources when they represent real locations.
-- Do not fake neighborhood movement with absolutely positioned HTML labels.
-- Buttons that look interactive must have real behavior, routing, state changes, or be visibly disabled with an explanation.
-- Mock hydrological values must be clearly identified as mock/demo data.
-- Official SGB flood extent must not be labeled as flood depth unless depth was actually computed.
-- A scenario stage must not be presented as an observed INEA level unless a validated translation has been implemented.
+- Real geographic objects must be georeferenced map sources/layers.
+- Do not fake neighborhood movement with absolutely positioned labels.
+- Controls must have real behavior or be clearly disabled.
+- Mock hydrological values must be labeled mock/demo.
+- SGB flood extent must not be labeled as flood depth.
+- Observed INEA stage must not be presented as an SGB scenario without a validated transformation.
+- Forecasts must show horizon, timestamp, source/model version and uncertainty context.
 
 ## Data rules
 
-- Record source provenance and retrieval date.
-- Preserve original source data when practical; keep derived assets separate.
-- Do not commit very large raw rasters/ZIPs when a reproducible download/process script is preferable.
-- Inspect CRS, datum, units and resolution before combining datasets.
-- `docs/DATA_SOURCES.md` is the evolving technical inventory of sources actually verified for Pádua.
-- The initial source list inside `docs/ACADEMIC_METHODOLOGY.md` is historical planning context, not a replacement for the verified inventory.
+- Record provenance and retrieval date.
+- Record station IDs and measurement units.
+- Preserve raw data when practical.
+- Keep derived outputs separate.
+- Inspect CRS/datum/units/resolution before combining geospatial sources.
+- Audit temporal frequency, gaps and quality flags before forecasting.
+- `docs/DATA_SOURCES.md` is the evolving verified inventory.
+
+## Research governance
+
+- Notion is for meetings, ideas, reading notes and research management.
+- GitHub is the consolidated scientific/technical source of truth.
+- Material scientific decisions should be versioned.
+- Experiments must be reproducible.
+- The research log must be updated at important milestones.
+
+If a task requires broad multi-source investigation, literature synthesis, dataset analysis or many-step research, flag it as a candidate for **Work** before spending Work credits.
 
 ## Git workflow
 
 Do not develop directly on `main`.
 
-Use focused branches such as:
+Use focused branches:
 
 - `feat/...`
 - `fix/...`
 - `geo/...`
+- `forecast/...`
+- `research/...`
 - `docs/...`
 - `chore/...`
 
-Prefer one agent/task per branch. Do not let Antigravity and Codex edit the same worktree concurrently.
+Prefer one agent/task per branch.
 
-Open a PR into `main` only after the task is coherent and locally validated.
+Expected flow:
+
+```text
+task -> branch -> checks -> PR -> review -> merge
+```
 
 ## Vercel policy
 
 Automatic Git deployments are disabled.
 
-Do not manually deploy intermediate agent work.
+Do not deploy intermediate research/documentation branches.
 
-Expected flow:
-
-`feature branch -> tests/CI -> PR -> review -> merge main -> one manual Vercel production deploy`
+Production deployment happens only after coherent changes are merged and reviewed.
 
 ## Validation
 
-Before declaring implementation work complete, run the checks relevant to the change.
+### Web application
 
-For the web app, normally run:
+Normally run:
 
 ```bash
 npm install
@@ -130,19 +211,37 @@ npm run typecheck
 npm run build
 ```
 
-Run additional tests or smoke checks when the task touches SGB integration, geospatial processing or browser behavior.
+Interactive/map work must also be checked in a browser.
 
-A successful build alone does not prove the map works. Interactive/map work should also be checked in a browser.
+### Spatial research
 
-For future scientific model work, validation must follow the methodology baseline: reproducible inputs, comparison against an independent reference, comparison with the naive below-cota baseline, quantitative metrics and sensitivity analysis where applicable.
+Use:
+
+- reproducible inputs;
+- SGB/reference comparison;
+- naive below-cota baseline;
+- IoU/precision/recall/F1 when applicable;
+- sensitivity analysis.
+
+### Forecast research
+
+Use:
+
+- temporal/event holdouts;
+- persistence/trend baselines;
+- MAE/RMSE/bias;
+- KGE/correlation when justified;
+- metrics per horizon;
+- event-level error analysis;
+- uncertainty evaluation.
 
 ## Agent roles
 
-Antigravity is the primary implementation agent for UI, browser interaction, MapLibre behavior and multi-file feature work.
+Antigravity is preferred for UI, browser interaction, MapLibre and multi-file interface work.
 
-Codex is the preferred second-pass engineer for code review, structural refactors, TypeScript/API correctness, tests and regression analysis.
+Codex is preferred for second-pass engineering, structural refactors, tests, scientific pipeline review and regression analysis.
 
-Either agent may implement a task when appropriate, but avoid overlapping ownership on the same files at the same time.
+Avoid overlapping edits to the same worktree.
 
 ## Definition of done
 
@@ -151,8 +250,10 @@ A task is not done merely because code was generated.
 It should have, as applicable:
 
 - working behavior;
-- tests/checks passing;
-- no misleading scientific claims;
-- documentation updated when assumptions or data sources change;
-- clear fallback/error behavior;
-- a focused PR ready for review.
+- checks passing;
+- reproducible scientific behavior;
+- no misleading claims;
+- documentation updated;
+- source/provenance captured;
+- explicit error/fallback state;
+- focused PR ready for review.

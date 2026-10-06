@@ -1,47 +1,75 @@
-# Dados geoespaciais
+# Dados do Pádua FloodSim
 
-O repositório não deve armazenar datasets brutos grandes sem necessidade.
+O repositório não deve armazenar datasets brutos grandes sem necessidade ou sem permissão.
 
-## Estrutura
+## Estrutura alvo
 
 ```text
 data/
-  raw/          # downloads originais; ignorado pelo Git
-  interim/      # recortes/reprojeções; ignorado pelo Git
-  cache/        # respostas temporárias de APIs; ignorado pelo Git
-  metadata/     # manifests e rastreabilidade; versionado
-  processed/    # artefatos pequenos necessários ao front; versionado com critério
+  raw/          # downloads originais; normalmente ignorado pelo Git
+  interim/      # recortes, reprojeções, resampling; normalmente ignorado
+  cache/        # respostas temporárias; ignorado
+  processed/    # datasets normalizados
+  metadata/     # manifests e proveniência; versionado
+  mock/         # dados fictícios de UI
 ```
+
+Dados temporais grandes poderão futuramente usar storage/banco apropriado. Git não deve virar banco de séries históricas.
+
+## Categorias
+
+- `observed` — medição recebida;
+- `processed` — observação/referência normalizada;
+- `official_reference` — produto oficial;
+- `derived` — transformação determinística;
+- `simulated` — saída do modelo espacial;
+- `forecast` — estimativa temporal futura;
+- `mock` — dado fictício.
 
 ## Regras
 
-1. Nunca editar um arquivo em `raw/`.
-2. Todo dado em `processed/` deve indicar a fonte de origem e o script que o produziu.
-3. Geometrias oficiais devem ser identificadas como `official_reference`.
-4. Resultados próprios devem ser identificados como `derived`.
-5. Dados fictícios devem permanecer em `data/mock` e ser identificados como `mock`.
-6. Antes de redistribuir dados de terceiros, conferir licença, atribuição e permissão específica de redistribuição.
-7. Preferir sempre a fonte original à cópia recebida por pesquisador, artigo, dissertação ou terceiro.
-8. Quando a licença não estiver clara, versionar apenas metadados e instruções de aquisição.
-9. Todo derivado deve apontar para a fonte original e para o script/commit que o produziu.
+1. Nunca editar silenciosamente um arquivo em `raw/`.
+2. Todo `processed` deve apontar para origem e script/commit.
+3. Registrar checksum quando aplicável.
+4. Registrar timestamp/timezone nas séries temporais.
+5. Registrar unidade, estação e identificador.
+6. Registrar CRS/datum para dados espaciais.
+7. Não misturar gauges/zeros/datum sem transformação explícita.
+8. Não redistribuir dados de terceiros sem revisar condições.
+9. Preferir fonte original a cópias de terceiros.
+10. Quando licença estiver incerta, versionar metadados/instruções, não o arquivo.
+11. Forecasts devem apontar para versão do modelo e snapshot/versão dos inputs.
+12. Resultados de experimentos devem ser regeneráveis.
 
-## Primeira fonte oficial priorizada
+## Fontes prioritárias atuais
 
-Serviço de manchas de inundação do Serviço Geológico do Brasil:
+### Espaço
 
-`https://geoportal.sgb.gov.br/server/rest/services/hidrologia/mancha_santo_antonio_de_padua/MapServer`
+- manchas oficiais SGB 2024;
+- pacote cartográfico/MDE SGB 2015;
+- Prefeitura para bairros;
+- IBGE;
+- OSM apenas como complemento rastreável.
 
-A V1 deverá testar o consumo das camadas oficiais por cota antes de manter cópias locais.
+### Tempo
 
+- INEA, após auditoria da estação/referência;
+- RHN/SGB/ANA para Santo Antônio de Pádua II (`58790002`);
+- UHE Barra do Braúna Jusante (`58788600`) como fonte candidata de montante;
+- pluviômetros relevantes a identificar.
 
-## Bases acadêmicas ou institucionais obtidas indiretamente
+## Manifests
 
-A citação de um dataset em dissertação ou artigo não autoriza automaticamente sua cópia ou redistribuição.
+Cada dataset incorporado à pesquisa deve possuir metadados suficientes para reconstruir:
 
-Em especial, bases municipais/PAE mencionadas em trabalhos acadêmicos sobre Santo Antônio de Pádua só devem ser incorporadas após identificação do provedor original e confirmação das condições de uso.
+```text
+origem -> aquisição -> normalização -> uso -> experimento/modelo
+```
 
 Consulte:
 
-- `docs/AUTHORSHIP_AND_DATA_PROVENANCE.md`
 - `docs/DATA_SOURCES.md`
+- `docs/GOVERNANCE.md`
+- `docs/VALIDATION_PROTOCOL.md`
+- `docs/AUTHORSHIP_AND_DATA_PROVENANCE.md`
 - `NOTICE.md`
