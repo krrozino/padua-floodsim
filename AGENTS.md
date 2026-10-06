@@ -27,6 +27,8 @@ Before changing code or scientific behavior, read the relevant docs:
 - `docs/ARCHITECTURE.md`
 - `docs/ROADMAP.md`
 - `docs/ARTICLE_PLAN_RBMET.md`
+- `docs/VALIDATION_PROTOCOL.md`
+- `docs/experiments/README.md`
 - `docs/GOVERNANCE.md`
 - `docs/AI_USAGE.md`
 - `docs/AGENT_WORKFLOW.md`
