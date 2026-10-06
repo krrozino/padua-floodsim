@@ -374,3 +374,48 @@ A aplicação deve sempre diferenciar:
 - **Previsão:** somente quando existir modelo temporal validado.
 
 Um nível observado não deve ser chamado de previsão de inundação sem essa distinção.
+
+---
+
+## Integração com previsão temporal — Research Phase
+
+O modelo espacial e o modelo temporal são componentes independentes.
+
+Uma previsão `H_Padua(t+h)` **não** deve acionar diretamente uma mancha enquanto a referência da previsão não estiver compatibilizada com a referência espacial.
+
+Fluxo autorizado somente após validação:
+
+```text
+forecast de nível
+      |
+      v
+estação/referência conhecida
+      |
+      v
+crosswalk validado
+      |
+      v
+cota espacial
+      |
+      +--> mancha oficial SGB compatível
+      |
+      +--> cenário experimental próprio
+```
+
+A interface deve informar qual caminho foi usado.
+
+### Linha temporal planejada
+
+A experiência futura poderá oferecer `Agora`, `+1h`, `+2h`, `+3h`, `+4h`, `+5h` e `+10h`, mas apenas horizontes com validação suficiente deverão receber cenário espacial futuro.
+
+### Incerteza espacial
+
+Se a previsão temporal possuir intervalo de incerteza, a tradução espacial deve preservar essa incerteza. Uma opção futura é representar:
+
+- cenário inferior;
+- cenário central;
+- cenário superior.
+
+Não reduzir um intervalo temporal a uma única borda de inundação visualmente exata sem justificativa.
+
+Consulte `FORECAST_MODEL.md` para a metodologia temporal.
