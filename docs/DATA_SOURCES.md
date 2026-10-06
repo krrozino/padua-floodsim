@@ -2,7 +2,7 @@
 
 Este documento registra as fontes escolhidas/candidatas e os requisitos de rastreabilidade dos dados usados pelo Pádua FloodSim.
 
-Última revisão: **2026-09-23**.
+Última revisão: **2026-10-05**.
 
 ## Regras
 
@@ -21,7 +21,7 @@ Todo dataset incorporado ao projeto deve registrar, quando aplicável:
 - permissão de redistribuição, quando aplicável;
 - limitações conhecidas.
 
-Também deve ser classificado como `observed`, `official_reference`, `derived` ou `mock`.
+Também deve ser classificado, conforme aplicável, como `observed`, `processed`, `official_reference`, `derived`, `simulated`, `forecast` ou `mock`.
 
 ### Regra de proveniência e redistribuição
 
@@ -389,6 +389,57 @@ Antes de usar exatamente esses arquivos:
 
 ---
 
+## 10. SAH-Pomba — referência para previsão em Santo Antônio de Pádua
+
+### Relatório técnico 2021
+
+**Instituição:** CPRM / Serviço Geológico do Brasil  
+**Uso:** referência metodológica e benchmark histórico para a linha de previsão  
+**URL:** https://rigeo.sgb.gov.br/server/api/core/bitstreams/59c0e2b1-8a9e-4898-9c3b-1737d6f71256/content  
+**Classificação:** `official_reference`
+
+O relatório avaliou dois modelos para Santo Antônio de Pádua. O Modelo 2, indicado como preferencial no documento, utiliza como entrada a estação:
+
+**UHE Barra do Braúna Jusante — código 58788600**
+
+Valores reportados naquele estudo:
+
+- tempo de deslocamento: **8 h**;
+- correlação montante-jusante: **0,939**;
+- MAE: **±11 cm**;
+- PBIAS: **0,0%**;
+- KGE: **0,956**.
+
+Esses valores serão tratados apenas como **benchmark histórico**. O Pádua FloodSim deverá obter as séries pertinentes, documentar período/qualidade e reavaliar a relação em protocolo independente.
+
+O próprio relatório alerta para a necessidade de acompanhar a qualidade/disponibilidade da estação, pois ela é operada pelo setor elétrico.
+
+### Relatório anual 2022
+
+Relatório do SAH-Pomba de 2022 registra equação para Santo Antônio de Pádua com antecedência de **8 horas**.
+
+Uso pretendido:
+
+- contextualizar a hipótese Barra do Braúna -> Pádua;
+- orientar a busca de dados;
+- comparar resultados futuros;
+- não substituir validação própria.
+
+### Pendências de dados temporais
+
+- obter série histórica de `58788600`;
+- confirmar fonte oficial/acesso e termos de uso;
+- obter série de `58790002`;
+- alinhar timestamps, unidades e frequência;
+- identificar gaps e quality flags;
+- levantar pluviômetros relevantes;
+- definir eventos retidos;
+- investigar relação com a estação/página INEA.
+
+Essa auditoria é candidata a **Work**, pois exige investigação multifuente e análise temporal.
+
+---
+
 ## Área de interesse inicial (AOI)
 
 ### AOI hidráulica inicial
@@ -439,9 +490,21 @@ Leitura recebida de uma estação ou órgão oficial.
 
 Mapa, mancha ou cenário técnico publicado por instituição responsável.
 
+### Processado (`processed`)
+
+Dado observado ou oficial submetido a normalização, sincronização, transformação de unidade/referência ou controle de qualidade, sem se tornar previsão.
+
 ### Derivado (`derived`)
 
 Resultado de processamento do Pádua FloodSim a partir de dados de origem.
+
+### Simulado (`simulated`)
+
+Resultado de modelo espacial experimental do Pádua FloodSim.
+
+### Previsto (`forecast`)
+
+Estimativa futura produzida por modelo temporal validado e identificada por horizonte, versão e incerteza.
 
 ### Mock (`mock`)
 
