@@ -2,6 +2,34 @@
 
 Todas as mudanças relevantes do Pádua FloodSim serão registradas neste arquivo.
 
+## [Unreleased] — Research Phase — 2026-10-05
+
+### Documentação e governança
+
+- formalizada a identidade **Monitorar -> Prever -> Traduzir em impacto espacial**;
+- criado `docs/PROJECT_CHARTER.md`;
+- criada fundação temporal em `docs/FORECAST_MODEL.md`;
+- criado plano científico em `docs/ARTICLE_PLAN_RBMET.md`;
+- criado protocolo integrado de validação;
+- criado registro de experimentos;
+- criado ADR da Research Phase;
+- criada política de governança GitHub/Notion/Chat/Work;
+- criada política de transparência sobre uso de IA;
+- iniciado diário formal de pesquisa.
+
+### Escopo científico
+
+- previsão de curto prazo passa a ser frente central de pesquisa;
+- UHE Barra do Braúna Jusante (`58788600`) registrada como candidata prioritária de montante com base em trabalhos prévios do SAH-Pomba;
+- o desempenho publicado pelo SAH-Pomba passa a ser tratado apenas como benchmark histórico;
+- previsão temporal e modelo espacial permanecem desacoplados até validação do crosswalk de referência;
+- novas categorias formais: `processed` e `forecast`.
+
+### Segurança
+
+- reforçada a proibição de apresentar o FloodSim como alerta oficial;
+- cenários podem apoiar compreensão/preparação, mas não devem emitir comandos de evacuação ou retirada de bens.
+
 ## [0.1.0-academic] — 2026-09-23
 
 Primeira versão acadêmica de referência do Pádua FloodSim.
