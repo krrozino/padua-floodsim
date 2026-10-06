@@ -1,11 +1,12 @@
 # Pádua FloodSim — Arquitetura acadêmica e metodologia
 
-**Versão de referência:** 1.0  
-**Data:** 03 de setembro de 2026  
+**Versão de referência:** 2.0  
+**Base original:** 03 de setembro de 2026  
+**Extensão Research Phase:** 05 de outubro de 2026  
 **Escopo:** Santo Antônio de Pádua, RJ  
 **Natureza:** projeto acadêmico e experimental de computação aplicada
 
-> Este documento incorpora ao repositório a arquitetura acadêmica produzida no planejamento metodológico do projeto. Ele é a referência científica de alto nível do Pádua FloodSim. O inventário de fontes efetivamente verificadas e utilizadas deve permanecer em `docs/DATA_SOURCES.md`, que pode evoluir à medida que novas fontes específicas de Pádua forem confirmadas.
+> Este documento preserva a arquitetura acadêmica espacial definida em 03/09/2026 e incorpora a expansão formal de 05/10/2026 para monitoramento e previsão de curto prazo. O inventário de fontes efetivamente verificadas permanece em `docs/DATA_SOURCES.md`.
 
 ## Decisão metodológica
 
@@ -20,6 +21,92 @@ Pergunta científica defensável:
 Esse recorte é executável por estudante, explicável, testável e compatível com dados públicos. O resultado deve exibir fonte, data, datum vertical, resolução, parâmetros e incerteza.
 
 **Nível observado** e **área simulada** são objetos diferentes e não devem ser confundidos.
+
+## Extensão Research Phase — monitoramento, previsão e tradução espacial
+
+A direção científica passa a ser organizada em três pilares:
+
+```text
+MONITORAR -> PREVER -> TRADUZIR EM IMPACTO ESPACIAL
+```
+
+O modelo espacial de cota + conectividade permanece como uma frente central, mas deixa de ser a única pergunta do projeto.
+
+### Objetivo A — monitoramento observado
+
+Investigar como dados hidrológicos atualizados podem ser apresentados de forma rastreável e espacialmente compreensível, sem assumir equivalência entre réguas ou referenciais.
+
+### Objetivo B — previsão estatística
+
+Estimar `H_Padua(t+h)` para horizontes de curto prazo, começando por baselines simples e avaliando informação de montante e precipitação.
+
+Horizontes candidatos iniciais:
+
+- 1 h;
+- 2 h;
+- 3 h;
+- 4 h;
+- 5 h;
+- 10 h.
+
+A estação **UHE Barra do Braúna Jusante (58788600)** é uma candidata prioritária de pesquisa porque o SAH-Pomba já documentou sua utilidade em modelo anterior para Santo Antônio de Pádua. O desempenho histórico publicado é benchmark, não resultado transferível ao FloodSim.
+
+### Objetivo C — tradução espaço-temporal
+
+Somente após compatibilidade de referência comprovada:
+
+```text
+nível observado/previsto
+        |
+        v
+crosswalk de referência validado
+        |
+        v
+cota espacial
+        |
+        v
+official_reference / derived / simulated
+        |
+        v
+bairros/áreas potencialmente interceptados
+```
+
+### Validação temporal
+
+Modelos de previsão deverão ser comparados, no mínimo, com persistência e tendência recente, usando separação temporal/eventos retidos e métricas por horizonte.
+
+Métricas candidatas:
+
+- MAE;
+- RMSE;
+- viés;
+- correlação como medida complementar;
+- KGE quando metodologicamente aplicável.
+
+### Informação e incerteza
+
+O projeto passa a diferenciar explicitamente:
+
+- `observed`;
+- `processed`;
+- `official_reference`;
+- `derived`;
+- `simulated`;
+- `forecast`;
+- `mock`.
+
+Previsões devem incluir horizonte, timestamp, versão do modelo e contexto de incerteza.
+
+### Uso responsável
+
+O sistema pode apoiar compreensão e preparação, mas não deve emitir comandos de evacuação, retirada de bens ou declarar uma propriedade segura.
+
+Consulte:
+
+- `PROJECT_CHARTER.md`;
+- `FORECAST_MODEL.md`;
+- `ARTICLE_PLAN_RBMET.md`;
+- `GOVERNANCE.md`.
 
 ## 1. Escopo científico e perguntas respondíveis
 
@@ -243,8 +330,8 @@ Fontes específicas de Santo Antônio de Pádua descobertas e verificadas poster
 
 ## Conclusão
 
-A contribuição científica mais forte do Pádua FloodSim não é "prever a enchente", mas **testar, documentar e avaliar um método simples de mapeamento de cenários conectado à hidrografia para um problema local**.
+A contribuição científica do Pádua FloodSim passa a abranger **integração reproduzível entre monitoramento, previsão estatística de curto prazo e tradução espacial**, mantendo o modelo topográfico simples como linha própria de pesquisa e comparação.
 
-O marco que autoriza expansão científica é P3: dois eventos históricos retidos, métricas transparentes e análise de incerteza.
+Nenhuma dessas frentes deve ser julgada pela aparência da interface. A maturidade depende de dados rastreáveis, baselines, validação fora da amostra, métricas transparentes e análise de incerteza.
 
-Até lá, a interface deve permanecer uma ferramenta experimental de exploração de cenários.
+Até que cada componente seja validado, a interface permanece uma ferramenta acadêmica e experimental.
