@@ -63,6 +63,8 @@ Após compatibilizar e validar as referências de nível, transformar observaç�
 - [Fontes de dados](docs/DATA_SOURCES.md) — proveniência e compatibilidade;
 - [Arquitetura](docs/ARCHITECTURE.md) — separação entre aquisição, modelos e interface;
 - [Plano do artigo](docs/ARTICLE_PLAN_RBMET.md) — desenho científico em discussão;
+- [Protocolo de validação](docs/VALIDATION_PROTOCOL.md) — critérios temporais, espaciais e integrados;
+- [Registro de experimentos](docs/experiments/README.md) — convenção para experimentos reproduzíveis;
 - [Roadmap](docs/ROADMAP.md) — ordem de execução;
 - [Governança](docs/GOVERNANCE.md) — GitHub, Notion, Chat e Work;
 - [Diário de pesquisa](docs/RESEARCH_LOG.md) — marcos consolidados;
