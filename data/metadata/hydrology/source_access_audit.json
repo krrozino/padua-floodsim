@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-11-25",
+  "sources": [
+    {
+      "id": "ana-soap-telemetriaws1",
+      "institution": "ANA (Agência Nacional de Águas e Saneamento Básico)",
+      "endpoint": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx",
+      "methods_tested": [
+        "HidroInventario",
+        "DadosHidrometeorologicos",
+        "HidroSerieHistorica"
+      ],
+      "access_status": "accessible_public",
+      "evidence": "HTTP 200 XML diffgram; 90-day chunks return 15-min/1-h records for 58790002, 58788600, 58770000 and daily Cotas for 58790002.",
+      "limitations": "Sequential low-rate requests required; no built-in gauge-zero metadata on telemetry rows; 58788600 exhibits sensor flatline episodes.",
+      "next_action": "GO for offline historical dataset pipeline; cite ANA/SGB-CPRM."
+    },
+    {
+      "id": "inea-alerta-cheias-xml",
+      "institution": "INEA (Instituto Estadual do Ambiente - RJ)",
+      "endpoint": "https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.xml",
+      "access_status": "partially_accessible_rolling_10d_only",
+      "evidence": "HTTP 200 XML (<estacao codigo='213042120' tipo='Plu/Flu'>) with 960 records (~10 days at 15 min).",
+      "limitations": "Rolling 10-day window only; no multi-year archive exposed; uses 'Dado Nulo' sentinel; scale differs from RHN 58790002.",
+      "next_action": "NO-GO for historical series or direct SGB mapping; request historical export & datum metadata from INEA."
+    },
+    {
+      "id": "ana-hidrowebservice-snirh-rest",
+      "institution": "ANA / SNIRH",
+      "endpoint": "https://www.snirh.gov.br/hidroweb/rest/api/estacao & https://www.ana.gov.br/hidrowebservice/",
+      "access_status": "blocked_auth_and_503",
+      "evidence": "SNIRH REST returned HTTP 401 ('Token de Autenticação da API Inexistente ou mal Formatado'); ana.gov.br/hidrowebservice returned HTTP 503 during audit.",
+      "limitations": "Requires formal institutional credential registration via hidro@ana.gov.br / telemetria@ana.gov.br (60-min OAuth token).",
+      "next_action": "Submit formal access request (template in docs/experiments/HIDROWEBSERVICE_ACCESS_REQUEST.md)."
+    },
+    {
+      "id": "sgb-sace-pomba-web",
+      "institution": "SGB / CPRM",
+      "endpoint": "https://sace.sgb.gov.br/bacia_pomba/",
+      "access_status": "blocked_connection_reset_and_no_bulk_api",
+      "evidence": "TLS connection reset (WinError 10054) on redirect during probe; SGB operational monitoring uses RHN stations accessible via ANA.",
+      "limitations": "No public machine-readable multi-year series API verified on SACE.",
+      "next_action": "Use SGB RIGeo reports as official reference and ANA/RHN for station time series."
+    }
+  ]
+}

@@ -1,0 +1,752 @@
+{
+  "schema_version": 1,
+  "aligned_hourly_summary": {
+    "total_hourly_slots": 60480,
+    "padua_valid_hours": 57113,
+    "brauna_valid_nonflatline_hours": 51662,
+    "brauna_flatline_hours_flagged": 6238,
+    "cataguases_valid_hours": 55229,
+    "padua_rain_valid_hours": 58255
+  },
+  "temporal_resolution_check": {
+    "58790002_native_cadence_min": 15,
+    "58788600_native_cadence_min": 60,
+    "58770000_native_cadence_min": 15,
+    "supports_1h_to_10h_horizons": true,
+    "note": "58790002 (15 min) and 58770000 (15 min) natively resolve sub-hourly dynamics; 58788600 (60 min) limits joint multi-station lag models to >= 1 h steps without interpolation."
+  },
+  "model_family_feasibility": {
+    "persistence_B0": {
+      "feasible": true,
+      "horizons": "+1h..+10h",
+      "status": "GO (pilot executed)"
+    },
+    "recent_trend_B1": {
+      "feasible": true,
+      "horizons": "+1h..+10h",
+      "status": "GO (pilot executed)"
+    },
+    "padua_autoregressive_M1": {
+      "feasible": true,
+      "horizons": "+1h..+10h",
+      "status": "GO for future experiment (6+ years 15-min series, multiple flood events)"
+    },
+    "barra_do_brauna_upstream_M2": {
+      "feasible": true,
+      "horizons": "+1h..+10h",
+      "status": "CONDITIONAL_GO (must exclude flatlined intervals such as Jan 2023; pair with 58770000 Cataguases)"
+    },
+    "precipitation_M3": {
+      "feasible": true,
+      "horizons": "+1h..+10h",
+      "status": "CONDITIONAL_GO (telemetric station rainfall available at 58790002/58788600/58770000; dedicated pluviometer 2142067 also audited in ANA inventory)"
+    }
+  },
+  "lag_diagnostics": {
+    "brauna_nonflatline_to_padua_lags": [
+      {
+        "lag_h": 0,
+        "n_pairs": 48790,
+        "pearson_r": 0.783
+      },
+      {
+        "lag_h": 1,
+        "n_pairs": 48776,
+        "pearson_r": 0.7853
+      },
+      {
+        "lag_h": 2,
+        "n_pairs": 48767,
+        "pearson_r": 0.7874
+      },
+      {
+        "lag_h": 3,
+        "n_pairs": 48765,
+        "pearson_r": 0.7894
+      },
+      {
+        "lag_h": 4,
+        "n_pairs": 48765,
+        "pearson_r": 0.7915
+      },
+      {
+        "lag_h": 5,
+        "n_pairs": 48770,
+        "pearson_r": 0.7931
+      },
+      {
+        "lag_h": 6,
+        "n_pairs": 48767,
+        "pearson_r": 0.7941
+      },
+      {
+        "lag_h": 7,
+        "n_pairs": 48770,
+        "pearson_r": 0.7945
+      },
+      {
+        "lag_h": 8,
+        "n_pairs": 48771,
+        "pearson_r": 0.7942
+      },
+      {
+        "lag_h": 9,
+        "n_pairs": 48771,
+        "pearson_r": 0.7935
+      },
+      {
+        "lag_h": 10,
+        "n_pairs": 48772,
+        "pearson_r": 0.7924
+      },
+      {
+        "lag_h": 11,
+        "n_pairs": 48774,
+        "pearson_r": 0.7909
+      },
+      {
+        "lag_h": 12,
+        "n_pairs": 48777,
+        "pearson_r": 0.789
+      },
+      {
+        "lag_h": 13,
+        "n_pairs": 48779,
+        "pearson_r": 0.7867
+      },
+      {
+        "lag_h": 14,
+        "n_pairs": 48780,
+        "pearson_r": 0.7841
+      },
+      {
+        "lag_h": 15,
+        "n_pairs": 48788,
+        "pearson_r": 0.7811
+      },
+      {
+        "lag_h": 16,
+        "n_pairs": 48789,
+        "pearson_r": 0.7781
+      }
+    ],
+    "brauna_best_overall_lag": {
+      "lag_h": 7,
+      "n_pairs": 48770,
+      "pearson_r": 0.7945
+    },
+    "cataguases_to_padua_lags": [
+      {
+        "lag_h": 0,
+        "n_pairs": 53923,
+        "pearson_r": 0.8915
+      },
+      {
+        "lag_h": 1,
+        "n_pairs": 53903,
+        "pearson_r": 0.8955
+      },
+      {
+        "lag_h": 2,
+        "n_pairs": 53898,
+        "pearson_r": 0.8992
+      },
+      {
+        "lag_h": 3,
+        "n_pairs": 53892,
+        "pearson_r": 0.9028
+      },
+      {
+        "lag_h": 4,
+        "n_pairs": 53887,
+        "pearson_r": 0.9063
+      },
+      {
+        "lag_h": 5,
+        "n_pairs": 53883,
+        "pearson_r": 0.9096
+      },
+      {
+        "lag_h": 6,
+        "n_pairs": 53879,
+        "pearson_r": 0.9127
+      },
+      {
+        "lag_h": 7,
+        "n_pairs": 53875,
+        "pearson_r": 0.9157
+      },
+      {
+        "lag_h": 8,
+        "n_pairs": 53871,
+        "pearson_r": 0.9185
+      },
+      {
+        "lag_h": 9,
+        "n_pairs": 53868,
+        "pearson_r": 0.921
+      },
+      {
+        "lag_h": 10,
+        "n_pairs": 53865,
+        "pearson_r": 0.9233
+      },
+      {
+        "lag_h": 11,
+        "n_pairs": 53862,
+        "pearson_r": 0.9253
+      },
+      {
+        "lag_h": 12,
+        "n_pairs": 53860,
+        "pearson_r": 0.927
+      },
+      {
+        "lag_h": 13,
+        "n_pairs": 53857,
+        "pearson_r": 0.9284
+      },
+      {
+        "lag_h": 14,
+        "n_pairs": 53854,
+        "pearson_r": 0.9294
+      },
+      {
+        "lag_h": 15,
+        "n_pairs": 53850,
+        "pearson_r": 0.93
+      },
+      {
+        "lag_h": 16,
+        "n_pairs": 53848,
+        "pearson_r": 0.9302
+      }
+    ],
+    "cataguases_best_overall_lag": {
+      "lag_h": 16,
+      "n_pairs": 53848,
+      "pearson_r": 0.9302
+    },
+    "flood_events_peak_lag_comparison": [
+      {
+        "event_id": "EVT-20200125-02",
+        "peak_stage_cm": 398.5,
+        "brauna_best_lag": {
+          "lag_h": 5,
+          "n_pairs": 362,
+          "pearson_r": 0.9918
+        },
+        "cataguases_best_lag": {
+          "lag_h": 16,
+          "n_pairs": 374,
+          "pearson_r": 0.9343
+        }
+      },
+      {
+        "event_id": "EVT-20200213-03",
+        "peak_stage_cm": 408.0,
+        "brauna_best_lag": {
+          "lag_h": 4,
+          "n_pairs": 95,
+          "pearson_r": 0.8793
+        },
+        "cataguases_best_lag": {
+          "lag_h": 9,
+          "n_pairs": 178,
+          "pearson_r": 0.924
+        }
+      },
+      {
+        "event_id": "EVT-20200228-04",
+        "peak_stage_cm": 369.0,
+        "brauna_best_lag": {
+          "lag_h": 6,
+          "n_pairs": 237,
+          "pearson_r": 0.9811
+        },
+        "cataguases_best_lag": {
+          "lag_h": 16,
+          "n_pairs": 245,
+          "pearson_r": 0.9094
+        }
+      },
+      {
+        "event_id": "EVT-20220108-11",
+        "peak_stage_cm": 423.0,
+        "brauna_best_lag": {
+          "lag_h": 6,
+          "n_pairs": 190,
+          "pearson_r": 0.9903
+        },
+        "cataguases_best_lag": {
+          "lag_h": 16,
+          "n_pairs": 190,
+          "pearson_r": 0.9606
+        }
+      },
+      {
+        "event_id": "EVT-20220204-12",
+        "peak_stage_cm": 365.0,
+        "brauna_best_lag": {
+          "lag_h": 5,
+          "n_pairs": 520,
+          "pearson_r": 0.9675
+        },
+        "cataguases_best_lag": {
+          "lag_h": 12,
+          "n_pairs": 524,
+          "pearson_r": 0.9016
+        }
+      },
+      {
+        "event_id": "EVT-20221231-27",
+        "peak_stage_cm": 428.0,
+        "brauna_best_lag": {
+          "lag_h": 14,
+          "n_pairs": 69,
+          "pearson_r": -0.0977
+        },
+        "cataguases_best_lag": {
+          "lag_h": 16,
+          "n_pairs": 396,
+          "pearson_r": 0.9519
+        }
+      },
+      {
+        "event_id": "EVT-20230121-28",
+        "peak_stage_cm": 337.0,
+        "brauna_best_lag": null,
+        "cataguases_best_lag": {
+          "lag_h": 12,
+          "n_pairs": 186,
+          "pearson_r": 0.9422
+        }
+      },
+      {
+        "event_id": "EVT-20251217-36",
+        "peak_stage_cm": 310.76,
+        "brauna_best_lag": {
+          "lag_h": 5,
+          "n_pairs": 76,
+          "pearson_r": 0.9899
+        },
+        "cataguases_best_lag": {
+          "lag_h": 15,
+          "n_pairs": 76,
+          "pearson_r": 0.9638
+        }
+      },
+      {
+        "event_id": "EVT-20260225-38",
+        "peak_stage_cm": 412.0,
+        "brauna_best_lag": {
+          "lag_h": 6,
+          "n_pairs": 142,
+          "pearson_r": 0.9933
+        },
+        "cataguases_best_lag": {
+          "lag_h": 16,
+          "n_pairs": 145,
+          "pearson_r": 0.9483
+        }
+      }
+    ]
+  },
+  "exploratory_pilot_b0_b1": {
+    "evidence_status": "exploratory",
+    "split_policy": "chronological_no_random_split_no_future_leakage",
+    "calibration_reference_window": {
+      "end_utc": "2022-12-31T23:59:59Z",
+      "hourly_slots": 26301,
+      "padua_valid_hours": 23758
+    },
+    "held_out_evaluation_window": {
+      "start_utc": "2023-01-01T00:00:00Z",
+      "end_utc": "2026-11-25T02:00:00Z",
+      "hourly_slots": 34179,
+      "padua_valid_hours": 33355
+    },
+    "horizons": {
+      "+1h": {
+        "all_eval_hours": {
+          "B0_persistence": {
+            "n_pairs": 33118,
+            "mae_cm": 0.86,
+            "rmse_cm": 1.89,
+            "bias_cm": 0.0,
+            "pearson_r": 0.9993,
+            "kge": 0.9993
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 33118,
+            "mae_cm": 0.64,
+            "rmse_cm": 1.28,
+            "bias_cm": -0.0,
+            "pearson_r": 0.9997,
+            "kge": 0.9987
+          }
+        },
+        "high_stage_ge_240cm": {
+          "B0_persistence": {
+            "n_pairs": 884,
+            "mae_cm": 2.8,
+            "rmse_cm": 3.79,
+            "bias_cm": 0.19,
+            "pearson_r": 0.9971,
+            "kge": 0.9948
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 884,
+            "mae_cm": 1.49,
+            "rmse_cm": 2.12,
+            "bias_cm": 0.32,
+            "pearson_r": 0.9991,
+            "kge": 0.9984
+          }
+        }
+      },
+      "+2h": {
+        "all_eval_hours": {
+          "B0_persistence": {
+            "n_pairs": 33092,
+            "mae_cm": 1.66,
+            "rmse_cm": 3.55,
+            "bias_cm": 0.0,
+            "pearson_r": 0.9977,
+            "kge": 0.9977
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 33092,
+            "mae_cm": 1.48,
+            "rmse_cm": 2.98,
+            "bias_cm": -0.0,
+            "pearson_r": 0.9984,
+            "kge": 0.9957
+          }
+        },
+        "high_stage_ge_240cm": {
+          "B0_persistence": {
+            "n_pairs": 884,
+            "mae_cm": 5.46,
+            "rmse_cm": 7.3,
+            "bias_cm": 0.6,
+            "pearson_r": 0.9893,
+            "kge": 0.983
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 884,
+            "mae_cm": 3.56,
+            "rmse_cm": 5.13,
+            "bias_cm": 0.88,
+            "pearson_r": 0.9948,
+            "kge": 0.994
+          }
+        }
+      },
+      "+3h": {
+        "all_eval_hours": {
+          "B0_persistence": {
+            "n_pairs": 33084,
+            "mae_cm": 2.42,
+            "rmse_cm": 5.01,
+            "bias_cm": 0.0,
+            "pearson_r": 0.9953,
+            "kge": 0.9953
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 33084,
+            "mae_cm": 2.48,
+            "rmse_cm": 4.95,
+            "bias_cm": 0.0,
+            "pearson_r": 0.9955,
+            "kge": 0.9909
+          }
+        },
+        "high_stage_ge_240cm": {
+          "B0_persistence": {
+            "n_pairs": 883,
+            "mae_cm": 7.97,
+            "rmse_cm": 10.54,
+            "bias_cm": 1.16,
+            "pearson_r": 0.9781,
+            "kge": 0.9668
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 883,
+            "mae_cm": 5.97,
+            "rmse_cm": 8.49,
+            "bias_cm": 1.58,
+            "pearson_r": 0.9863,
+            "kge": 0.9849
+          }
+        }
+      },
+      "+4h": {
+        "all_eval_hours": {
+          "B0_persistence": {
+            "n_pairs": 33079,
+            "mae_cm": 3.13,
+            "rmse_cm": 6.28,
+            "bias_cm": 0.0,
+            "pearson_r": 0.9926,
+            "kge": 0.9926
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 33079,
+            "mae_cm": 3.56,
+            "rmse_cm": 6.98,
+            "bias_cm": 0.0,
+            "pearson_r": 0.9911,
+            "kge": 0.984
+          }
+        },
+        "high_stage_ge_240cm": {
+          "B0_persistence": {
+            "n_pairs": 882,
+            "mae_cm": 10.33,
+            "rmse_cm": 13.48,
+            "bias_cm": 1.81,
+            "pearson_r": 0.9652,
+            "kge": 0.9488
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 882,
+            "mae_cm": 8.42,
+            "rmse_cm": 11.78,
+            "bias_cm": 2.37,
+            "pearson_r": 0.9748,
+            "kge": 0.971
+          }
+        }
+      },
+      "+5h": {
+        "all_eval_hours": {
+          "B0_persistence": {
+            "n_pairs": 33073,
+            "mae_cm": 3.8,
+            "rmse_cm": 7.41,
+            "bias_cm": -0.0,
+            "pearson_r": 0.9898,
+            "kge": 0.9898
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 33073,
+            "mae_cm": 4.68,
+            "rmse_cm": 9.02,
+            "bias_cm": 0.0,
+            "pearson_r": 0.9853,
+            "kge": 0.9754
+          }
+        },
+        "high_stage_ge_240cm": {
+          "B0_persistence": {
+            "n_pairs": 881,
+            "mae_cm": 12.57,
+            "rmse_cm": 16.2,
+            "bias_cm": 2.51,
+            "pearson_r": 0.9509,
+            "kge": 0.93
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 881,
+            "mae_cm": 10.84,
+            "rmse_cm": 14.94,
+            "bias_cm": 3.2,
+            "pearson_r": 0.9614,
+            "kge": 0.9528
+          }
+        }
+      },
+      "+6h": {
+        "all_eval_hours": {
+          "B0_persistence": {
+            "n_pairs": 33067,
+            "mae_cm": 4.41,
+            "rmse_cm": 8.42,
+            "bias_cm": -0.0,
+            "pearson_r": 0.9868,
+            "kge": 0.9868
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 33067,
+            "mae_cm": 5.81,
+            "rmse_cm": 11.02,
+            "bias_cm": -0.0,
+            "pearson_r": 0.9783,
+            "kge": 0.9652
+          }
+        },
+        "high_stage_ge_240cm": {
+          "B0_persistence": {
+            "n_pairs": 880,
+            "mae_cm": 14.74,
+            "rmse_cm": 18.83,
+            "bias_cm": 3.26,
+            "pearson_r": 0.9353,
+            "kge": 0.9104
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 880,
+            "mae_cm": 13.36,
+            "rmse_cm": 18.18,
+            "bias_cm": 4.06,
+            "pearson_r": 0.946,
+            "kge": 0.9298
+          }
+        }
+      },
+      "+7h": {
+        "all_eval_hours": {
+          "B0_persistence": {
+            "n_pairs": 33062,
+            "mae_cm": 4.99,
+            "rmse_cm": 9.35,
+            "bias_cm": -0.01,
+            "pearson_r": 0.9837,
+            "kge": 0.9837
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 33062,
+            "mae_cm": 6.95,
+            "rmse_cm": 12.97,
+            "bias_cm": -0.01,
+            "pearson_r": 0.9703,
+            "kge": 0.9535
+          }
+        },
+        "high_stage_ge_240cm": {
+          "B0_persistence": {
+            "n_pairs": 879,
+            "mae_cm": 16.84,
+            "rmse_cm": 21.37,
+            "bias_cm": 4.03,
+            "pearson_r": 0.9185,
+            "kge": 0.8901
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 879,
+            "mae_cm": 15.91,
+            "rmse_cm": 21.49,
+            "bias_cm": 4.97,
+            "pearson_r": 0.929,
+            "kge": 0.9029
+          }
+        }
+      },
+      "+8h": {
+        "all_eval_hours": {
+          "B0_persistence": {
+            "n_pairs": 33057,
+            "mae_cm": 5.52,
+            "rmse_cm": 10.2,
+            "bias_cm": -0.01,
+            "pearson_r": 0.9805,
+            "kge": 0.9805
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 33057,
+            "mae_cm": 8.09,
+            "rmse_cm": 14.96,
+            "bias_cm": -0.02,
+            "pearson_r": 0.9611,
+            "kge": 0.9399
+          }
+        },
+        "high_stage_ge_240cm": {
+          "B0_persistence": {
+            "n_pairs": 878,
+            "mae_cm": 18.86,
+            "rmse_cm": 23.87,
+            "bias_cm": 4.82,
+            "pearson_r": 0.9006,
+            "kge": 0.8689
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 878,
+            "mae_cm": 18.41,
+            "rmse_cm": 24.77,
+            "bias_cm": 5.84,
+            "pearson_r": 0.9114,
+            "kge": 0.8734
+          }
+        }
+      },
+      "+9h": {
+        "all_eval_hours": {
+          "B0_persistence": {
+            "n_pairs": 33053,
+            "mae_cm": 6.02,
+            "rmse_cm": 11.0,
+            "bias_cm": -0.01,
+            "pearson_r": 0.9774,
+            "kge": 0.9774
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 33053,
+            "mae_cm": 9.22,
+            "rmse_cm": 16.99,
+            "bias_cm": -0.02,
+            "pearson_r": 0.9506,
+            "kge": 0.9243
+          }
+        },
+        "high_stage_ge_240cm": {
+          "B0_persistence": {
+            "n_pairs": 877,
+            "mae_cm": 20.8,
+            "rmse_cm": 26.32,
+            "bias_cm": 5.66,
+            "pearson_r": 0.8818,
+            "kge": 0.8468
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 877,
+            "mae_cm": 21.01,
+            "rmse_cm": 28.13,
+            "bias_cm": 6.61,
+            "pearson_r": 0.893,
+            "kge": 0.8407
+          }
+        }
+      },
+      "+10h": {
+        "all_eval_hours": {
+          "B0_persistence": {
+            "n_pairs": 33048,
+            "mae_cm": 6.49,
+            "rmse_cm": 11.75,
+            "bias_cm": -0.01,
+            "pearson_r": 0.9742,
+            "kge": 0.9742
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 33048,
+            "mae_cm": 10.34,
+            "rmse_cm": 18.96,
+            "bias_cm": -0.03,
+            "pearson_r": 0.9395,
+            "kge": 0.9077
+          }
+        },
+        "high_stage_ge_240cm": {
+          "B0_persistence": {
+            "n_pairs": 876,
+            "mae_cm": 22.71,
+            "rmse_cm": 28.73,
+            "bias_cm": 6.46,
+            "pearson_r": 0.8619,
+            "kge": 0.8245
+          },
+          "B1_recent_trend_1h": {
+            "n_pairs": 876,
+            "mae_cm": 23.65,
+            "rmse_cm": 31.66,
+            "bias_cm": 7.55,
+            "pearson_r": 0.8732,
+            "kge": 0.8052
+          }
+        }
+      }
+    }
+  }
+}

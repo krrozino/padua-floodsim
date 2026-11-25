@@ -343,6 +343,12 @@ sem uma transformação documentada.
 - comparar séries simultâneas INEA x SGB/ANA para determinar se existe relação simples entre as leituras;
 - documentar política de atualização e indisponibilidade.
 
+### Achados de auditoria (2026-11-25 — `EXP-2026-001`)
+
+- O endpoint XML público `https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.xml` identifica `<estacao codigo="213042120" tipo="Plu/Flu">` e expõe janela móvel de ~10 dias (961 registros, passo de 15 min, `"Dado Nulo"` como sentinela ausente).
+- Não há série histórica plurianual pública nem metadados de zero da régua/datum nesse endpoint.
+- Em 926 pares simultâneos de 15 min com `58790002` (`2026-11-15..2026-11-25`), a diferença `INEA − RHN` variou entre `+88,0 cm` e `+159,0 cm` (média `+111,02 cm`, desvio `13,95 cm`). **Decisão:** `NO-GO` para associação automática com manchas SGB; solicitação formal de histórico e zero da régua preparada em `docs/experiments/HIDROWEBSERVICE_ACCESS_REQUEST.md`.
+
 ---
 
 ## 8. ANA
@@ -354,6 +360,12 @@ Uso pretendido:
 - curva-chave e informações complementares da estação `58790002`, quando públicas.
 
 A ANA também é citada pelo estudo de 2024 como responsável por viabilizar a operação da estação hidrológica usada pelo SGB.
+
+### Achados de auditoria de acesso (2026-11-25 — `EXP-2026-001`)
+
+- **ANA SOAP (`https://telemetriaws1.ana.gov.br/ServiceANA.asmx`):** acessível publicamente via HTTPS para `HidroInventario`, `DadosHidrometeorologicos` (chunks sequenciais de 90 dias, `15 min` em `58790002` e `58770000`, `60 min` em `58788600`) e `HidroSerieHistorica` (`tipoDados=1` diário em `58790002`, consistências `1` e `2`).
+- **ANA / SNIRH HidroWebService REST (`https://www.snirh.gov.br/hidroweb/rest/api/*` e `https://www.ana.gov.br/hidrowebservice/`):** retornaram HTTP `401` (token ausente) e HTTP `503` durante a auditoria. O credenciamento oficial exige solicitação formal via `hidro@ana.gov.br` / `telemetria@ana.gov.br` (documentada em `docs/experiments/HIDROWEBSERVICE_ACCESS_REQUEST.md`).
+- **SGB / SACE (`https://sace.sgb.gov.br/bacia_pomba/`):** apresentou reset TLS no redirecionamento durante o teste e não expôs API histórica pública verificada.
 
 ---
 
@@ -437,6 +449,12 @@ Uso pretendido:
 - investigar relação com a estação/página INEA.
 
 Essa auditoria é candidata a **Work**, pois exige investigação multifuente e análise temporal.
+
+### Resultados iniciais da auditoria (`2026-11-25 — EXP-2026-001`)
+
+- Séries de `2020-01-01` a `2026-11-25` adquiridas via `telemetriaws1.ana.gov.br` para `58790002`, `58788600` e estação complementar a montante `58770000` (Cataguases, SGB-CPRM, `15 min`), além de inventário dos 5 pluviômetros em Santo Antônio de Pádua (`2142067`, `2141094`, `2142083`, `2142049`, `2142058`).
+- `58788600` apresentou 78 episódios de valor travado (*flatline* >= 24 h, `6.276 h` no total), incluindo janeiro/2023 (quando Pádua II atingiu `428 cm` e `337 cm`) e setembro/2025 (pico anômalo `1.012 cm` durante estiagem em Cataguases e Pádua). A defasagem de máxima correlação não é fixa em 8 h (variou de `4 h` a `6 h` entre cheias válidas `>= 310 cm`, com máximo global em `7 h`).
+- Detalhes, manifestos SHA-256, eventos candidatos e piloto exploratório `B0/B1` registrados em `docs/experiments/EXP-2026-001-historical-hydrological-datasets.md` e `data/metadata/hydrology/`.
 
 ---
 

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SYNTHETIC TEST FIXTURE (NOT REAL OBSERVATIONS) -->
+<DataTable xmlns="http://MRCS/">
+  <diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">
+    <NewDataSet xmlns="">
+      <!-- Out-of-order descending rows, comma decimal, extreme high flood peak, valid zero, missing, negative, exact duplicate -->
+      <DadosHidrometereologicos diffgr:id="1" msdata:rowOrder="0">
+        <CodEstacao>58790002</CodEstacao>
+        <DataHora>2023-01-08 12:30:00</DataHora>
+        <Vazao>1200.50</Vazao>
+        <Nivel>450,00</Nivel>
+        <Chuva>0.00</Chuva>
+      </DadosHidrometereologicos>
+      <!-- Exact duplicate of 12:30:00 -->
+      <DadosHidrometereologicos diffgr:id="2" msdata:rowOrder="1">
+        <CodEstacao>58790002</CodEstacao>
+        <DataHora>2023-01-08 12:30:00</DataHora>
+        <Vazao>1200.50</Vazao>
+        <Nivel>450,00</Nivel>
+        <Chuva>0.00</Chuva>
+      </DadosHidrometereologicos>
+      <!-- Missing level, valid zero rain -->
+      <DadosHidrometereologicos diffgr:id="3" msdata:rowOrder="2">
+        <CodEstacao>58790002</CodEstacao>
+        <DataHora>2023-01-08 12:15:00</DataHora>
+        <Vazao></Vazao>
+        <Nivel></Nivel>
+        <Chuva>0.00</Chuva>
+      </DadosHidrometereologicos>
+      <!-- Negative sentinel & invalid timestamp row -->
+      <DadosHidrometereologicos diffgr:id="4" msdata:rowOrder="3">
+        <CodEstacao>58790002</CodEstacao>
+        <DataHora>2023-01-08 12:00:00</DataHora>
+        <Vazao>1100.00</Vazao>
+        <Nivel>-99.00</Nivel>
+        <Chuva>12.40</Chuva>
+      </DadosHidrometereologicos>
+      <DadosHidrometereologicos diffgr:id="5" msdata:rowOrder="4">
+        <CodEstacao>58790002</CodEstacao>
+        <DataHora>INVALID-DATE</DataHora>
+        <Vazao>100.00</Vazao>
+        <Nivel>150.00</Nivel>
+        <Chuva>0.00</Chuva>
+      </DadosHidrometereologicos>
+      <!-- Earlier valid baseline row (after a gap > 30 min from 12:00) -->
+      <DadosHidrometereologicos diffgr:id="6" msdata:rowOrder="5">
+        <CodEstacao>58790002</CodEstacao>
+        <DataHora>2023-01-08 10:00:00</DataHora>
+        <Vazao>900.00</Vazao>
+        <Nivel>305.00</Nivel>
+        <Chuva>5.00</Chuva>
+      </DadosHidrometereologicos>
+    </NewDataSet>
+  </diffgr:diffgram>
+</DataTable>
