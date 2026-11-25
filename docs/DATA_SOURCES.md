@@ -172,73 +172,69 @@ Uso pretendido:
 - ortofotos para conferência visual;
 - comparação com o produto hidrológico de 2024.
 
-### Pendências antes de incorporar arquivos do pacote
+### Achados da auditoria técnica e legal (`2026-11-25 — R02-F`)
 
-- inspecionar `license.txt` integralmente;
-- inventariar arquivos internos;
-- registrar CRS de cada camada;
-- registrar resolução e tipo exato dos produtos MDE;
-- não versionar ZIPs grandes diretamente no Git sem necessidade.
+- **`license.txt` inspecionado:** o arquivo `license.txt` do repositório RIGeo `doc/15089` contém apenas um *template* padrão não preenchido do DSpace (`"NOTE: PLACE YOUR OWN LICENSE HERE ... grants to DSpace University (DSU)"`), enquanto os relatórios PDF trazem permissão institucional de reprodução com citação à CPRM. Por prudência jurídica, nenhum raster ou vetor bruto do pacote `doc/15089` é redistribuído no repositório Git até esclarecimento formal junto ao SGB.
+- **`bc_santoantoniodepadua_rj.zip` (`8.728.248` B, `SHA-256: fd3a14323576e591514aff20046b911248a890e0dc22b74a9660f84c47a9abfe`):** contém pontos de sedes distritais/vilas (`Distritos.shp`, `localidade_cartograma.shp`, `EPSG:4674`) e geodatabase `.mdb`; **não possui limites de bairros**.
+- **`produtos_mde_santoantoniodepadua_rj.zip` (`222.657.788` B, inspecionado via HTTP Range):** MDE em formato Esri Grid (`MDE/sp_sirgas_utm`) com resolução espacial de **`30,0 m × 30,0 m`** (`EPSG:31983`, `SIRGAS 2000 / UTM 23S`, cotas entre `62,974 m` e `970,586 m`) — **3× mais grosseiro** que o MDE reamostrado de `10 m` do estudo SGB de 2024.
+- **`ortofotossantoantoniodepadua_rj.zip` (`146.021.583` B, inspecionado via HTTP Range):** ortofoto ECW com resolução (`GSD`) de **`1,00 m × 1,00 m`** em `EPSG:31983`, útil para conferência visual planimétrica complementar.
 
 ---
 
-## 3. Prefeitura — bairros oficiais
+## 3. Prefeitura — bairros oficiais (`BLOCKED_DATA_SOURCE` para polígonos)
 
-### Lei municipal nº 3.864/2017
+### Lei municipal nº 3.864/2017 e Lei municipal nº 4.135/2021
 
 **Fonte:** Prefeitura Municipal de Santo Antônio de Pádua  
-**Documento:** Lei nº 3.864, de 27 de dezembro de 2017 — Planta Genérica de Valores  
-**URL:** https://santoantoniodepadua.itcast.com.br/portal/arquivo/1/2017/12-dezembro/lei_sancionada_no_3.864-17.pdf  
+**Documento 1:** Lei nº 3.864, de 27 de dezembro de 2017 — Planta Genérica de Valores (`1.962.244` B, `137` pág., `SHA-256: 379a5accce9c37a31ce160cad9dc6b3164a455a540cabfc4a151f8ed6e95a971`)  
+**URL ativa verificada em `2026-11-25`:** http://santoantoniodepadua.rj.gov.br/portal/arquivo/1/2017/12-dezembro/lei_sancionada_no_3.864-17.pdf *(o subdomínio legado `santoantoniodepadua.itcast.com.br` encontra-se inativo)*  
+**Documento 2:** Lei nº 4.135, de 17 de novembro de 2021 — Atualiza a Planta Genérica de Valores / Tabela I por Logradouro (`934.409` B, `18` pág., `SHA-256: 7d0482d79a0b8cca038b340f51abae42f0448b2ecd93386b355bc17fba9081a2`)  
+**URL ativa verificada em `2026-11-25`:** http://santoantoniodepadua.rj.gov.br/portal/arquivo/1/2021/11-novembro/lei_sancionada_no_4.135-21.pdf  
 **Classificação:** `official_reference`
 
-O Anexo VI e a ata da comissão registram **27 bairros** e informam que seus limites constam na PGV.
+O Anexo VI (`p. 34`) e o Anexo XIII (`p. 42`, Ata de `25/07/2017`) da Lei nº 3.864/2017 oficializam **27 bairros** na sede urbana (1º Distrito), confirmados nos códigos `01` a `27` da Tabela I da Lei nº 4.135/2021 (que também enumera separadamente localidades distritais sob os códigos `28` a `44`).
 
 ### Margem direita do Rio Pomba
 
-1. Aeroporto
+1. Aeroporto *(prioritário)*
 2. Alípio
 3. Arraialzinho
 4. Café Garoto
 5. CEHAB
-6. Cidade Nova
+6. Cidade Nova *(prioritário)*
 7. Dezessete
-8. Farol
-9. Gabri
+8. Farol *(prioritário)*
+9. Gabri *(grafado `Gabry` na Lei nº 4.135/2021)*
 10. Glória
 11. Monte Líbano
 12. Parque das Águas
 13. Santa Afra
-14. São Félix
-15. São Luis
-16. Sardemberg
+14. São Félix *(prioritário)*
+15. São Luis *(grafado `São Luiz` na Lei nº 4.135/2021)*
+16. Sardemberg *(grafado `Sardenberg` na Lei nº 4.135/2021)*
 
 ### Margem esquerda do Rio Pomba
 
 17. Alequicis
 18. Barro Branco
 19. Carvalho
-20. Centro
-21. Divinéia
+20. Centro *(prioritário)*
+21. Divinéia *(prioritário)*
 22. Ferreira
 23. Industrial
 24. Jorimpa
-25. Mirante
+25. Mirante *(prioritário)*
 26. Pereira
 27. Tavares
 
-> Nota: o texto extraído do Anexo VI contém alguns erros tipográficos (`FERRERIRA`, `PERERIRA`), enquanto a ata posterior apresenta `FERREIRA` e `PEREIRA`. O projeto deve usar a grafia validada na documentação municipal e manter rastreabilidade dessa normalização.
+> Nota de reconciliação ortográfica (`R02-F`): na Lei nº 3.864/2017, o Anexo VI contém os erros tipográficos `22 - FERRERIRA` e `26 - PERERIRA`; o Anexo XIII (Ata) corrige `26 - PEREIRA` (mantendo `22 - FERRERIRA`), e a Tabela I da Lei nº 4.135/2021 retifica ambos para `22 - Ferreira` e `26 - Pereira`. A rastreabilidade literal das três tabelas está versionada em `data/metadata/neighborhoods/neighborhood_registry.json`.
 
-### Situação dos polígonos
+### Situação auditada dos polígonos (`2026-11-25` — `BLOCKED_DATA_SOURCE`)
 
-A fonte municipal confirma a existência e a nomenclatura oficial dos bairros, mas ainda não foi localizado um download vetorial público dos limites.
-
-Estratégia:
-
-1. procurar arquivo vetorial público da PGV/Plano Diretor;
-2. se inexistente, solicitar à Prefeitura/Secretaria responsável;
-3. somente em último caso, georreferenciar/digitalizar o mapa oficial e marcar o resultado como `derived`.
-
-Não usar limites de bairros de fontes comerciais como referência oficial.
+- O Anexo VI da Lei nº 3.864/2017 remete a `* Vide Mapa em anexo` (`p. 34`), mas **o mapa anexo foi omitido na publicação oficial** e `73` das `137` páginas do PDF estão em branco (apenas cabeçalho).
+- A Lei nº 4.135/2021 publica `1.065` entradas de logradouros associados aos bairros, porém sem coordenadas ou pontos de seccionamento para vias que cruzam múltiplos bairros.
+- **Resultado (`0/27` polígonos utilizáveis):** registrado formalmente como **`BLOCKED_DATA_SOURCE`** em `docs/research/MUNICIPAL_NEIGHBORHOOD_BOUNDARIES.md`, `data/metadata/neighborhoods/neighborhood_registry.json` e `lib/neighborhoods/`. Minuta de solicitação institucional (LAI / Ofício Acadêmico) preparada para revisão do mantenedor, sem envio automático.
+- Não usar limites de bairros de fontes comerciais, setores censitários ou diagramas de Voronoi como referência oficial.
 
 ---
 
@@ -246,63 +242,44 @@ Não usar limites de bairros de fontes comerciais como referência oficial.
 
 ### Plano Diretor 2018
 
-Página pública com mapas M1–M6:
+Página pública com Lei nº 3.922/2018 (`SHA-256: b6ceb430...`) e mapas M1–M6:
 
-https://santoantoniodepadua.rj.gov.br/portal/arquivo/1/2018/11-novembro
+http://santoantoniodepadua.rj.gov.br/portal/arquivo/1/2018/11-novembro
 
-Pode auxiliar na conferência de:
+Auditado em `2026-11-25`: os mapas M1–M6 (`1:125.000` e `1:35.000`, sem grade de coordenadas) delimitam macrozonas, sistema viário e a Zona de Proteção do Rio Pomba (`ZPROPOMBA`), mas **não contêm limites de bairros**.
 
-- perímetro urbano;
-- sistema viário;
-- macrozoneamento;
-- núcleos urbanos.
+### Plano Municipal de Saneamento Básico (2019 e revisão SES 2024)
 
-### Plano Municipal de Saneamento Básico
+Exemplo de mapa de setores da sede urbana (`1:3.500`, `EPSG:31983`, `SHA-256: 609e59c3...`):
 
-A Prefeitura publica mapas e relatórios técnicos da sede urbana, incluindo setores censitários e redes de infraestrutura.
+http://www.santoantoniodepadua.rj.gov.br/portal/arquivo/36/2024/volume_1_relatorio_tecnico_preliminar_rtp/tomo_iv_n_desenho/setores_censitarios_-_sede_urbana.pdf
 
-Exemplo de mapa de setores censitários da sede urbana:
-
-https://www.santoantoniodepadua.rj.gov.br/portal/arquivo/36/2024/volume_1_relatorio_tecnico_preliminar_rtp/tomo_iv_n_desenho/setores_censitarios_-_sede_urbana.pdf
-
-Esses produtos são auxiliares; não substituem os limites oficiais de bairros.
+Achados `R02-F`:
+- mapeia `37` setores de projeto (`CS01–CS37`, `706,39 ha`) cujas linhas descritivas listam apenas ruas de referência, não bairros oficiais;
+- o Anexo VIII do PMSB (Programa `A.PI-1`) confirma documentalmente a inexistência de Cadastro Técnico Multifinalitário / SIG na Prefeitura;
+- o Diagnóstico de agosto/2024 (`pmsb2024_diagnostico.pdf`, p. 14) identifica a existência do **`Volume II — Levantamentos de Campo, Tomo I — Levantamento Topográfico`** (Contrato nº `02/2024`), não publicado no portal web e incluído como alvo prioritário para validação altimétrica local (`#7` e `#9`).
 
 ---
 
-## 5. IBGE — limites administrativos
+## 5. IBGE e Base Cartográfica Estadual (`BC25_RJ`)
 
-**Produto:** Malha Municipal Digital 2024  
-**Instituição:** IBGE  
-**URL de referência:** https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/15774-malhas.html  
-**Classificação:** `official_reference`
+**Produtos auditados em `2026-11-25` (`EPSG:4674 — SIRGAS 2000`, `official_reference`):**
 
-Uso pretendido:
-
-- limite municipal;
-- distritos/setores quando aplicável;
-- recorte e validação espacial.
-
-O IBGE não será presumido como fonte de limites dos 27 bairros municipais sem confirmação específica do produto.
+1. **Malha Municipal Digital 2024:** https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/15774-malhas.html — limite municipal (`3304706`) e distrital.
+2. **Malha Territorial de Bairros — Censo 2022 (`RJ_bairros_CD2022.zip`, `SHA-256: 8eb963e5...`):** contém `1.509` bairros em 31 municípios do RJ, mas **`0` registros para Santo Antônio de Pádua (`3304706`)**.
+3. **Malhas de Setores Censitários — Censos 2022 (`RJ_setores_CD2022.zip`, `154` setores, `SHA-256: 88dc4a6c...`) e 2010 (`71` setores, `SHA-256: 1a794c55...`):** `CD_BAIRRO` e `NM_BAIRRO` vazios em **100% dos setores**; descritivos de perímetro (`Descrição_RJ.xlsx`) demonstram incompatibilidade entre setores e bairros.
+4. **Base Cartográfica Contínua `BC25_RJ` 1:25.000 (IBGE / SEA-RJ / INEA, EDGV 3.0):** https://geoftp.ibge.gov.br/cartas_e_mapas/bases_cartograficas_continuas/bc25/rj/versao2018_edgv_3.0/ — `0` limites intramunicipais de bairros (`lml_outros_limites_oficiais_l`), porém fornece **`427` pontos cotados altimétricos (`rel_ponto_cotado_altimetrico_p`)** e **`48` ilhas fluviais (`hid_ilha_a`)** na AOI urbana, já empregados na validação espacial da `Ilha da Convivência` (`86,0 m`) e margens adjacentes à `Praça Monsenhor Diniz` (`84,0 m`) em `docs/research/MUNICIPAL_NEIGHBORHOOD_BOUNDARIES.md`.
 
 ---
 
 ## 6. OpenStreetMap — ruas, pontes e pontos de interesse
 
-**Classificação:** `official_reference` não; utilizar como **fonte cartográfica colaborativa complementar**.
+**Classificação:** `official_reference` não; utilizar como **fonte cartográfica colaborativa complementar** (`ODbL 1.0`).
 
-Uso pretendido:
-
-- eixos de ruas;
-- pontes;
-- edificações;
-- equipamentos/pontos de interesse.
-
-Requisitos:
-
-- registrar data de extração;
-- manter atribuição;
-- respeitar a licença ODbL;
-- validar manualmente estruturas críticas como pontes e acessos antes de gerar métricas públicas.
+Auditoria na AOI urbana (`2026-11-25`, API v0.6 `bbox=-42.22,-21.56,-42.15,-21.51`, `9.516` elementos, `SHA-256: 16794b21...`):
+- **`0` polígonos de bairros** (apenas `admin_level=8` município e `admin_level=9` distritos);
+- **`13` nós pontuais `place=suburb`**, dos quais `11` correspondem a bairros da PGV e `2` são denominações populares sem correspondência na Lei nº 3.864/2017 (`Gerador` e `São José`), estando ausentes até mesmo como ponto `Centro`, `Farol` e `Mirante`;
+- eixos viários, praças e pontes apresentam incerteza planimétrica típica de `±2–8 m` e exigem validação manual em estruturas críticas (ex.: projeção 2D de manchas sobre tabuleiros elevados das pontes Raul Veiga e Alberíades Gabry).
 
 ---
 
