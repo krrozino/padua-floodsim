@@ -65,3 +65,11 @@ Relatório de apoio Gemini Deep Research, *Fundamentação Científica e Protoco
 - Solicitações institucionais ainda não enviadas: INEA (zero, datum, permissões, lacunas, códigos), ANA/SGB (metadados e acesso, divergências, curvas e modelo), Prefeitura (bairros e eventos), UHE (manutenção). 
 
 Não é sistema oficial de alerta. Não usar cenários para afirmar segurança de imóveis nem orientar evacuação.
+
+## R02-B — Plataforma pública funcional (25/11/2026)
+
+- Issue #21; [PR #48](https://github.com/krrozino/padua-floodsim/pull/48), baseline técnico `adc56424bcb9841ffb5cb6b49034529260eca95d`, base #44 `4ad9525`. Draft, sem merge/deploy. Checks Build, Secret Scan e SonarCloud confirmados verdes no baseline; 27 unitários web, 12 Python e 9 E2E reportados pelo executor.
+- Quatro módulos funcionais, eliminação de placeholders, sete pontos mock de bairros e métricas sem dados; aviso oficial preservado. Camada com duas estações INEA documentadas, RHN 58790002 sem ponto definitivo. Flag de coleta permanece desativada. Modal corrigido.
+- Área derivada: união topológica via polygon-clipping 0.15.7 e integração aproximada em latitude autálica WGS84, método registrado wgs84-ellipsoidal-geodesic-union-v1. Extremos reportados: 170,6 ha (300 cm) e 271,9 ha (550 cm); diferença 101,3 ha (~59,4%); não representam inundação atual, profundidade ou risco. Resultados do executor, não reprodução independente.
+- Revisão de area.ts constatou descarte silencioso de anéis inválidos e retorno potencialmente válido de coleção parcialmente inválida. Antes da publicação: falha fechada, testes negativos e comparação independente das 11 camadas com referência geoespacial (registrar hashes, transformação CRS, versão, tolerância e erros); monotonicidade não prova exatidão. Registrar status de método e dados, não publicar área parcial.
+- Próximo: correção focada em #48, integração autorizada #48 → #44 e #45, release #47. #6 continua gate para ativação INEA, #37 metadados, #46 experimentos. Sem alteração dos manifestos históricos.
