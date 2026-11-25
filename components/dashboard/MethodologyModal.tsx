@@ -184,9 +184,10 @@ export function MethodologyModal({
               </li>
               <li>
                 <strong>Régua INEA vs. Cota SGB:</strong> O nível da estação de monitoramento do INEA
-                (exibido a título demonstrativo) não é traduzido diretamente para as cotas SGB, pois a
-                equivalência entre as referências de régua, estações e datums ainda não foi identificada e
-                tecnicamente validada.
+                (exibido no painel de monitoramento observado, código INEA 213042120) não é traduzido
+                diretamente para as cotas SGB, pois as estações físicas (~5,9 km de distância) e as
+                referências de régua, zeros e datums não são equivalentes e ainda não possuem
+                crosswalk validado.
               </li>
             </ul>
           </section>

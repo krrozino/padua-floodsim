@@ -2,7 +2,7 @@
 
 Este documento registra as fontes escolhidas/candidatas e os requisitos de rastreabilidade dos dados usados pelo Pádua FloodSim.
 
-Última revisão: **2026-10-05**.
+Última revisão: **2026-11-25**.
 
 ## Regras
 
@@ -308,40 +308,71 @@ Requisitos:
 
 ## 7. INEA — Alerta de Cheias
 
-**Página utilizada localmente:**  
+**Página pública oficial:**  
 https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.html  
-**Classificação pretendida:** `observed`
+**Exportação estruturada oficial (XML):**  
+https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.xml  
+**Classificação:** `observed`  
+**Status de auditoria:** operacional (verificada em **2026-11-24 / 2026-11-25 UTC**)
 
-A página oferece, no mínimo:
+### Identidade e metadados auditados
 
-- leituras de nível do rio;
-- chuva acumulada em 15 min, 1 h, 4 h, 24 h e 96 h;
-- histórico recente em passos de aproximadamente 15 minutos;
-- exportação para Excel;
-- exportação para XML;
-- cota de transbordamento apresentada pela página: **5,00 m**.
+- **Instituição:** Instituto Estadual do Ambiente (INEA) — Sistema de Alerta de Cheias;
+- **Código da estação (XML `<estacao codigo="...">`):** `213042120` (`tipo="Plu/Flu"`);
+- **Nome oficial publicado:** Santo Antônio de Pádua (Rio Pomba, conforme `hidro213042120.html`);
+- **Coordenadas oficiais publicadas em `mapa.php`:** latitude `-21.511110305786`, longitude `-42.207527160645` (WGS84 / `EPSG:4326`);
+- **Frequência de medição:** 15 minutos (`data_hora` nos últimos 10 dias; ~961 registros por arquivo XML);
+- **Frequência de atualização da página/exportação:** meta-refresh de 300 s (5 min); servidor suporta `ETag` e `Last-Modified` (`HTTP 304`);
+- **Unidades originais:** nível do rio (`nivel_rio_ultimo`) em **metros (`m`)** com separador decimal `.`; chuva (`chuva_ultimo`, `chuva_1h`, `chuva_4h`, `chuva_24h`, `chuva_96h`, `chuva_30d`) em **milímetros (`mm`)**;
+- **Fuso horário original:** `America/Sao_Paulo` (`UTC-03:00`), exibido na página como `"Hora Local"` no formato `DD/MM/YYYY HH:mm`;
+- **Sentinela de dado ausente observada:** `"Dado Nulo"`;
+- **Limiares locais publicados pela estação:** Cota de 80% = **4,00 m** (`400 cm`); Cota de transbordamento = **5,00 m** (`500 cm`);
+- **Não confirmados (mantidos `null` no contrato):** código RHN equivalente (`rhnCode: null`), zero da régua (`gaugeZeroMeters: null`), datum vertical (`verticalDatum: null`).
+
+### Condições de acesso e política de cache
+
+- Acesso público HTTP(S) sem autenticação e sem bloqueio em `robots.txt` (`/robots.txt` retorna `404`).
+- Consumo implementado exclusivamente **server-side** em `lib/hydro/providers/ineaAdapter.ts` com allowlist estrita de host (`alertadecheias.inea.rj.gov.br`), HTTPS obrigatório (`rejectUnauthorized: true`), fornecendo o certificado intermediário público `Sectigo Public Server Authentication CA DV R36` (omitido no handshake TLS do servidor do INEA e verificado criptograficamente em `lib/hydro/providers/ineaTlsChain.ts` contra a raiz `Sectigo Public Server Authentication Root R46` embutida no Node), timeout de 12 s, limite de 2 MiB, cache em memória proporcional de **5 minutos (300 s)** com validação condicional (`If-None-Match` / `If-Modified-Since`) e janela de obsolescência (`stale`) após **45 minutos** do `measuredAt`.
+- Não armazenar séries brutas volumosas nem redistribuir dumps integrais no Git; apenas leitura recente normalizada em tempo de execução e fixture mínima sanitizada em `tests/fixtures/hydro/`.
+
+### Evidência sanitizada de payload (2026-11-25T02:56:27Z)
+
+```xml
+<estacao codigo="213042120" tipo="Plu/Flu">
+    <nome_estacao>Santo Antônio de Pádua</nome_estacao>
+    <dados_ultimos_10_dias>
+        <registro>
+            <nome_estacao>Santo Antônio de Pádua</nome_estacao>
+            <data_hora>24/11/2026 23:45</data_hora>
+            <chuva_ultimo>0.0</chuva_ultimo>
+            <chuva_1h>0.0</chuva_1h>
+            <chuva_4h>0.0</chuva_4h>
+            <chuva_24h>0.2</chuva_24h>
+            <chuva_96h>4.6</chuva_96h>
+            <chuva_30d>17.0</chuva_30d>
+            <nivel_rio_ultimo>4.17</nivel_rio_ultimo>
+        </registro>
+```
+
+Leitura confirmada simultaneamente na página HTML e no XML: `24/11/2026 23:45` (BRT), nível `4.17 m` (`417 cm`), chuva `0.0 mm` (15 min/1 h/4 h), `0.2 mm` (24 h), `4.6 mm` (96 h), `17.0 mm` (30 d).
 
 ### Regra crítica: não converter diretamente INEA -> manchas SGB
 
-O produto SGB de 2024 trabalha com a estação `58790002`, cujo zero de régua e datum vertical são documentados, e aponta primeiro dano em 310 cm. A página do INEA apresenta uma cota de transbordamento de 5,00 m.
+A auditoria simultânea em **2026-11-24 23:45 BRT** comprovou que:
 
-Esses números **não devem ser tratados como a mesma régua/referência** até que a estação do INEA, seu zero de régua e a relação com a estação SGB sejam identificados e validados.
+1. **Estações fisicamente distintas:** INEA `213042120` está em `(-21.511110, -42.207527)` e SGB/ANA `58790002` (Santo Antônio de Pádua II — Clube de pesca do município) está em `(-21.53786, -42.15778)`, separadas por cerca de **5,9 km** ao longo do Rio Pomba.
+2. **Referências verticais incompatíveis:** no mesmo instante (`24/11/2026 23:45 BRT`), o INEA reportou **4,17 m** (abaixo da cota de transbordamento de 5,00 m), enquanto o SACE/SGB reportou a estação `58790002` em **Cota de Atenção** (faixa de 240 a 274 cm no estudo SGB 2024).
 
-Portanto, é proibido no código fazer algo equivalente a:
+Portanto, é estritamente proibido no código acionar manchas SGB a partir de leituras do INEA sem um crosswalk formalmente validado.
 
 ```text
-nivel_inea_5_00m -> COTA_500cm_SGB
+nivel_inea_4_17m -> COTA_425cm_SGB   [PROIBIDO]
 ```
 
-sem uma transformação documentada.
+### Pendências de pesquisa para fases futuras (G3/G4)
 
-### Pendências técnicas
-
-- identificar nome/código oficial da estação INEA `21304212020`;
-- verificar endpoint/XML estruturado;
-- registrar datum/referência da régua;
-- comparar séries simultâneas INEA x SGB/ANA para determinar se existe relação simples entre as leituras;
-- documentar política de atualização e indisponibilidade.
+- levantamento documental do zero da régua e datum vertical da estação INEA `213042120`;
+- análise histórica pareada INEA `213042120` × SGB/ANA `58790002` (escopo de séries históricas / issue #37).
 
 ---
 
@@ -424,6 +455,18 @@ Uso pretendido:
 - orientar a busca de dados;
 - comparar resultados futuros;
 - não substituir validação própria.
+
+### Auditoria operacional SGB SACE / SAH-Pomba (2026-11-25)
+
+**Portal:** https://sace.sgb.gov.br/pomba/ (acessado via https://www.sgb.gov.br/sace/)  
+**Endpoint REST público auditado:** https://sace.sgb.gov.br/pomba/api/geojson/point
+
+A inspeção ao vivo em **2026-11-25 UTC** confirmou:
+
+- o endpoint GeoJSON retorna 7 pontos de monitoramento da bacia, incluindo **`58790002 - SANTO ANTÔNIO DE PÁDUA`** (`sigla: "PAD"`, `Rio Pomba`, `localizacao: "Clube de pesca do município"`, `latitude: -21.53786`, `longitude: -42.15778`, `altitude: 86.0`, `areaDrenagem: 8235.0`, `fusoHorario: "GMT-3"`, `observacao: "Estação Vaisala com sensor de pressão. Bateria 18 Ah. Estação 58790002 - Santo Antônio de Pádua II"`);
+- o endpoint GeoJSON expõe apenas metadados e classe qualitativa de alerta (`tipoAlerta`, `nomeFiltroAlerta`, ex.: `"Cota de Atenção"`), **sem valores numéricos de cota ou chuva**;
+- a leitura numérica na interface SACE utiliza chamadas DWR Java com estado de sessão (`GeradorGraficoService`, `ExportacaoDadosService`), menos adequada para monitoramento leve em tempo real do que o XML estruturado do INEA;
+- a estação a montante **`58788600` (UHE Barra do Braúna Jusante)** não consta entre os 7 pontos ativos publicados no GeoJSON público do SAH-Pomba.
 
 ### Pendências de dados temporais
 
