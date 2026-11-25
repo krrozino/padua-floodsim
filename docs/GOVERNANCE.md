@@ -169,3 +169,7 @@ devem continuar ligados ao GitHub.
 Nenhuma pressão de produto deve fazer a interface afirmar mais do que os dados e a validação suportam.
 
 O Pádua FloodSim permanece acadêmico e experimental e não substitui alertas oficiais.
+
+## Registro obrigatório por sprint (perfil Research, 25/11/2026)
+
+Antes de fechar cada sprint, atualizar README (estado da main, produção e candidata claramente distintos), CHANGELOG em Unreleased, RESEARCH_LOG, ROADMAP, catálogo de dados/experimentos afetados e notas de release. Usar issues existentes para critérios e bloqueios; vincular PRs, SHAs e testes. No Notion Research HQ, atualizar visão, diário, fontes, experimentos, literatura e artigo conforme o escopo, sem duplicar backlog técnico. Registrar resultados negativos e divergências; distinguir evidência observada, relato de executor, hipótese, teste de software e validação científica. Catalogar documentos auxiliares de IA com título, hash, finalidade e limitações; verificar fontes primárias. Preservar dados originais e direitos; nenhum arquivo bruto volumoso ou sem autorização no Git. Release, deploy, ativação de fonte e DOI são eventos diferentes: registrar apenas após execução autorizada. Evitar burocracia repetitiva: um registro canônico e links, com revisão proporcional ao risco.

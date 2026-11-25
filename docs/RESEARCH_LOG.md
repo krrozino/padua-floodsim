@@ -49,3 +49,7 @@ Foi estabelecido:
 - levantar precipitação útil na bacia;
 - preparar protocolo de previsão;
 - manter modelo espacial e benchmark SGB como frente paralela.
+
+## 2026-11-17 a 25 — R01 e R02-A
+
+Contrato e skills (#41), observação INEA (#42), pipeline/QC/piloto (#43), candidata integrada (#44) e auditoria de acervo (#45). Ver [registro consolidado](research/RESEARCH_CATALOG_2026-11-25.md). Checks da candidata verdes no baseline; dados reais, permissões e reprodução continuam gates separados. Relatório Gemini de 59 páginas catalogado como apoio bibliográfico não validado integralmente. Estratégia proposta: manter INEA independente e investigar referência RHN para ligação espacial; comparar Braúna e Cataguases; nenhuma transformação automática. Próximas ações #6, #37, #38, #46, #47. Não houve merge/deploy nesta rodada.

@@ -2,6 +2,13 @@
 
 Todas as mudanças relevantes do Pádua FloodSim serão registradas neste arquivo.
 
+## [Unreleased] — R01 / R02-A — 2026-11-25
+
+- Candidata #44 integra #41–#43: contrato, skills, monitoramento INEA (flag desligada), pipeline Python, CI e governança Research. #45 audita acervo INEA, ainda independente.
+- Manifestos históricos preservados; EXP-001 exploratório, EXP-002 não executado, reprodução BLOCKED_LOCAL_DATA.
+- Vínculo INEA 213042120 / RHN 58774000 identificado na auditoria #45; datum e crosswalk não confirmados. Sem previsão pública.
+- [Registro consolidado](docs/research/RESEARCH_CATALOG_2026-11-25.md) e [notas de pre-release](docs/releases/research-r01-unreleased.md); nenhuma tag/DOI/deploy novo.
+
 ## [Unreleased] — Research Phase — 2026-10-05
 
 ### Documentação e governança

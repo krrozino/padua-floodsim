@@ -4,11 +4,17 @@ Plataforma acadêmica e experimental de **monitoramento, previsão de curto praz
 
 > **Importante:** o Pádua FloodSim não é um sistema oficial de alerta e não substitui INEA, Defesa Civil, Serviço Geológico do Brasil (SGB), ANA ou outras fontes oficiais.
 
-## Estado atual da aplicação (Sprint R01 — 25/11/2026)
+[Aplicação pública](https://padua-floodsim.vercel.app) · [Issues](https://github.com/krrozino/padua-floodsim/issues) · [Pull requests](https://github.com/krrozino/padua-floodsim/pulls) · [Releases](https://github.com/krrozino/padua-floodsim/releases)
 
-A aplicação V1 disponível hoje usa como referência as **11 manchas oficiais do SGB entre 3,00 m e 5,50 m**, em intervalos de 25 cm.
+## Estado atual — 25/11/2026
 
-No estado atual:
+**Produção / última release:** V1 cartográfica e pre-release `v0.1.0-academic` (tag não alterada). **Candidata em revisão:** [PR #44](https://github.com/krrozino/padua-floodsim/pull/44), que consolida #41–#43. A auditoria do acervo INEA [#45](https://github.com/krrozino/padua-floodsim/pull/45) é independente. Nenhum deles está integrado à main nesta data.
+
+### Funcionalidades e estado da candidata R01
+
+A V1 cartográfica usa como referência as **11 manchas oficiais do SGB entre 3,00 m e 5,50 m**, em intervalos de 25 cm.
+
+Na candidata R01:
 
 - a mancha exibida é `official_reference`, não uma previsão FloodSim;
 - não há profundidade real calculada a partir das manchas SGB;
@@ -32,20 +38,13 @@ MONITORAR -> PREVER -> TRADUZIR EM IMPACTO ESPACIAL
 
 Exibir nível observado do Rio Pomba, tendência, horário, fonte e precipitação relevante, com rastreabilidade.
 
-A meta de produto é permitir que uma pessoa dentro ou fora de Pádua compreenda visualmente a condição do rio.
+A meta de utilidade pública é permitir que uma pessoa dentro ou fora de Pádua compreenda visualmente a condição do rio.
 
 ### 2. Prever
 
 Desenvolver e avaliar modelos estatísticos de curto prazo para estimar a evolução do nível em Santo Antônio de Pádua.
 
-Horizontes iniciais candidatos:
-
-- +1 h;
-- +2 h;
-- +3 h;
-- +4 h;
-- +5 h;
-- +10 h.
+Horizontes candidatos do protocolo: +1 h a +10 h, em passos de uma hora.
 
 A pesquisa investigará dados locais, precipitação e informações de montante, incluindo a relação com **UHE Barra do Braúna Jusante (58788600)**.
 
@@ -54,6 +53,28 @@ Nenhuma previsão deverá ser publicada como certeza ou alerta operacional.
 ### 3. Traduzir em impacto espacial
 
 Após compatibilizar e validar as referências de nível, transformar observações/previsões em cenários espaciais e, futuramente, em métricas por bairro.
+
+## Evidências e como reproduzir
+
+- [Catálogo R01/R02-A](docs/research/RESEARCH_CATALOG_2026-11-25.md): estações, fontes, eventos, resultados exploratórios, hashes, lacunas e backlog.
+- [Changelog](CHANGELOG.md) e [notas da próxima pre-release](docs/releases/research-r01-unreleased.md): histórico e critérios de publicação; não são release publicada.
+- [EXP-2026-001](docs/experiments/EXP-2026-001-historical-hydrological-datasets.md): piloto exploratório; [EXP-2026-002](docs/experiments/EXP-2026-002-forecast-protocol.md): protocolo não executado.
+- `data/metadata/hydrology/`: inventário, QC e manifestos; dados volumosos não estão no Git.
+
+### Executar localmente (candidata R01)
+
+Node compatível com o lockfile/CI e Python 3.12 para o pipeline científico. A coleta INEA permanece desligada por padrão. Não habilite sem homologação e permissão.
+
+```sh
+npm ci
+npm run dev
+npm run typecheck
+npm run test:unit
+npm run build
+python -m unittest discover -s tests/research -v
+```
+
+Testes E2E: `npm run test:e2e` com navegador Playwright instalado. Para pesquisa, consulte `scripts/research/hydrology/README.md`; a verificação dos dados históricos exige os arquivos originais. CI offline não comprova acesso ao INEA nem validade de previsão. Não efetue coleta real para testes de rotina.
 
 ## Documentos centrais
 
