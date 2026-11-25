@@ -305,8 +305,10 @@ export function DataSourcesSection({
                 <dd>
                   O gráfico das 11 cotas utiliza o snapshot catalogado com hashes
                   SHA-256 ({SGB_AREA_SNAPSHOT_DATE}) para evitar 11 requisições
-                  na abertura. Caso a geometria consultada divirja do snapshot,
-                  a divergência é exibida explicitamente sem misturar valores.
+                  na abertura. Caso a área total da geometria consultada
+                  apresente divergência em relação ao catálogo, o alerta é
+                  exibido sem misturar valores (áreas equivalentes não comprovam
+                  geometrias idênticas).
                 </dd>
               </div>
               <div>

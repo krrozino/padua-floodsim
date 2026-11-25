@@ -85,7 +85,7 @@ export function ScenarioComparisonCard({
       </div>
 
       <p className="comparison-station-ref">
-        {SGB_REFERENCE_STATION_LABEL} · Geometria consultada ao vivo.
+        {SGB_REFERENCE_STATION_LABEL} · Cálculo sobre a geometria consultada.
       </p>
 
       {(isALoading || isBLoading) && (

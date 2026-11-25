@@ -7,7 +7,7 @@ import {
   SGB_AREA_SNAPSHOT_DATE,
   SGB_AREA_SNAPSHOT_ENTRIES,
   SGB_REFERENCE_STATION_LABEL,
-  type SnapshotDivergenceCheck,
+  type CatalogAreaDivergenceCheck,
 } from "@/lib/sgb/areaCatalog";
 import {
   SGB_STAGE_DISCHARGES_M3S,
@@ -25,7 +25,7 @@ export type ScenarioAreaChartProps = {
   readonly selectedLevelBCm?: number;
   readonly onSelectSingleLevel?: (levelMeters: number) => void;
   readonly onSelectCompareLevel?: (target: "A" | "B", levelMeters: number) => void;
-  readonly snapshotDivergences?: readonly SnapshotDivergenceCheck[];
+  readonly catalogAreaDivergences?: readonly CatalogAreaDivergenceCheck[];
 };
 
 export function ScenarioAreaChart({
@@ -34,7 +34,7 @@ export function ScenarioAreaChart({
   selectedLevelBCm,
   onSelectSingleLevel,
   onSelectCompareLevel,
-  snapshotDivergences = [],
+  catalogAreaDivergences = [],
 }: ScenarioAreaChartProps) {
   const [hoveredLevelCm, setHoveredLevelCm] = useState<SgbFloodLevelCm | null>(null);
   const [clickTarget, setClickTarget] = useState<"A" | "B">("B");
@@ -77,7 +77,9 @@ export function ScenarioAreaChart({
     }
   };
 
-  const activeDivergences = snapshotDivergences.filter((d) => !d.matchesSnapshot);
+  const activeDivergences = catalogAreaDivergences.filter(
+    (d) => !d.matchesCatalogArea,
+  );
 
   return (
     <article
@@ -247,15 +249,17 @@ export function ScenarioAreaChart({
           role="alert"
           data-testid="snapshot-divergence-warning"
         >
-          <strong>Divergência entre geometria consultada e snapshot:</strong>{" "}
+          <strong>Divergência de área em relação ao catálogo:</strong>{" "}
           {activeDivergences
             .map(
               (d) =>
-                `Cota ${formatMetersFromCm(d.levelCm)} m consultada agora (${formatHectares(d.liveAreaHectares, 2)}) difere do snapshot de ${SGB_AREA_SNAPSHOT_DATE} (${formatHectares(d.snapshotEntry.areaHectares, 2)}).`,
+                `Cota ${formatMetersFromCm(d.levelCm)} m na geometria consultada (${formatHectares(d.queriedAreaHectares, 2)}) difere do snapshot catalogado de ${SGB_AREA_SNAPSHOT_DATE} (${formatHectares(d.snapshotEntry.areaHectares, 2)}).`,
             )
             .join(" ")}{" "}
-          O gráfico acima preserva o snapshot catalogado; os cartões de área e
-          comparação exibem o cálculo sobre a geometria consultada atualmente.
+          A verificação compara apenas áreas totais (áreas equivalentes não
+          comprovam geometrias idênticas). O gráfico acima preserva o snapshot
+          catalogado; os cartões de área e comparação exibem o cálculo sobre a
+          geometria consultada.
         </div>
       )}
 

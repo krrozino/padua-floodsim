@@ -10,7 +10,7 @@ import {
   SGB_AREA_SNAPSHOT_BY_LEVEL,
   SGB_AREA_SNAPSHOT_ENTRIES,
   SGB_REFERENCE_STATION_LABEL,
-  checkSnapshotDivergence,
+  checkCatalogAreaDivergence,
 } from "../../../lib/sgb/areaCatalog.ts";
 import {
   SGB_COMPARISON_METHOD_ID,
@@ -48,7 +48,7 @@ describe("SGB topological scenario comparison (compareFloodScenarios)", () => {
     const res = compareFloodScenarios(RECT_BASE, 425, RECT_BASE, 425);
     assert.equal(res.status, "valid");
     assert.equal(res.classification, "derived");
-    assert.equal(res.provenanceKind, "live_queried_geometry");
+    assert.equal(res.provenanceKind, "queried_geometry");
     assert.equal(res.method, SGB_COMPARISON_METHOD_ID);
     assert.equal(res.levelACm, 425);
     assert.equal(res.levelBCm, 425);
@@ -253,13 +253,14 @@ describe("SGB area catalog snapshot & divergence detection", () => {
     }
   });
 
-  it("detects when live queried geometry matches or diverges from the cataloged snapshot", () => {
+  it("detects when queried geometry total area matches or diverges from the cataloged snapshot", () => {
     const snap425 = SGB_AREA_SNAPSHOT_BY_LEVEL[425];
-    const matching = checkSnapshotDivergence(425, snap425.areaSquareMeters + 0.5);
-    assert.equal(matching.matchesSnapshot, true);
+    const matching = checkCatalogAreaDivergence(425, snap425.areaSquareMeters + 0.5);
+    assert.equal(matching.matchesCatalogArea, true);
+    assert.equal(matching.queriedAreaSquareMeters, snap425.areaSquareMeters + 0.5);
 
-    const diverging = checkSnapshotDivergence(425, snap425.areaSquareMeters + 50_000);
-    assert.equal(diverging.matchesSnapshot, false);
+    const diverging = checkCatalogAreaDivergence(425, snap425.areaSquareMeters + 50_000);
+    assert.equal(diverging.matchesCatalogArea, false);
     assert.ok(Math.abs(diverging.diffHectares - 5) < 1e-6);
   });
 

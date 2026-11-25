@@ -21,8 +21,8 @@ import {
 } from "@/lib/sgb/area";
 import {
   SGB_REFERENCE_STATION_LABEL,
-  checkSnapshotDivergence,
-  type SnapshotDivergenceCheck,
+  checkCatalogAreaDivergence,
+  type CatalogAreaDivergenceCheck,
 } from "@/lib/sgb/areaCatalog";
 import type { ScenarioComparisonResult } from "@/lib/sgb/compare";
 import {
@@ -242,11 +242,11 @@ export function FloodDashboard() {
     ? formatFloodArea(validDerivedArea.areaSquareMeters)
     : null;
 
-  const snapshotDivergences: readonly SnapshotDivergenceCheck[] = useMemo(() => {
-    const checks: SnapshotDivergenceCheck[] = [];
+  const catalogAreaDivergences: readonly CatalogAreaDivergenceCheck[] = useMemo(() => {
+    const checks: CatalogAreaDivergenceCheck[] = [];
     if (validDerivedArea) {
       checks.push(
-        checkSnapshotDivergence(
+        checkCatalogAreaDivergence(
           validDerivedArea.levelCm as SgbFloodLevelCm,
           validDerivedArea.areaSquareMeters,
         ),
@@ -254,7 +254,7 @@ export function FloodDashboard() {
     }
     if (validDerivedAreaB && validDerivedAreaB.levelCm !== validDerivedArea?.levelCm) {
       checks.push(
-        checkSnapshotDivergence(
+        checkCatalogAreaDivergence(
           validDerivedAreaB.levelCm as SgbFloodLevelCm,
           validDerivedAreaB.areaSquareMeters,
         ),
@@ -686,7 +686,7 @@ export function FloodDashboard() {
               selectedLevelBCm={mapMode === "compare" ? levelBCm : undefined}
               onSelectSingleLevel={setLevel}
               onSelectCompareLevel={handleChartSelectCompare}
-              snapshotDivergences={snapshotDivergences}
+              catalogAreaDivergences={catalogAreaDivergences}
             />
 
             {/* Real INEA Hydro Monitoring Card */}

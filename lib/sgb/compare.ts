@@ -75,7 +75,7 @@ export type ScenarioComparisonResult =
   | {
       readonly status: "valid";
       readonly classification: "derived";
-      readonly provenanceKind: "live_queried_geometry";
+      readonly provenanceKind: "queried_geometry";
       readonly method: typeof SGB_COMPARISON_METHOD_ID;
       readonly areaMethod: typeof SGB_AREA_METHOD_ID;
       readonly crs: "EPSG:4326";
@@ -111,7 +111,7 @@ export type ScenarioComparisonResult =
   | {
       readonly status: "empty" | "invalid";
       readonly classification: "derived";
-      readonly provenanceKind: "live_queried_geometry";
+      readonly provenanceKind: "queried_geometry";
       readonly method: typeof SGB_COMPARISON_METHOD_ID;
       readonly areaMethod: typeof SGB_AREA_METHOD_ID;
       readonly crs: "EPSG:4326";
@@ -175,7 +175,7 @@ function makeFailedResult(
   return {
     status,
     classification: "derived",
-    provenanceKind: "live_queried_geometry",
+    provenanceKind: "queried_geometry",
     method: SGB_COMPARISON_METHOD_ID,
     areaMethod: SGB_AREA_METHOD_ID,
     crs: "EPSG:4326",
@@ -351,7 +351,7 @@ export function compareFloodScenarios(
   return {
     status: "valid",
     classification: "derived",
-    provenanceKind: "live_queried_geometry",
+    provenanceKind: "queried_geometry",
     method: SGB_COMPARISON_METHOD_ID,
     areaMethod: SGB_AREA_METHOD_ID,
     crs: "EPSG:4326",

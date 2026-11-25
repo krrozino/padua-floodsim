@@ -193,7 +193,8 @@ export function MethodologyModal({
                 A (A \ B) e exclusiva de B (B \ A) sem pressupor aninhamento perfeito, com validação
                 de conservação de área e falha fechada em caso de geometria inválida. O gráfico das
                 11 cotas utiliza o snapshot catalogado em 25/11/2026 com hashes registrados e sinaliza
-                explicitamente qualquer divergência frente à geometria consultada ao vivo.
+                explicitamente divergência de área em relação ao catálogo frente à geometria
+                consultada (áreas equivalentes não comprovam geometrias idênticas).
               </li>
               <li>
                 <strong>Régua INEA vs. Cota de referência SGB — Pádua II (58790002):</strong> O

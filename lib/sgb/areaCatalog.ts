@@ -8,12 +8,15 @@ export const SGB_REFERENCE_STATION_LABEL =
   "Cota de referência SGB — Pádua II (58790002)" as const;
 
 /**
- * Tolerance used to decide whether a live queried geometry diverges from the
- * cataloged snapshot validated on 2026-11-25 (matches the 0.01% policy in
- * SGB_AREA_VALIDATION_2026-11-25.md, with a 1 m² floor).
+ * Tolerance used to detect area divergence between the queried geometry's derived
+ * total area and the cataloged snapshot validated on 2026-11-25 (matches the 0.01%
+ * policy in SGB_AREA_VALIDATION_2026-11-25.md, with a 1 m² floor).
+ *
+ * Note: this check compares total derived areas only; matching areas do NOT prove
+ * vertex-by-vertex geometric identity.
  */
-export const SNAPSHOT_DIVERGENCE_RELATIVE_TOLERANCE = 1e-4;
-export const SNAPSHOT_DIVERGENCE_ABSOLUTE_TOLERANCE_M2 = 1.0;
+export const CATALOG_AREA_DIVERGENCE_RELATIVE_TOLERANCE = 1e-4;
+export const CATALOG_AREA_DIVERGENCE_ABSOLUTE_TOLERANCE_M2 = 1.0;
 
 export type SgbAreaSnapshotEntry = {
   readonly levelCm: SgbFloodLevelCm;
@@ -49,8 +52,9 @@ type RawSnapshotSeed = {
  * docs/research/SGB_AREA_VALIDATION_2026-11-25.md.
  *
  * Used for the interactive 11-stage area curve without issuing 11 upstream SGB
- * requests on every application open. Always kept distinct from live-queried
- * geometry calculations via `provenanceKind` and divergence detection.
+ * requests on every application open. Always kept distinct from calculations over
+ * the queried geometry (which may come from HTTP/CDN cache) via `provenanceKind`
+ * and area-divergence checks.
  */
 const RAW_SNAPSHOT_SEEDS: readonly RawSnapshotSeed[] = [
   {
@@ -194,12 +198,13 @@ export function getSgbAreaSnapshot(
   return SGB_AREA_SNAPSHOT_BY_LEVEL[levelCm as SgbFloodLevelCm];
 }
 
-export type SnapshotDivergenceCheck = {
+export type CatalogAreaDivergenceCheck = {
   readonly levelCm: SgbFloodLevelCm;
-  readonly matchesSnapshot: boolean;
+  /** True when total derived area matches the catalog within tolerance; does NOT prove geometric identity. */
+  readonly matchesCatalogArea: boolean;
   readonly snapshotEntry: SgbAreaSnapshotEntry;
-  readonly liveAreaSquareMeters: number;
-  readonly liveAreaHectares: number;
+  readonly queriedAreaSquareMeters: number;
+  readonly queriedAreaHectares: number;
   readonly diffSquareMeters: number;
   readonly diffHectares: number;
   readonly relativeDiff: number;
@@ -207,20 +212,25 @@ export type SnapshotDivergenceCheck = {
 };
 
 /**
- * Compares a live-computed derived area against the cataloged 2026-11-25 snapshot.
- * If the live queried geometry diverges beyond tolerance, callers must surface an
- * explicit notice rather than silently mixing snapshot and live values.
+ * Compares the derived total area of a queried geometry against the cataloged
+ * 2026-11-25 snapshot area.
+ *
+ * Important scientific note: this verifies total-area consistency only. Equivalent
+ * total areas do NOT prove vertex-by-vertex geometric identity; conversely, an
+ * area divergence beyond tolerance must be surfaced explicitly rather than mixing
+ * cataloged snapshot values with queried-geometry calculations.
  */
-export function checkSnapshotDivergence(
+export function checkCatalogAreaDivergence(
   levelCm: SgbFloodLevelCm,
-  liveAreaSquareMeters: number,
-): SnapshotDivergenceCheck {
+  queriedAreaSquareMeters: number,
+): CatalogAreaDivergenceCheck {
   const snapshotEntry = SGB_AREA_SNAPSHOT_BY_LEVEL[levelCm];
-  const diffSquareMeters = liveAreaSquareMeters - snapshotEntry.areaSquareMeters;
+  const diffSquareMeters =
+    queriedAreaSquareMeters - snapshotEntry.areaSquareMeters;
   const absDiff = Math.abs(diffSquareMeters);
   const toleranceSquareMeters = Math.max(
-    SNAPSHOT_DIVERGENCE_ABSOLUTE_TOLERANCE_M2,
-    SNAPSHOT_DIVERGENCE_RELATIVE_TOLERANCE * snapshotEntry.areaSquareMeters,
+    CATALOG_AREA_DIVERGENCE_ABSOLUTE_TOLERANCE_M2,
+    CATALOG_AREA_DIVERGENCE_RELATIVE_TOLERANCE * snapshotEntry.areaSquareMeters,
   );
   const relativeDiff =
     snapshotEntry.areaSquareMeters > 0
@@ -229,10 +239,10 @@ export function checkSnapshotDivergence(
 
   return {
     levelCm,
-    matchesSnapshot: absDiff <= toleranceSquareMeters,
+    matchesCatalogArea: absDiff <= toleranceSquareMeters,
     snapshotEntry,
-    liveAreaSquareMeters,
-    liveAreaHectares: liveAreaSquareMeters / 10_000,
+    queriedAreaSquareMeters,
+    queriedAreaHectares: queriedAreaSquareMeters / 10_000,
     diffSquareMeters,
     diffHectares: diffSquareMeters / 10_000,
     relativeDiff,

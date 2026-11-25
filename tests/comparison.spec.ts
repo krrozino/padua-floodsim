@@ -108,8 +108,15 @@ test("scenario comparison mode: 11-stage chart without 11 initial fetches, equal
     "Cota de referência SGB — Pádua II (58790002)",
   );
 
-  // Synthetic geometry differs from the 25/11/2026 cataloged snapshot -> divergence warning must appear
-  await expect(page.getByTestId("snapshot-divergence-warning")).toBeVisible();
+  // Synthetic geometry total area differs from the 25/11/2026 cataloged snapshot -> area divergence warning must appear
+  const divergenceBanner = page.getByTestId("snapshot-divergence-warning");
+  await expect(divergenceBanner).toBeVisible();
+  await expect(divergenceBanner).toContainText(
+    "Divergência de área em relação ao catálogo",
+  );
+  await expect(divergenceBanner).toContainText(
+    "áreas equivalentes não comprovam geometrias idênticas",
+  );
 
   // Clicking a bar in single mode updates the selected stage
   await page
