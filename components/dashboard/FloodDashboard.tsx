@@ -11,6 +11,8 @@ import {
   DataSourcesSection,
   MonitoringSection,
 } from "@/components/dashboard/PlatformSections";
+import { ScenarioAreaChart } from "@/components/dashboard/ScenarioAreaChart";
+import { ScenarioComparisonCard } from "@/components/dashboard/ScenarioComparisonCard";
 import { HydroMonitoringCard } from "@/components/monitoring/HydroMonitoringCard";
 import { useHydroMonitoring } from "@/lib/hydro/useHydroMonitoring";
 import {
@@ -18,12 +20,19 @@ import {
   type DerivedFloodAreaResult,
 } from "@/lib/sgb/area";
 import {
+  SGB_REFERENCE_STATION_LABEL,
+  checkCatalogAreaDivergence,
+  type CatalogAreaDivergenceCheck,
+} from "@/lib/sgb/areaCatalog";
+import type { ScenarioComparisonResult } from "@/lib/sgb/compare";
+import {
   SGB_FLOOD_LEVELS_CM,
   SGB_STAGE_ELEVATIONS,
   type SgbFloodLevelCm,
 } from "@/lib/sgb/stages";
 
 export type PlatformSection = "mapa" | "monitoramento" | "fontes" | "sobre";
+export type MapScenarioMode = "single" | "compare";
 
 function formatMetersFromCm(levelCm: number) {
   return (levelCm / 100).toFixed(2).replace(".", ",");
@@ -38,29 +47,61 @@ const NAV_ITEMS: readonly { readonly id: PlatformSection; readonly label: string
 
 export function FloodDashboard() {
   const [activeSection, setActiveSection] = useState<PlatformSection>("mapa");
+  const [mapMode, setMapMode] = useState<MapScenarioMode>("single");
   const [level, setLevel] = useState(4.25);
+  const [compareLevelB, setCompareLevelB] = useState(5.5);
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
+
   const [layerStatus, setLayerStatus] = useState<FloodLayerStatus>({
     state: "loading",
     levelCm: 425,
   });
+  const [layerStatusB, setLayerStatusB] = useState<FloodLayerStatus | null>(
+    null,
+  );
   const [derivedArea, setDerivedArea] = useState<DerivedFloodAreaResult | null>(
     null,
   );
+  const [derivedAreaB, setDerivedAreaB] =
+    useState<DerivedFloodAreaResult | null>(null);
+  const [comparison, setComparison] =
+    useState<ScenarioComparisonResult | null>(null);
+
   const [retryToken, setRetryToken] = useState(0);
+  const [retryTokenB, setRetryTokenB] = useState(0);
 
   const monitoring = useHydroMonitoring();
   const mapPanelRef = useRef<HTMLElement | null>(null);
   const realtimeCardRef = useRef<HTMLElement | null>(null);
 
   const levelCm = Math.round(level * 100);
+  const levelBCm = Math.round(compareLevelB * 100);
   const ortometricElevation = SGB_STAGE_ELEVATIONS[levelCm as SgbFloodLevelCm];
+  const ortometricElevationB =
+    SGB_STAGE_ELEVATIONS[levelBCm as SgbFloodLevelCm];
   const minLevel = SGB_FLOOD_LEVELS_CM[0] / 100;
   const maxLevel = SGB_FLOOD_LEVELS_CM[SGB_FLOOD_LEVELS_CM.length - 1] / 100;
 
   const handleRetry = useCallback(() => {
     setRetryToken((prev) => prev + 1);
   }, []);
+
+  const handleRetryB = useCallback(() => {
+    setRetryTokenB((prev) => prev + 1);
+  }, []);
+
+  const handleRetryActive = useCallback(() => {
+    if (mapMode === "compare") {
+      if (layerStatus.state === "error" || layerStatus.state === "empty") {
+        setRetryToken((prev) => prev + 1);
+      }
+      if (layerStatusB?.state === "error" || layerStatusB?.state === "empty") {
+        setRetryTokenB((prev) => prev + 1);
+      }
+    } else {
+      setRetryToken((prev) => prev + 1);
+    }
+  }, [mapMode, layerStatus.state, layerStatusB?.state]);
 
   const handleOpenMethodology = useCallback(() => {
     setIsMethodologyOpen(true);
@@ -80,6 +121,7 @@ export function FloodDashboard() {
 
   const handleSelectStageAndOpenMap = useCallback((nextLevel: number) => {
     setLevel(nextLevel);
+    setMapMode("single");
     setActiveSection("mapa");
   }, []);
 
@@ -95,7 +137,64 @@ export function FloodDashboard() {
     [minLevel, maxLevel],
   );
 
+  const handleStepLevelB = useCallback(
+    (deltaMeters: number) => {
+      setCompareLevelB((prev) => {
+        const next = Math.round((prev + deltaMeters) * 100) / 100;
+        if (next < minLevel) return minLevel;
+        if (next > maxLevel) return maxLevel;
+        return next;
+      });
+    },
+    [minLevel, maxLevel],
+  );
+
+  const handleSwapLevels = useCallback(() => {
+    setLevel(compareLevelB);
+    setCompareLevelB(level);
+  }, [level, compareLevelB]);
+
+  const handleChartSelectCompare = useCallback(
+    (target: "A" | "B", levelMeters: number) => {
+      if (target === "A") {
+        setLevel(levelMeters);
+      } else {
+        setCompareLevelB(levelMeters);
+      }
+    },
+    [],
+  );
+
+  const badgeVisualState = useMemo((): FloodLayerStatus["state"] => {
+    if (mapMode === "single") {
+      return layerStatus.levelCm === levelCm ? layerStatus.state : "loading";
+    }
+    const aCurrent = layerStatus.levelCm === levelCm ? layerStatus.state : "loading";
+    const bCurrent =
+      layerStatusB && layerStatusB.levelCm === levelBCm
+        ? layerStatusB.state
+        : "loading";
+
+    if (aCurrent === "error" || bCurrent === "error") return "error";
+    if (aCurrent === "empty" || bCurrent === "empty") return "empty";
+    if (aCurrent === "official" && bCurrent === "official") return "official";
+    return "loading";
+  }, [mapMode, layerStatus, layerStatusB, levelCm, levelBCm]);
+
   const mapBadge = useMemo(() => {
+    if (mapMode === "compare") {
+      if (badgeVisualState === "official") {
+        return `Comparação A ${formatMetersFromCm(levelCm)} m × B ${formatMetersFromCm(levelBCm)} m`;
+      }
+      if (badgeVisualState === "error") {
+        return "Falha ao carregar camada(s) SGB · comparação pausada";
+      }
+      if (badgeVisualState === "empty") {
+        return "SGB retornou camada vazia · comparação indisponível";
+      }
+      return `Carregando cenários SGB (${formatMetersFromCm(levelCm)} m e ${formatMetersFromCm(levelBCm)} m)...`;
+    }
+
     if (layerStatus.levelCm !== levelCm) {
       return "Carregando cenário oficial do SGB...";
     }
@@ -113,7 +212,14 @@ export function FloodDashboard() {
       return "SGB retornou camada vazia · nenhuma extensão exibida";
     }
     return "Carregando cenário oficial do SGB...";
-  }, [layerStatus, ortometricElevation, levelCm]);
+  }, [
+    mapMode,
+    badgeVisualState,
+    layerStatus,
+    ortometricElevation,
+    levelCm,
+    levelBCm,
+  ]);
 
   const validDerivedArea =
     layerStatus.state === "official" &&
@@ -123,9 +229,39 @@ export function FloodDashboard() {
       ? derivedArea
       : null;
 
+  const validDerivedAreaB =
+    mapMode === "compare" &&
+    layerStatusB?.state === "official" &&
+    layerStatusB.levelCm === levelBCm &&
+    derivedAreaB?.status === "valid" &&
+    derivedAreaB.levelCm === levelBCm
+      ? derivedAreaB
+      : null;
+
   const formattedArea = validDerivedArea
     ? formatFloodArea(validDerivedArea.areaSquareMeters)
     : null;
+
+  const catalogAreaDivergences: readonly CatalogAreaDivergenceCheck[] = useMemo(() => {
+    const checks: CatalogAreaDivergenceCheck[] = [];
+    if (validDerivedArea) {
+      checks.push(
+        checkCatalogAreaDivergence(
+          validDerivedArea.levelCm as SgbFloodLevelCm,
+          validDerivedArea.areaSquareMeters,
+        ),
+      );
+    }
+    if (validDerivedAreaB && validDerivedAreaB.levelCm !== validDerivedArea?.levelCm) {
+      checks.push(
+        checkCatalogAreaDivergence(
+          validDerivedAreaB.levelCm as SgbFloodLevelCm,
+          validDerivedAreaB.areaSquareMeters,
+        ),
+      );
+    }
+    return checks;
+  }, [validDerivedArea, validDerivedAreaB]);
 
   return (
     <div className="platform-root">
@@ -170,16 +306,22 @@ export function FloodDashboard() {
           >
             <FloodMap
               level={level}
+              mode={mapMode}
+              compareLevelB={compareLevelB}
               onStatusChange={setLayerStatus}
+              onStatusBChange={setLayerStatusB}
               onDerivedAreaChange={setDerivedArea}
+              onDerivedAreaBChange={setDerivedAreaB}
+              onComparisonChange={setComparison}
               retryToken={retryToken}
+              retryTokenB={retryTokenB}
               isVisible={activeSection === "mapa"}
             />
 
             {/* Bottom Scenario Controls */}
-            <div className="slider-card">
+            <div className={`slider-card ${mapMode === "compare" ? "is-compare" : ""}`}>
               <div className="slider-status-bar">
-                <div className={`scenario-status-badge ${layerStatus.state}`}>
+                <div className={`scenario-status-badge ${badgeVisualState}`}>
                   <span
                     className="data-origin-badge official"
                     data-classification="official_reference"
@@ -189,12 +331,12 @@ export function FloodDashboard() {
                   <span role="status" aria-live="polite">
                     {mapBadge}
                   </span>
-                  {(layerStatus.state === "error" ||
-                    layerStatus.state === "empty") && (
+                  {(badgeVisualState === "error" ||
+                    badgeVisualState === "empty") && (
                     <button
                       type="button"
                       className="badge-retry-btn"
-                      onClick={handleRetry}
+                      onClick={handleRetryActive}
                       title="Tentar carregar novamente a mancha do SGB"
                     >
                       Tentar novamente
@@ -202,97 +344,281 @@ export function FloodDashboard() {
                   )}
                 </div>
 
-                <button
-                  type="button"
-                  className="methodology-trigger-btn"
-                  onClick={handleOpenMethodology}
-                  title="Ver detalhes de fonte, estação e metodologia do SGB (2024)"
-                >
-                  Fonte e metodologia
-                </button>
-              </div>
-
-              <div className="slider-title">
-                <div>
-                  <strong>Cota do cenário de referência</strong>
-                  <span>
-                    Estação SGB/ANA 58790002 · Cenário estático de referência
-                    (não indica a extensão atual do rio nem profundidade). Não
-                    equivale à régua do INEA.
-                  </span>
-                </div>
-                <div className="slider-value-group">
-                  <b>{level.toFixed(2).replace(".", ",")} m</b>
-                  {Number.isFinite(ortometricElevation) && (
-                    <span className="elev-label">
-                      Alt. ortométrica:{" "}
-                      {ortometricElevation.toFixed(2).replace(".", ",")} m
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="slider-control-row">
-                <button
-                  type="button"
-                  className="stage-step-btn"
-                  onClick={() => handleStepLevel(-0.25)}
-                  disabled={level <= minLevel}
-                  aria-label="Diminuir cota em 25 centímetros"
-                  title="Diminuir 0,25 m"
-                >
-                  −
-                </button>
-                <input
-                  aria-label="Cota da mancha oficial do SGB"
-                  type="range"
-                  min={minLevel}
-                  max={maxLevel}
-                  step="0.25"
-                  value={level}
-                  aria-valuetext={`${level.toFixed(2).replace(".", ",")} metros, cenário oficial SGB`}
-                  onChange={(event) => setLevel(Number(event.target.value))}
-                />
-                <button
-                  type="button"
-                  className="stage-step-btn"
-                  onClick={() => handleStepLevel(0.25)}
-                  disabled={level >= maxLevel}
-                  aria-label="Aumentar cota em 25 centímetros"
-                  title="Aumentar 0,25 m"
-                >
-                  +
-                </button>
-              </div>
-
-              <div className="slider-scale">
-                <span>3,00 m</span>
-                <span>4,25 m</span>
-                <span>5,50 m</span>
-              </div>
-
-              {/* Quick Stage Shortcuts */}
-              <div
-                className="quick-stages"
-                role="group"
-                aria-label="Atalhos de cotas SGB"
-              >
-                <span className="quick-stages-label">Atalhos:</span>
-                {[3.0, 4.25, 5.5].map((stage) => {
-                  const label = `${stage.toFixed(2).replace(".", ",")} m`;
-                  return (
+                <div className="slider-status-actions">
+                  <div
+                    className="mode-toggle-group"
+                    role="group"
+                    aria-label="Modo de visualização de cenários"
+                  >
                     <button
-                      key={stage}
                       type="button"
-                      className={`stage-chip ${level === stage ? "active" : ""}`}
-                      aria-pressed={level === stage}
-                      onClick={() => setLevel(stage)}
+                      className={`mode-toggle-btn ${
+                        mapMode === "single" ? "active" : ""
+                      }`}
+                      aria-pressed={mapMode === "single"}
+                      onClick={() => setMapMode("single")}
                     >
-                      {label}
+                      Cenário único
                     </button>
-                  );
-                })}
+                    <button
+                      type="button"
+                      className={`mode-toggle-btn ${
+                        mapMode === "compare" ? "active" : ""
+                      }`}
+                      aria-pressed={mapMode === "compare"}
+                      onClick={() => setMapMode("compare")}
+                    >
+                      Comparar cenários
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="methodology-trigger-btn"
+                    onClick={handleOpenMethodology}
+                    title="Ver detalhes de fonte, estação e metodologia do SGB (2024)"
+                  >
+                    Fonte e metodologia
+                  </button>
+                </div>
               </div>
+
+              {mapMode === "single" ? (
+                <>
+                  <div className="slider-title">
+                    <div>
+                      <strong>{SGB_REFERENCE_STATION_LABEL}</strong>
+                      <span>
+                        Cenário estático de referência (não indica a extensão
+                        atual do rio nem profundidade). Não confundir com a
+                        leitura da estação INEA.
+                      </span>
+                    </div>
+                    <div className="slider-value-group">
+                      <b>{level.toFixed(2).replace(".", ",")} m</b>
+                      {Number.isFinite(ortometricElevation) && (
+                        <span className="elev-label">
+                          Alt. ortométrica:{" "}
+                          {ortometricElevation.toFixed(2).replace(".", ",")} m
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="slider-control-row">
+                    <button
+                      type="button"
+                      className="stage-step-btn"
+                      onClick={() => handleStepLevel(-0.25)}
+                      disabled={level <= minLevel}
+                      aria-label="Diminuir cota em 25 centímetros"
+                      title="Diminuir 0,25 m"
+                    >
+                      −
+                    </button>
+                    <input
+                      aria-label="Cota da mancha oficial do SGB"
+                      type="range"
+                      min={minLevel}
+                      max={maxLevel}
+                      step="0.25"
+                      value={level}
+                      aria-valuetext={`${level.toFixed(2).replace(".", ",")} metros, cenário oficial SGB`}
+                      onChange={(event) => setLevel(Number(event.target.value))}
+                    />
+                    <button
+                      type="button"
+                      className="stage-step-btn"
+                      onClick={() => handleStepLevel(0.25)}
+                      disabled={level >= maxLevel}
+                      aria-label="Aumentar cota em 25 centímetros"
+                      title="Aumentar 0,25 m"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <div className="slider-scale">
+                    <span>3,00 m</span>
+                    <span>4,25 m</span>
+                    <span>5,50 m</span>
+                  </div>
+
+                  {/* Quick Stage Shortcuts */}
+                  <div
+                    className="quick-stages"
+                    role="group"
+                    aria-label="Atalhos de cotas SGB"
+                  >
+                    <span className="quick-stages-label">Atalhos:</span>
+                    {[3.0, 4.25, 5.5].map((stage) => {
+                      const label = `${stage.toFixed(2).replace(".", ",")} m`;
+                      return (
+                        <button
+                          key={stage}
+                          type="button"
+                          className={`stage-chip ${level === stage ? "active" : ""}`}
+                          aria-pressed={level === stage}
+                          onClick={() => setLevel(stage)}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div className="compare-controls-wrap">
+                  <div className="compare-controls-header">
+                    <div>
+                      <strong>{SGB_REFERENCE_STATION_LABEL}</strong>
+                      <span>
+                        Selecione duas cotas independentes (A e B) para sobrepor
+                        topologicamente A ∩ B, A \ B e B \ A. Não confundir com a
+                        estação INEA.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="compare-swap-btn"
+                      onClick={handleSwapLevels}
+                      title="Inverter cota A com cota B"
+                    >
+                      Inverter A ⇄ B
+                    </button>
+                  </div>
+
+                  <div className="compare-selectors-grid">
+                    {/* Selector A */}
+                    <div className="compare-selector-box selector-a">
+                      <div className="compare-selector-head">
+                        <label htmlFor="compare-select-a">
+                          <i className="legend-swatch-only-a" aria-hidden="true" />
+                          Cenário A (base)
+                        </label>
+                        {Number.isFinite(ortometricElevation) && (
+                          <span className="elev-label">
+                            Alt. {ortometricElevation.toFixed(2).replace(".", ",")} m
+                          </span>
+                        )}
+                      </div>
+                      <div className="compare-selector-row">
+                        <button
+                          type="button"
+                          className="stage-step-btn"
+                          onClick={() => handleStepLevel(-0.25)}
+                          disabled={level <= minLevel}
+                          aria-label="Diminuir cota A em 25 centímetros"
+                        >
+                          −
+                        </button>
+                        <select
+                          id="compare-select-a"
+                          aria-label="Cota A de referência SGB"
+                          className="compare-stage-select"
+                          value={levelCm}
+                          onChange={(e) => setLevel(Number(e.target.value) / 100)}
+                        >
+                          {SGB_FLOOD_LEVELS_CM.map((cm) => (
+                            <option key={cm} value={cm}>
+                              {formatMetersFromCm(cm)} m ({cm} cm)
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="stage-step-btn"
+                          onClick={() => handleStepLevel(0.25)}
+                          disabled={level >= maxLevel}
+                          aria-label="Aumentar cota A em 25 centímetros"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Selector B */}
+                    <div className="compare-selector-box selector-b">
+                      <div className="compare-selector-head">
+                        <label htmlFor="compare-select-b">
+                          <i className="legend-swatch-only-b" aria-hidden="true" />
+                          Cenário B (comparado)
+                        </label>
+                        {Number.isFinite(ortometricElevationB) && (
+                          <span className="elev-label">
+                            Alt. {ortometricElevationB.toFixed(2).replace(".", ",")} m
+                          </span>
+                        )}
+                      </div>
+                      <div className="compare-selector-row">
+                        <button
+                          type="button"
+                          className="stage-step-btn"
+                          onClick={() => handleStepLevelB(-0.25)}
+                          disabled={compareLevelB <= minLevel}
+                          aria-label="Diminuir cota B em 25 centímetros"
+                        >
+                          −
+                        </button>
+                        <select
+                          id="compare-select-b"
+                          aria-label="Cota B de referência SGB"
+                          className="compare-stage-select"
+                          value={levelBCm}
+                          onChange={(e) =>
+                            setCompareLevelB(Number(e.target.value) / 100)
+                          }
+                        >
+                          {SGB_FLOOD_LEVELS_CM.map((cm) => (
+                            <option key={cm} value={cm}>
+                              {formatMetersFromCm(cm)} m ({cm} cm)
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="stage-step-btn"
+                          onClick={() => handleStepLevelB(0.25)}
+                          disabled={compareLevelB >= maxLevel}
+                          aria-label="Aumentar cota B em 25 centímetros"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick comparison pairs */}
+                  <div
+                    className="quick-stages"
+                    role="group"
+                    aria-label="Atalhos de pares para comparação"
+                  >
+                    <span className="quick-stages-label">Pares rápidos:</span>
+                    {[
+                      { a: 3.0, b: 4.25, label: "3,00 × 4,25 m" },
+                      { a: 3.0, b: 5.5, label: "3,00 × 5,50 m" },
+                      { a: 4.25, b: 5.5, label: "4,25 × 5,50 m" },
+                    ].map((pair) => {
+                      const active = level === pair.a && compareLevelB === pair.b;
+                      return (
+                        <button
+                          key={pair.label}
+                          type="button"
+                          className={`stage-chip ${active ? "active" : ""}`}
+                          aria-pressed={active}
+                          onClick={() => {
+                            setLevel(pair.a);
+                            setCompareLevelB(pair.b);
+                          }}
+                        >
+                          {pair.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 
@@ -303,41 +629,65 @@ export function FloodDashboard() {
               órgãos oficiais.
             </p>
 
-            {/* Derived Spatial Metric: Area of Selected SGB Scenario */}
-            {validDerivedArea && formattedArea && (
-              <article
-                className="card area-metric-card"
-                data-classification="derived"
-                aria-labelledby="selected-area-title"
-              >
-                <div className="card-heading">
-                  <strong id="selected-area-title">
-                    Área da mancha selecionada
-                  </strong>
-                  <span
-                    className="data-origin-badge derived"
-                    data-classification="derived"
-                  >
-                    Dado derivado
-                  </span>
-                </div>
-                <div className="area-metric-values">
-                  <b className="area-metric-primary">{formattedArea.primary}</b>
-                  <span className="area-metric-secondary">
-                    ({formattedArea.secondary})
-                  </span>
-                </div>
-                <p className="area-metric-meta">
-                  Cenário SGB {formatMetersFromCm(validDerivedArea.levelCm)} m (
-                  {validDerivedArea.levelCm} cm) · {validDerivedArea.source}.
-                </p>
-                <small className="area-metric-note">
-                  Cálculo geodésico (WGS84) sobre os polígonos oficiais
-                  carregados. Representa apenas a extensão do cenário escolhido,
-                  não a área inundada no momento.
-                </small>
-              </article>
+            {/* Derived Spatial Metric: Single Scenario OR Topological Comparison */}
+            {mapMode === "compare" ? (
+              <ScenarioComparisonCard
+                levelACm={levelCm}
+                levelBCm={levelBCm}
+                statusA={layerStatus}
+                statusB={layerStatusB}
+                comparison={comparison}
+                onRetryA={handleRetry}
+                onRetryB={handleRetryB}
+              />
+            ) : (
+              validDerivedArea &&
+              formattedArea && (
+                <article
+                  className="card area-metric-card"
+                  data-classification="derived"
+                  aria-labelledby="selected-area-title"
+                >
+                  <div className="card-heading">
+                    <strong id="selected-area-title">
+                      Área da mancha selecionada
+                    </strong>
+                    <span
+                      className="data-origin-badge derived"
+                      data-classification="derived"
+                    >
+                      Dado derivado
+                    </span>
+                  </div>
+                  <div className="area-metric-values">
+                    <b className="area-metric-primary">{formattedArea.primary}</b>
+                    <span className="area-metric-secondary">
+                      ({formattedArea.secondary})
+                    </span>
+                  </div>
+                  <p className="area-metric-meta">
+                    {SGB_REFERENCE_STATION_LABEL} ·{" "}
+                    {formatMetersFromCm(validDerivedArea.levelCm)} m (
+                    {validDerivedArea.levelCm} cm).
+                  </p>
+                  <small className="area-metric-note">
+                    Cálculo geodésico (WGS84) sobre os polígonos oficiais
+                    carregados. Representa apenas a extensão do cenário
+                    escolhido, não a área inundada no momento.
+                  </small>
+                </article>
+              )
             )}
+
+            {/* Interactive 11-stage Area Chart (Cataloged Snapshot, 0 extra SGB fetches) */}
+            <ScenarioAreaChart
+              mode={mapMode}
+              selectedLevelACm={levelCm}
+              selectedLevelBCm={mapMode === "compare" ? levelBCm : undefined}
+              onSelectSingleLevel={setLevel}
+              onSelectCompareLevel={handleChartSelectCompare}
+              catalogAreaDivergences={catalogAreaDivergences}
+            />
 
             {/* Real INEA Hydro Monitoring Card */}
             <HydroMonitoringCard
@@ -353,17 +703,55 @@ export function FloodDashboard() {
               </div>
 
               <div className="legend-list">
-                <div className="official-layer-legend">
-                  <i className="legend-swatch-flood" aria-hidden="true" />
-                  <div>
-                    <strong>Cenário oficial SGB (2024)</strong>
-                    <small>
-                      Extensão horizontal estimada para a cota selecionada. Não
-                      indica profundidade, dano, probabilidade ou risco
-                      individual.
-                    </small>
+                {mapMode === "compare" ? (
+                  <>
+                    <div className="official-layer-legend">
+                      <i className="legend-swatch-common" aria-hidden="true" />
+                      <div>
+                        <strong>Área comum (A ∩ B)</strong>
+                        <small>
+                          Extensão presente simultaneamente nas cotas{" "}
+                          {formatMetersFromCm(levelCm)} m e{" "}
+                          {formatMetersFromCm(levelBCm)} m (SGB 2024).
+                        </small>
+                      </div>
+                    </div>
+
+                    <div className="official-layer-legend">
+                      <i className="legend-swatch-only-a" aria-hidden="true" />
+                      <div>
+                        <strong>Exclusiva de A (A \ B)</strong>
+                        <small>
+                          Trechos presentes apenas na cota A (
+                          {formatMetersFromCm(levelCm)} m).
+                        </small>
+                      </div>
+                    </div>
+
+                    <div className="official-layer-legend">
+                      <i className="legend-swatch-only-b" aria-hidden="true" />
+                      <div>
+                        <strong>Exclusiva de B (B \ A)</strong>
+                        <small>
+                          Trechos presentes apenas na cota B (
+                          {formatMetersFromCm(levelBCm)} m).
+                        </small>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="official-layer-legend">
+                    <i className="legend-swatch-flood" aria-hidden="true" />
+                    <div>
+                      <strong>Cenário oficial SGB (2024)</strong>
+                      <small>
+                        Extensão horizontal estimada para a cota selecionada.
+                        Não indica profundidade, dano, probabilidade ou risco
+                        individual.
+                      </small>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="official-layer-legend">
                   <i className="legend-swatch-station" aria-hidden="true" />
