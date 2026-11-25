@@ -12,6 +12,11 @@ export function MethodologyModal({
   onClose,
 }: Readonly<MethodologyModalProps>) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -42,21 +47,20 @@ export function MethodologyModal({
       // Native Escape triggers 'cancel' on modal dialogs.
       // Prevent browser default closing so React state manages dismissal deterministically.
       e.preventDefault();
-      onClose();
+      onCloseRef.current();
     };
 
     const handleDialogClick = (e: MouseEvent) => {
       // A click directly on the dialog backdrop (outside the inner content box)
       if (e.target !== dialog) return;
       const rect = dialog.getBoundingClientRect();
-      const isInside = (
+      const isInside =
         rect.top <= e.clientY &&
         e.clientY <= rect.top + rect.height &&
         rect.left <= e.clientX &&
-        e.clientX <= rect.left + rect.width
-      );
+        e.clientX <= rect.left + rect.width;
       if (!isInside) {
-        onClose();
+        onCloseRef.current();
       }
     };
 
@@ -74,7 +78,7 @@ export function MethodologyModal({
         }
       }
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <dialog
@@ -86,10 +90,15 @@ export function MethodologyModal({
         <header className="methodology-modal-header">
           <div>
             <div className="modal-tag-row">
-              <span className="classification-pill">official_reference</span>
+              <span
+                className="data-origin-badge official"
+                data-classification="official_reference"
+              >
+                Cenário oficial SGB
+              </span>
               <span className="source-tag">SGB / CPRM · 2024</span>
             </div>
-            <h2 id="methodology-modal-title">Fonte e metodologia científica</h2>
+            <h2 id="methodology-modal-title">Fonte e metodologia</h2>
             <p className="methodology-modal-subtitle">
               Referencial hidrológico e cartográfico do Rio Pomba em Santo Antônio de Pádua, RJ
             </p>
@@ -108,9 +117,9 @@ export function MethodologyModal({
           <section className="modal-section">
             <h3>Estudo de referência oficial</h3>
             <p>
-              As manchas de inundação apresentadas no mapa são os polígonos oficiais
+              As manchas de inundação exibidas no mapa são os polígonos oficiais
               publicados pelo <strong>Serviço Geológico do Brasil (SGB / CPRM)</strong> no
-              trabalho:
+              estudo:
             </p>
             <blockquote className="modal-citation">
               <em>
@@ -119,9 +128,9 @@ export function MethodologyModal({
               (SGB, 2024).
             </blockquote>
             <p>
-              O produto hidrológico original contempla <strong>11 cenários modelados</strong> entre{" "}
-              <strong>300 cm (3,00 m)</strong> e <strong>550 cm (5,50 m)</strong>, com intervalos
-              regulares de 25 cm, disponibilizados via geosserviço oficial do SGB.
+              O mapeamento contempla <strong>11 cenários modelados</strong> entre{" "}
+              <strong>300 cm (3,00 m)</strong> e <strong>550 cm (5,50 m)</strong>, em intervalos
+              regulares de 25 cm, consultados diretamente do geosserviço oficial do SGB.
             </p>
             <a
               href="https://rigeo.sgb.gov.br/handle/doc/25035"
@@ -129,7 +138,7 @@ export function MethodologyModal({
               rel="noreferrer"
               className="modal-external-link"
             >
-              Acessar relatório técnico no repositório institucional RiGeo (SGB) ↗
+              Acessar relatório técnico no repositório RiGeo (SGB) ↗
             </a>
           </section>
 
@@ -139,7 +148,7 @@ export function MethodologyModal({
               <div className="data-box">
                 <span className="data-label">Estação de referência</span>
                 <strong className="data-val">Santo Antônio de Pádua II</strong>
-                <span className="data-sub">Código RHN: 58790002</span>
+                <span className="data-sub">Código RHN / ANA: 58790002</span>
               </div>
               <div className="data-box">
                 <span className="data-label">Zero da régua</span>
@@ -158,56 +167,52 @@ export function MethodologyModal({
               </div>
             </div>
             <p className="modal-note">
-              A altitude ortométrica exibida para cada cota é a soma da cota local lida na régua da estação
-              com o zero da régua (79,709 m), conforme publicado na documentação do SGB.
+              A altitude ortométrica exibida para cada cenário corresponde à soma da cota local na
+              régua da estação com o zero da régua (79,709 m), conforme o relatório do SGB.
             </p>
           </section>
 
           <section className="modal-section">
-            <h3>Semântica cartográfica e científica</h3>
+            <h3>Limites de interpretação e dados derivados</h3>
             <ul className="modal-bullets">
               <li>
-                <strong>Extensão, não profundidade:</strong> A mancha poligonal delimita a{" "}
+                <strong>Extensão, não profundidade:</strong> A mancha delimita a{" "}
                 <em>extensão horizontal estimada</em> da água para cada cota de referência. Ela{" "}
-                <strong>não indica lâmina d&apos;água (profundidade)</strong>, velocidade da correnteza nem
-                danos estruturais.
+                <strong>não indica profundidade</strong>, velocidade da correnteza, dano ou risco
+                individual a imóveis.
               </li>
               <li>
-                <strong>Não é previsão meteorológica nem alerta de evacuação:</strong> Os cenários
-                mostram o comportamento hidráulico estático modelado para cotas fixas, não uma estimativa de
-                quando ou se o rio atingirá determinado patamar.
+                <strong>Cenário estático, não situação atual:</strong> Selecionar uma cota no mapa
+                não significa que o rio esteja naquele nível no momento nem constitui previsão.
               </li>
               <li>
-                <strong>Independência de modelos:</strong> Esta camada representa exclusivamente a
-                referência oficial do SGB. Modelos numéricos experimentais próprios com Modelo Digital de
-                Elevação (MDE/DEM) permanecem concebidos como camadas e artefatos distintos e independentes.
+                <strong>Área da mancha selecionada (dado derivado):</strong> Calculada sobre os
+                polígonos oficiais efetivamente carregados pelo método geodésico no elipsoide WGS84
+                com união topológica prévia (evitando dupla contagem de partes sobrepostas e
+                subtraindo ilhas/anéis internos). Representa apenas a área do cenário escolhido.
               </li>
               <li>
-                <strong>Régua INEA vs. Cota SGB:</strong> O nível da estação de monitoramento do INEA
-                (exibido no painel de monitoramento observado, código INEA 213042120) não é comparado
-                diretamente nem associado automaticamente às manchas SGB (estação RHN 58790002): as
-                estações possuem localizações físicas distintas (~5,9 km), o zero da régua e o datum
-                do INEA ainda não foram identificados e a equivalência entre as referências não foi
-                estabelecida (crosswalk não validado).
+                <strong>Régua INEA vs. Cota SGB:</strong> O monitoramento do INEA (estação
+                213042120 / ANA FLU 58774000, ~6 km a montante do centro) não aciona nem altera
+                automaticamente a mancha SGB (estação 58790002), pois o zero da régua e o datum do
+                INEA ainda não foram confirmados e a equivalência entre as estações não foi
+                estabelecida.
               </li>
             </ul>
           </section>
 
           <section className="modal-section modal-disclaimer-box">
-            <h3>Caráter acadêmico e experimental</h3>
+            <h3>Aviso institucional</h3>
             <p>
-              O <strong>Pádua FloodSim</strong> é uma iniciativa acadêmica voltada à pesquisa em modelagem
-              hidrológica, cartografia computacional e visualização científica.
+              <strong>
+                Esta plataforma não substitui os alertas e as orientações dos órgãos oficiais.
+              </strong>
             </p>
             <p>
-              <strong>Nunca utilize estas simulações para tomada de decisão em situações de emergência.</strong>{" "}
-              Para alertas hidrológicos vigentes, instruções de evacuação e monitoramento oficial, consulte
-              sempre a <strong>Defesa Civil Municipal de Santo Antônio de Pádua</strong>, o{" "}
+              O <strong>Pádua FloodSim</strong> é uma iniciativa acadêmica de consulta hidrológica e
+              cartográfica. Em situações de chuva forte ou cheia do Rio Pomba, acompanhe sempre a{" "}
+              <strong>Defesa Civil Municipal de Santo Antônio de Pádua</strong>, o{" "}
               <strong>INEA</strong> e os boletins do <strong>SGB</strong>.
-            </p>
-            <p className="modal-internal-docs">
-              Documentação técnica interna detalhada: <code>docs/ACADEMIC_METHODOLOGY.md</code> e{" "}
-              <code>docs/DATA_SOURCES.md</code>.
             </p>
           </section>
         </div>

@@ -7,11 +7,14 @@ import {
 } from "@/lib/hydro/ineaParser";
 import {
   useHydroMonitoring,
+  type HydroMonitoringState,
   type HydroViewState,
 } from "@/lib/hydro/useHydroMonitoring";
 
 export interface HydroMonitoringCardProps {
   readonly cardRef?: RefObject<HTMLElement | null>;
+  readonly monitoring?: HydroMonitoringState;
+  readonly id?: string;
 }
 
 const BRT_DATE_FORMATTER = new Intl.DateTimeFormat("pt-BR", {
@@ -42,29 +45,34 @@ function formatRainMm(valueMm: number): string {
 function statusLabel(state: HydroViewState): string {
   switch (state) {
     case "loading":
-      return "Carregando...";
+      return "Consultando...";
     case "fresh":
       return "Atualizado";
     case "stale":
       return "Desatualizado";
     case "unavailable":
-      return "Fonte indisponível";
+      return "Indisponível";
     case "invalid":
       return "Dado inválido";
   }
 }
 
-export function HydroMonitoringCard({
+function HydroMonitoringCardView({
   cardRef,
-}: Readonly<HydroMonitoringCardProps>) {
+  monitoring,
+  id = "realtime-card",
+}: Readonly<{
+  cardRef?: RefObject<HTMLElement | null>;
+  monitoring: HydroMonitoringState;
+  id?: string;
+}>) {
   const {
     viewState,
     data,
     effectiveAgeMinutes,
     isRefreshing,
-    errorMessage,
     refreshNow,
-  } = useHydroMonitoring();
+  } = monitoring;
 
   const hasValidStage =
     (viewState === "fresh" || viewState === "stale") &&
@@ -87,12 +95,12 @@ export function HydroMonitoringCard({
   const overflowCm = data?.station.gaugeReference.overflowStageCm ?? 500;
 
   let trendText = "Não calculável";
-  let trendSubtext = "sem par válido ~1 h";
+  let trendSubtext = "sem par válido na última hora";
   let trendClassName = "";
 
   if (viewState === "loading") {
     trendText = "Consultando...";
-    trendSubtext = "aguardando série recente";
+    trendSubtext = "aguardando leitura recente";
   } else if (viewState === "unavailable" || viewState === "invalid") {
     trendText = "Indisponível";
     trendSubtext = "sem leitura válida";
@@ -113,23 +121,31 @@ export function HydroMonitoringCard({
     }
   }
 
+  const alertMessage =
+    viewState === "stale"
+      ? "A última medição recebida tem mais de 45 minutos. Consulte também a página oficial do INEA."
+      : viewState === "invalid"
+        ? "Não foi possível validar a resposta recebida da fonte. Consulte o monitoramento oficial do INEA."
+        : "Consulta automática indisponível no momento. Consulte o monitoramento oficial do INEA.";
+
   return (
     <article
       ref={cardRef}
-      id="realtime-card"
+      id={id}
       tabIndex={-1}
       className="card realtime"
-      aria-labelledby="hydro-card-title"
+      data-classification="observed"
+      aria-labelledby={`${id}-title`}
     >
       <div className="card-heading hydro-heading">
         <div>
-          <strong id="hydro-card-title">Monitoramento hidrológico</strong>
+          <strong id={`${id}-title`}>Monitoramento do Rio Pomba</strong>
           <div className="hydro-tag-row">
             <span
-              className="classification-pill"
-              title="Classificação de proveniência: leitura observada em estação oficial"
+              className="data-origin-badge observed"
+              data-classification="observed"
             >
-              observed
+              Dado observado · INEA
             </span>
             <span
               className={`hydro-status-pill ${viewState}`}
@@ -143,15 +159,15 @@ export function HydroMonitoringCard({
       </div>
 
       <h2 className="hydro-station-title">
-        Rio Pomba · Estação {stationName}
+        Estação {stationName}
       </h2>
       <p className="hydro-station-meta">
-        INEA — Alerta de Cheias · Cód. {stationCode}
+        INEA — Alerta de Cheias · Cód. {stationCode} (ANA FLU 58774000)
       </p>
 
       <div className="river-grid">
         <div>
-          <span>Nível observado</span>
+          <span>Nível do rio</span>
           {viewState === "loading" ? (
             <strong className="hydro-value-muted">Consultando...</strong>
           ) : stageCm !== null ? (
@@ -165,7 +181,7 @@ export function HydroMonitoringCard({
         </div>
 
         <div>
-          <span>Tendência recente</span>
+          <span>Tendência observada</span>
           <strong className={trendClassName}>{trendText}</strong>
           <em className="hydro-cell-sub">{trendSubtext}</em>
         </div>
@@ -179,8 +195,8 @@ export function HydroMonitoringCard({
           </strong>
           <em className="hydro-cell-sub">
             {effectiveAgeMinutes !== null
-              ? `há ${effectiveAgeMinutes} min · cadência 15 min`
-              : "fuso America/Sao_Paulo"}
+              ? `há ${effectiveAgeMinutes} min · leituras a cada 15 min`
+              : "horário de Brasília"}
           </em>
         </div>
 
@@ -192,14 +208,16 @@ export function HydroMonitoringCard({
             </time>
           </strong>
           <em className="hydro-cell-sub">
-            atualização automática a cada 5 min
+            verificação automática a cada 5 min
           </em>
         </div>
       </div>
 
       {availableRain.length > 0 && (
         <div className="hydro-rain-box" aria-label="Chuva acumulada observada">
-          <span className="hydro-rain-title">Chuva observada (estação {stationCode})</span>
+          <span className="hydro-rain-title">
+            Chuva acumulada (estação {stationCode})
+          </span>
           <div className="hydro-rain-grid">
             {availableRain.map((rain) => (
               <div key={rain.window} className="hydro-rain-chip">
@@ -215,19 +233,14 @@ export function HydroMonitoringCard({
         viewState === "unavailable" ||
         viewState === "invalid") && (
         <p className={`hydro-condition-alert ${viewState}`} role="status">
-          {viewState === "stale"
-            ? data?.message ||
-              "Leitura fora da janela recente de atualização (acima de 45 min)."
-            : errorMessage ||
-              data?.message ||
-              "Leitura observada indisponível no momento."}
+          {alertMessage}
         </p>
       )}
 
       <p className="hydro-gauge-ref">
-        Referência local INEA: atenção (80%) {formatMetersFromCm(attentionCm)} m ·
+        Cotas de referência na régua INEA: atenção {formatMetersFromCm(attentionCm)} m ·
         transbordo {formatMetersFromCm(overflowCm)} m (zero da régua e datum
-        ainda não identificados).
+        vertical ainda não confirmados).
       </p>
 
       <div className="hydro-actions">
@@ -236,7 +249,7 @@ export function HydroMonitoringCard({
           className="hydro-refresh-btn"
           onClick={refreshNow}
           disabled={isRefreshing}
-          title="Consultar novamente o serviço de monitoramento observado"
+          title="Consultar novamente o monitoramento do INEA"
         >
           {isRefreshing ? "Atualizando..." : "Atualizar leitura"}
         </button>
@@ -246,18 +259,52 @@ export function HydroMonitoringCard({
           target="_blank"
           rel="noreferrer"
         >
-          Fonte oficial INEA ({stationCode}) ↗
+          Monitoramento oficial INEA ({stationCode}) ↗
         </a>
       </div>
 
       <small>
-        <strong>Independência científica:</strong> Leitura observada na estação
-        INEA {stationCode} (-21,5111°, -42,2075°). Não altera automaticamente a
-        mancha oficial SGB (estação RHN 58790002): as estações possuem
-        localizações físicas distintas, o zero da régua e o datum do INEA ainda
-        não foram identificados e a equivalência entre as referências não foi
-        estabelecida (crosswalk não validado).
+        <strong>Separação das referências:</strong> esta medição é feita na
+        estação do INEA (~6 km a montante do centro) e não altera
+        automaticamente o cenário exibido no mapa (baseado na estação SGB/ANA
+        58790002), pois o zero da régua e o datum do INEA ainda não foram
+        identificados e a equivalência entre as referências não foi
+        estabelecida.
       </small>
     </article>
+  );
+}
+
+export function HydroMonitoringCard({
+  cardRef,
+  monitoring,
+  id,
+}: Readonly<HydroMonitoringCardProps>) {
+  if (monitoring) {
+    return (
+      <HydroMonitoringCardView
+        cardRef={cardRef}
+        monitoring={monitoring}
+        id={id}
+      />
+    );
+  }
+  return <StandaloneHydroMonitoringCard cardRef={cardRef} id={id} />;
+}
+
+function StandaloneHydroMonitoringCard({
+  cardRef,
+  id,
+}: Readonly<{
+  cardRef?: RefObject<HTMLElement | null>;
+  id?: string;
+}>) {
+  const monitoring = useHydroMonitoring();
+  return (
+    <HydroMonitoringCardView
+      cardRef={cardRef}
+      monitoring={monitoring}
+      id={id}
+    />
   );
 }
