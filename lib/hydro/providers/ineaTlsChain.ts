@@ -41,8 +41,7 @@ export const SECTIGO_DV_R36_METADATA = {
   validToIso: "2036-03-21T23:59:59Z",
   fingerprint256:
     "8C:54:C3:34:B6:6B:A4:E4:26:77:2A:F4:A3:F9:13:6C:19:A1:AE:C7:29:FD:B2:8C:53:5C:07:A5:A4:EF:22:E0",
-  officialDownloadUrl:
-    "http://crt.sectigo.com/SectigoPublicServerAuthenticationCADVR36.crt",
+  officialReferenceUrl: "https://crt.sh/?d=4267304690",
 } as const;
 
 export const SECTIGO_DV_R36_INTERMEDIATE_PEM = [
