@@ -186,18 +186,21 @@ export function MethodologyModal({
                 não significa que o rio esteja naquele nível no momento nem constitui previsão.
               </li>
               <li>
-                <strong>Área da mancha selecionada (dado derivado):</strong> Calculada sobre os
-                polígonos oficiais efetivamente carregados por aproximação numérica em latitude
-                autálica no elipsoide WGS84 com união topológica prévia (evitando dupla contagem de
-                partes sobrepostas, subtraindo ilhas/anéis internos e falhando fechado em caso de
-                geometria inválida). Representa apenas a área do cenário escolhido.
+                <strong>Área da mancha selecionada e comparação topológica (dado derivado):</strong>{" "}
+                Calculadas sobre os polígonos oficiais efetivamente consultados por aproximação
+                numérica em latitude autálica no elipsoide WGS84 com união e operações topológicas
+                reais (<code>polygon-clipping</code>), distinguindo área comum (A ∩ B), exclusiva de
+                A (A \ B) e exclusiva de B (B \ A) sem pressupor aninhamento perfeito, com validação
+                de conservação de área e falha fechada em caso de geometria inválida. O gráfico das
+                11 cotas utiliza o snapshot catalogado em 25/11/2026 com hashes registrados e sinaliza
+                explicitamente qualquer divergência frente à geometria consultada ao vivo.
               </li>
               <li>
-                <strong>Régua INEA vs. Cota SGB:</strong> O monitoramento do INEA (estação
-                213042120 / ANA FLU 58774000, ~6 km a montante do centro) não aciona nem altera
-                automaticamente a mancha SGB (estação 58790002), pois o zero da régua e o datum do
-                INEA ainda não foram confirmados e a equivalência entre as estações não foi
-                estabelecida.
+                <strong>Régua INEA vs. Cota de referência SGB — Pádua II (58790002):</strong> O
+                monitoramento do INEA (estação 213042120 / ANA FLU 58774000, ~6 km a montante do
+                centro) não aciona nem altera automaticamente a mancha SGB (estação 58790002), pois
+                o zero da régua e o datum do INEA ainda não foram confirmados e a equivalência entre
+                as estações não foi estabelecida.
               </li>
             </ul>
           </section>

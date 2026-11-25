@@ -6,7 +6,13 @@ import {
   formatStationIdentifiers,
 } from "@/lib/hydro/stations";
 import type { HydroMonitoringState } from "@/lib/hydro/useHydroMonitoring";
-import { SGB_AREA_METHOD_ID } from "@/lib/sgb/area";
+import { SGB_AREA_METHOD_ID, formatHectares } from "@/lib/sgb/area";
+import {
+  SGB_AREA_SNAPSHOT_BY_LEVEL,
+  SGB_AREA_SNAPSHOT_DATE,
+  SGB_REFERENCE_STATION_LABEL,
+} from "@/lib/sgb/areaCatalog";
+import { SGB_COMPARISON_METHOD_ID } from "@/lib/sgb/compare";
 import {
   SGB_FLOOD_LEVELS_CM,
   SGB_STAGE_DISCHARGES_M3S,
@@ -270,7 +276,7 @@ export function DataSourcesSection({
 
           <article className="card">
             <div className="card-heading">
-              <strong>3. Área da mancha selecionada</strong>
+              <strong>3. Área derivada e comparação topológica</strong>
               <span
                 className="data-origin-badge derived"
                 data-classification="derived"
@@ -279,30 +285,35 @@ export function DataSourcesSection({
               </span>
             </div>
             <p className="section-lead">
-              Métrica espacial calculada dinamicamente sobre os polígonos
-              oficiais do SGB efetivamente carregados no mapa.
+              Métricas espaciais calculadas sobre os polígonos oficiais do SGB
+              consultados no mapa, acompanhadas do snapshot catalogado (
+              {SGB_AREA_SNAPSHOT_DATE}) para o gráfico das 11 cotas.
             </p>
             <dl className="meta-list">
               <div>
-                <dt>Método</dt>
+                <dt>Métodos registrados</dt>
                 <dd>
-                  Aproximação numérica de área geodésica em latitude autálica no
-                  elipsoide WGS84 com união topológica prévia (
-                  <code>{SGB_AREA_METHOD_ID}</code>).
+                  Área individual (<code>{SGB_AREA_METHOD_ID}</code>) e
+                  sobreposição topológica A ∩ B, A \ B, B \ A (
+                  <code>{SGB_COMPARISON_METHOD_ID}</code>) via{" "}
+                  <code>polygon-clipping</code>, com validação de conservação de
+                  área (&lt;= 0,01% ou 1 m²).
                 </dd>
               </div>
               <div>
-                <dt>Tratamento geométrico</dt>
+                <dt>Snapshot vs. geometria consultada</dt>
                 <dd>
-                  Suporte a Polygon e MultiPolygon, subtração de anéis internos
-                  (ilhas) e eliminação de dupla contagem em partes sobrepostas.
+                  O gráfico das 11 cotas utiliza o snapshot catalogado com hashes
+                  SHA-256 ({SGB_AREA_SNAPSHOT_DATE}) para evitar 11 requisições
+                  na abertura. Caso a geometria consultada divirja do snapshot,
+                  a divergência é exibida explicitamente sem misturar valores.
                 </dd>
               </div>
               <div>
                 <dt>Interpretação</dt>
                 <dd>
-                  Indica apenas a extensão horizontal do cenário SGB selecionado;
-                  não representa área atualmente inundada.
+                  Indica apenas a extensão horizontal dos cenários estáticos SGB;
+                  não representa área atualmente inundada nem profundidade.
                 </dd>
               </div>
             </dl>
@@ -361,9 +372,10 @@ export function DataSourcesSection({
             </span>
           </div>
           <p className="section-lead">
-            Valores publicados no relatório técnico SGB (2024) para a estação
-            Santo Antônio de Pádua II (RHN 58790002). Selecione qualquer cota
-            para visualizá-la no mapa.
+            {SGB_REFERENCE_STATION_LABEL}. Valores hidráulicos publicados no
+            relatório técnico SGB (2024) e área derivada do snapshot catalogado
+            ({SGB_AREA_SNAPSHOT_DATE}). Não confundir com a leitura da estação
+            INEA.
           </p>
           <div className="table-scroll">
             <table className="stages-table">
@@ -372,6 +384,7 @@ export function DataSourcesSection({
                   <th>Cota na régua</th>
                   <th>Altitude ortométrica</th>
                   <th>Vazão publicada (SGB)</th>
+                  <th>Área derivada (snapshot)</th>
                   <th>Ação</th>
                 </tr>
               </thead>
@@ -386,6 +399,12 @@ export function DataSourcesSection({
                     </td>
                     <td>
                       {SGB_STAGE_DISCHARGES_M3S[cm].toLocaleString("pt-BR")} m³/s
+                    </td>
+                    <td>
+                      {formatHectares(
+                        SGB_AREA_SNAPSHOT_BY_LEVEL[cm].areaHectares,
+                        2,
+                      )}
                     </td>
                     <td>
                       <button
