@@ -18,6 +18,14 @@ data/cache/**
 !data/interim/.gitkeep
 !data/cache/.gitkeep
 
+# Hydrological research datasets: keep bulk processed series out of Git
+data/processed/hydrology/**
+!data/processed/hydrology/.gitkeep
+
+# Python bytecode caches
+__pycache__/
+*.py[cod]
+
 # Generated from the pinned maplibre-gl package by install/dev/build
 /public/maplibre/
 /test-results/

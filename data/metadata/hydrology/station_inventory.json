@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "stations": [
+    {
+      "code": "58790002",
+      "name": "SANTO ANTÔNIO DE PÁDUA II",
+      "role": "priority_target",
+      "coordinates": {
+        "latitude": -21.5422,
+        "longitude": -42.1806,
+        "crs": "EPSG:4674 (SIRGAS 2000 / WGS84 geographic)"
+      },
+      "river": "RIO POMBA",
+      "basin_position": "target_urban_section (drainage area 8,210 km2)",
+      "institution": "ANA / SGB-CPRM",
+      "operator_sigla": "SGB-CPRM",
+      "responsible_sigla": "ANA",
+      "telemetric_period_start_metadata": "2001-02-01 00:00:00",
+      "temporal_frequency_nominal_min": 15,
+      "units": {
+        "stage": "cm (INEA raw m normalized to cm)",
+        "discharge": "m3/s",
+        "rainfall": "mm"
+      },
+      "gauge_reference": "RHN-58790002",
+      "gauge_zero_m": 79.709,
+      "vertical_datum": "hgeoHNOR_IMBITUBA",
+      "license": "Public Brazilian National Hydrometeorological Network (RHN/ANA) telemetry and series; attribution to ANA and SGB-CPRM required.",
+      "consumption_and_redistribution": "Metadata, QC summaries, and manifest checksums versioned in Git; large raw XML/processed CSV kept out of Git per repository policy.",
+      "notes": "Primary urban reference gauge used by SGB 2024 flood study (zero = 79.709 m hgeoHNOR_IMBITUBA)."
+    },
+    {
+      "code": "58788600",
+      "name": "UHE BARRA DO BRAÚNA JUSANTE",
+      "role": "priority_upstream",
+      "coordinates": {
+        "latitude": -21.4453,
+        "longitude": -42.3919,
+        "crs": "EPSG:4674 (SIRGAS 2000 / WGS84 geographic)"
+      },
+      "river": "RIO POMBA",
+      "basin_position": "upstream_hydroelectric_tailrace (Recreio/MG)",
+      "institution": "BRAÚNA (UHE Barra do Braúna) via ANA/ANEEL RHN",
+      "operator_sigla": "BRAÚNA",
+      "responsible_sigla": "BRAÚNA",
+      "telemetric_period_start_metadata": "2014-05-01 00:00:00",
+      "temporal_frequency_nominal_min": 60,
+      "units": {
+        "stage": "cm (INEA raw m normalized to cm)",
+        "discharge": "m3/s",
+        "rainfall": "mm"
+      },
+      "gauge_reference": "RHN-58788600",
+      "gauge_zero_m": null,
+      "vertical_datum": null,
+      "license": "Public RHN telemetric series operated by power-sector concessionaire (BRAÚNA) under Res. ANA/ANEEL; attribution required.",
+      "consumption_and_redistribution": "Keep raw/bulk series out of Git; document signal-quality caveats and flatlines transparently.",
+      "notes": "Referenced by SGB SAH-Pomba 2021/2022 studies as 8h upstream predictor; requires flatline screening."
+    },
+    {
+      "code": "58770000",
+      "name": "CATAGUASES",
+      "role": "complementary_upstream",
+      "coordinates": {
+        "latitude": -21.3894,
+        "longitude": -42.6964,
+        "crs": "EPSG:4674 (SIRGAS 2000 / WGS84 geographic)"
+      },
+      "river": "RIO POMBA",
+      "basin_position": "upstream_sgb_reference (Cataguases/MG, drainage area 5,880 km2)",
+      "institution": "ANA / SGB-CPRM",
+      "operator_sigla": "SGB-CPRM",
+      "responsible_sigla": "ANA",
+      "telemetric_period_start_metadata": "1996-04-01 00:00:00",
+      "temporal_frequency_nominal_min": 15,
+      "units": {
+        "stage": "cm (INEA raw m normalized to cm)",
+        "discharge": "m3/s",
+        "rainfall": "mm"
+      },
+      "gauge_reference": "RHN-58770000",
+      "gauge_zero_m": null,
+      "vertical_datum": null,
+      "license": "Public RHN telemetry operated by SGB-CPRM; attribution to ANA and SGB-CPRM required.",
+      "consumption_and_redistribution": "Metadata and analytical summaries versioned; bulk raw/CSV excluded from Git.",
+      "notes": "Scientifically justified complementary upstream station (SGB-CPRM operated) to evaluate basin travel and cross-check 58788600 flatlines."
+    },
+    {
+      "code": "INEA-213042120",
+      "name": "Santo Antônio de Pádua (INEA)",
+      "role": "local_audit_overlap_only",
+      "coordinates": {
+        "latitude": null,
+        "longitude": null,
+        "crs": "undocumented_on_endpoint"
+      },
+      "river": "Rio Pomba",
+      "basin_position": "urban_padua_inea_monitoring",
+      "institution": "INEA (Instituto Estadual do Ambiente - RJ)",
+      "operator_sigla": "INEA (Instituto Estadual do Ambiente - RJ)",
+      "responsible_sigla": "INEA (Instituto Estadual do Ambiente - RJ)",
+      "telemetric_period_start_metadata": null,
+      "temporal_frequency_nominal_min": 15,
+      "units": {
+        "stage": "cm (INEA raw m normalized to cm)",
+        "discharge": null,
+        "rainfall": "mm"
+      },
+      "gauge_reference": "INEA-213042120",
+      "gauge_zero_m": null,
+      "vertical_datum": null,
+      "license": "Public INEA Alerta de Cheias 10-day rolling XML feed; no bulk multi-year archive exposed on endpoint; terms/redistribution for continuous ingestion pending confirmation.",
+      "consumption_and_redistribution": "Do not mirror bulk feeds; store minimal audit snapshot locally in raw/ and publish only summary metrics.",
+      "notes": "URL uses 21304212020.html/.xml while XML attribute reports codigo=213042120. Overflow reported as 5.00 m on INEA scale; NOT equivalent to RHN 58790002."
+    }
+  ],
+  "padua_pluviometers_inventory": [
+    {
+      "code": "2141094",
+      "name": "SANTO ANTÔNIO DE PÁDUA",
+      "municipality": "SANTO ANTÔNIO DE PÁ",
+      "operator": "INFOPER",
+      "telemetric": true,
+      "operating": true,
+      "latitude": -21.5111,
+      "longitude": -42.2075,
+      "scale_start": null,
+      "telemetric_start": "2011-12-01 00:00:00"
+    },
+    {
+      "code": "2142049",
+      "name": "SANTO ANTÔNIO DE PÁDUA",
+      "municipality": "SANTO ANTÔNIO DE PÁ",
+      "operator": "INMET",
+      "telemetric": false,
+      "operating": true,
+      "latitude": -21.5422,
+      "longitude": -42.1806,
+      "scale_start": null,
+      "telemetric_start": null
+    },
+    {
+      "code": "2142058",
+      "name": "SANTO ANTÔNIO DE PÁDUA",
+      "municipality": "SANTO ANTÔNIO DE PÁ",
+      "operator": "SGB-CPRM",
+      "telemetric": false,
+      "operating": true,
+      "latitude": -21.5419,
+      "longitude": -42.1825,
+      "scale_start": null,
+      "telemetric_start": null
+    },
+    {
+      "code": "2142067",
+      "name": "SANTO ANTÔNIO DE PÁDUA II",
+      "municipality": "SANTO ANTÔNIO DE PÁ",
+      "operator": "SGB-CPRM",
+      "telemetric": true,
+      "operating": true,
+      "latitude": -21.5419,
+      "longitude": -42.1825,
+      "scale_start": null,
+      "telemetric_start": "2001-02-01 00:00:00"
+    },
+    {
+      "code": "2142083",
+      "name": "PONTE PARAOQUENA",
+      "municipality": "SANTO ANTÔNIO DE PÁ",
+      "operator": "INFOPER",
+      "telemetric": true,
+      "operating": true,
+      "latitude": -21.4953,
+      "longitude": -42.2533,
+      "scale_start": null,
+      "telemetric_start": "2012-02-01 00:00:00"
+    }
+  ],
+  "rio_pomba_telemetric_station_count": 21
+}

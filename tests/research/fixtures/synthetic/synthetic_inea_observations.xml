@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SYNTHETIC TEST FIXTURE (NOT REAL OBSERVATIONS) -->
+<estacao codigo="213042120" tipo="Plu/Flu">
+  <dados_ultimos_10_dias>
+    <registro>
+      <nome_estacao>Santo Antônio de Pádua (SYNTHETIC)</nome_estacao>
+      <data_hora>24/11/2026 12:15</data_hora>
+      <chuva_ultimo>0.0</chuva_ultimo>
+      <chuva_1h>0.0</chuva_1h>
+      <chuva_4h>0.0</chuva_4h>
+      <chuva_24h>1,2</chuva_24h>
+      <chuva_96h>4.6</chuva_96h>
+      <chuva_30d>17.0</chuva_30d>
+      <nivel_rio_ultimo>4,17</nivel_rio_ultimo>
+    </registro>
+    <registro>
+      <nome_estacao>Santo Antônio de Pádua (SYNTHETIC)</nome_estacao>
+      <data_hora>24/11/2026 12:00</data_hora>
+      <chuva_ultimo>Dado Nulo</chuva_ultimo>
+      <chuva_1h>0.0</chuva_1h>
+      <chuva_4h>0.0</chuva_4h>
+      <chuva_24h>0.0</chuva_24h>
+      <chuva_96h>0.0</chuva_96h>
+      <chuva_30d>0.0</chuva_30d>
+      <nivel_rio_ultimo>0.0</nivel_rio_ultimo>
+    </registro>
+  </dados_ultimos_10_dias>
+</estacao>

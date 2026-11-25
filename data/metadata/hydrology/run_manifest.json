@@ -1,0 +1,874 @@
+{
+  "schema_version": 1,
+  "pipeline_version": "1.0.0",
+  "parser_version": "1.0.0",
+  "mode": "offline",
+  "generated_at_utc": "2026-11-25T03:24:12Z",
+  "git_commit": "054ff6f47a0456d6d4de7382e22cc4a8ce97b0be",
+  "environment": {
+    "python_version": "3.14.7",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "dependencies": "pure-python-stdlib"
+  },
+  "parameters": {
+    "start_date": "2020-01-01",
+    "end_date": "2026-11-24",
+    "calibration_end_utc": "2022-12-31T23:59:59Z",
+    "evaluation_start_utc": "2023-01-01T00:00:00Z",
+    "event_threshold_cm": 240.0,
+    "flatline_min_hours": 24.0
+  },
+  "raw_inputs": [
+    {
+      "relative_path": "data/raw/hydrology/ana/inventory/rio_pomba_telemetric.xml",
+      "station_id": "SUBBACIA_58_RIO_POMBA",
+      "dataset_kind": "inventory",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/HidroInventario?codEstDE=&codEstATE=&tpEst=&nmEst=&nmRio=RIO+POMBA&codSubBacia=58&codBacia=&nmMunicipio=&nmEstado=&sgResp=&sgOper=&telemetrica=1",
+      "retrieved_at": "2026-11-25T03:13:10Z",
+      "bytes": 79775,
+      "sha256": "393580853abde0b730260c3f489c026533060bcbb658aaec141ffb17d57088c8"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/inventory/padua_pluviometers.xml",
+      "station_id": "PADUA_PLU",
+      "dataset_kind": "inventory",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/HidroInventario?codEstDE=&codEstATE=&tpEst=2&nmEst=&nmRio=&codSubBacia=58&codBacia=&nmMunicipio=SANTO+ANT%C3%94NIO&nmEstado=&sgResp=&sgOper=&telemetrica=",
+      "retrieved_at": "2026-11-25T03:13:12Z",
+      "bytes": 24028,
+      "sha256": "830ca0513549d227b27eafec86eb03ad19fdd05110b6639e565407b8861b672b"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2020-01-01_2020-03-30.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=01%2F01%2F2020&dataFim=30%2F03%2F2020",
+      "retrieved_at": "2026-11-25T03:13:13Z",
+      "bytes": 2746729,
+      "sha256": "f92775897d21d93834a39630beaf998ba718c7256081c189d5e28f78fbf83ada"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2020-03-31_2020-06-28.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=31%2F03%2F2020&dataFim=28%2F06%2F2020",
+      "retrieved_at": "2026-11-25T03:13:14Z",
+      "bytes": 2742912,
+      "sha256": "a01ac6e7d4e17865f22f023d60a699e8113740dc48dc276fc5821318f3198f08"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2020-06-29_2020-09-26.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=29%2F06%2F2020&dataFim=26%2F09%2F2020",
+      "retrieved_at": "2026-11-25T03:13:15Z",
+      "bytes": 2727717,
+      "sha256": "255764bb5328d0f014ff1f8443b08d503d8bf4e9adb51f865f85acd22ecfe87a"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2020-09-27_2020-12-25.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=27%2F09%2F2020&dataFim=25%2F12%2F2020",
+      "retrieved_at": "2026-11-25T03:13:16Z",
+      "bytes": 2275581,
+      "sha256": "f088c10cc0fd9a0ff87c5567e5392421c8218150d578e22c295f063737e9b456"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2020-12-26_2021-03-25.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=26%2F12%2F2020&dataFim=25%2F03%2F2021",
+      "retrieved_at": "2026-11-25T03:13:17Z",
+      "bytes": 2742128,
+      "sha256": "9f9c5a08bba9b01529848f3e081577737e49634da9c05d17740260c228460fe1"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2021-03-26_2021-06-23.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=26%2F03%2F2021&dataFim=23%2F06%2F2021",
+      "retrieved_at": "2026-11-25T03:13:18Z",
+      "bytes": 2699690,
+      "sha256": "8b107bc926bd126343463478004b283655cb1f769349357452d87676de5b3b41"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2021-06-24_2021-09-21.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=24%2F06%2F2021&dataFim=21%2F09%2F2021",
+      "retrieved_at": "2026-11-25T03:13:19Z",
+      "bytes": 2617721,
+      "sha256": "4ea6b5e90f5366ac43f43348a3e848f72ed2f94426f386ba1f26b9690fd94761"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2021-09-22_2021-12-20.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=22%2F09%2F2021&dataFim=20%2F12%2F2021",
+      "retrieved_at": "2026-11-25T03:13:20Z",
+      "bytes": 2732338,
+      "sha256": "7822aab4dc1641046929f16da083aeac8c8b1de88e8183051f8e7709c4c5274f"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2021-12-21_2022-03-20.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=21%2F12%2F2021&dataFim=20%2F03%2F2022",
+      "retrieved_at": "2026-11-25T03:13:21Z",
+      "bytes": 2611591,
+      "sha256": "d3f53ad17e42f8f1037be1ec2e15ee2a2e77b2e60b2d6e450bdd1e25f128ad6d"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2022-03-21_2022-06-18.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=21%2F03%2F2022&dataFim=18%2F06%2F2022",
+      "retrieved_at": "2026-11-25T03:13:22Z",
+      "bytes": 2701621,
+      "sha256": "3225e22fa3b129d921cc5c02a96995eddcbff87cd6b1b3fa2fe1c817ffbf2645"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2022-06-19_2022-09-16.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=19%2F06%2F2022&dataFim=16%2F09%2F2022",
+      "retrieved_at": "2026-11-25T03:13:22Z",
+      "bytes": 2727768,
+      "sha256": "09e64b6937b639b816984b4886dfc95c09d65e29597e0bebe21a9d63af5823d5"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2022-09-17_2022-12-15.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=17%2F09%2F2022&dataFim=15%2F12%2F2022",
+      "retrieved_at": "2026-11-25T03:13:23Z",
+      "bytes": 2719857,
+      "sha256": "038ff06bdf3705947862629789f15259dccf80caee831bc0e292eec0c3761611"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2022-12-16_2023-03-15.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=16%2F12%2F2022&dataFim=15%2F03%2F2023",
+      "retrieved_at": "2026-11-25T03:13:24Z",
+      "bytes": 2741357,
+      "sha256": "820e0cf34fba3e73690e335e56884a318e157906d5123f26a2b5a29a35f54d62"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2023-03-16_2023-06-13.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=16%2F03%2F2023&dataFim=13%2F06%2F2023",
+      "retrieved_at": "2026-11-25T03:13:25Z",
+      "bytes": 2739157,
+      "sha256": "832e41edf8594895b1915ed630143eeb13204a267bf665e639f08051a4660574"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2023-06-14_2023-09-11.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=14%2F06%2F2023&dataFim=11%2F09%2F2023",
+      "retrieved_at": "2026-11-25T03:13:26Z",
+      "bytes": 2730629,
+      "sha256": "e831dfaf7d324ca73db2033a162aab9661aff6517c35b5d5ff73fbadfd6dc820"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2023-09-12_2023-12-10.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=12%2F09%2F2023&dataFim=10%2F12%2F2023",
+      "retrieved_at": "2026-11-25T03:13:27Z",
+      "bytes": 2671068,
+      "sha256": "ad5c6acda9f38e6eda215262deacfcfb0f9e4668c1f76ad963996c1c730cabed"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2023-12-11_2024-03-09.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=11%2F12%2F2023&dataFim=09%2F03%2F2024",
+      "retrieved_at": "2026-11-25T03:13:28Z",
+      "bytes": 2717968,
+      "sha256": "8906c4279c436f26a211b001b2347468e71b106c860aea3fd57e6118ac494b4a"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2024-03-10_2024-06-07.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=10%2F03%2F2024&dataFim=07%2F06%2F2024",
+      "retrieved_at": "2026-11-25T03:13:29Z",
+      "bytes": 2734908,
+      "sha256": "2b17c6e97f8862e0d3c98b4e6140d5652e8553e6fc87bf604a0e5a046a86578b"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2024-06-08_2024-09-05.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=08%2F06%2F2024&dataFim=05%2F09%2F2024",
+      "retrieved_at": "2026-11-25T03:13:30Z",
+      "bytes": 2727014,
+      "sha256": "72f29a535cb1c782437b8d79c64a98ecbf2c33ce7786bb82eed937e218d19f10"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2024-09-06_2024-12-04.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=06%2F09%2F2024&dataFim=04%2F12%2F2024",
+      "retrieved_at": "2026-11-25T03:13:31Z",
+      "bytes": 2721236,
+      "sha256": "3c31cc767cfaf128998fb9c9df852da6d5bfe7fcdf9d0ba6d697b6964af841e7"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2024-12-05_2025-03-04.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=05%2F12%2F2024&dataFim=04%2F03%2F2025",
+      "retrieved_at": "2026-11-25T03:13:32Z",
+      "bytes": 2712425,
+      "sha256": "f76de6b34df56bc2a4e6df0e804b12851fd420a2c69f8b79ff1a60a166a28b1b"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2025-03-05_2025-06-02.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=05%2F03%2F2025&dataFim=02%2F06%2F2025",
+      "retrieved_at": "2026-11-25T03:13:33Z",
+      "bytes": 2734881,
+      "sha256": "e2be3a380fbec8e460b54a40b4f06b36e816a8aac85fdd568be775555ad6f807"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2025-06-03_2025-08-31.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=03%2F06%2F2025&dataFim=31%2F08%2F2025",
+      "retrieved_at": "2026-11-25T03:13:34Z",
+      "bytes": 2729320,
+      "sha256": "f4db0119fe462a6691d306a2e02e49ab979ada95564981492eb644613ce8e436"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2025-09-01_2025-11-29.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=01%2F09%2F2025&dataFim=29%2F11%2F2025",
+      "retrieved_at": "2026-11-25T03:13:35Z",
+      "bytes": 2722187,
+      "sha256": "bdb48063eb552eff2c3bb122f14601067fb74bcf71c9ddd4fbe1a6c42d82a9a8"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2025-11-30_2026-02-27.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=30%2F11%2F2025&dataFim=27%2F02%2F2026",
+      "retrieved_at": "2026-11-25T03:13:36Z",
+      "bytes": 2728477,
+      "sha256": "f3006c271d5b2de3bc24d27c42b40b9d68ee4f51109fbebae46b156293f24c67"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2026-02-28_2026-05-28.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=28%2F02%2F2026&dataFim=28%2F05%2F2026",
+      "retrieved_at": "2026-11-25T03:13:36Z",
+      "bytes": 1873946,
+      "sha256": "1212f722242b6f83b8c34edad70c9578657bedfbdeb7fd47a861c37a199b23f0"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2026-05-29_2026-08-26.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=29%2F05%2F2026&dataFim=26%2F08%2F2026",
+      "retrieved_at": "2026-11-25T03:13:38Z",
+      "bytes": 2710822,
+      "sha256": "9aaf14536e14673edf924e7a0ac1936c325edeb670e46226d7bfad425455c538"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58790002/2026-08-27_2026-11-24.xml",
+      "station_id": "58790002",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58790002&dataInicio=27%2F08%2F2026&dataFim=24%2F11%2F2026",
+      "retrieved_at": "2026-11-25T03:13:39Z",
+      "bytes": 2735197,
+      "sha256": "b473e60f56f1fa79733a31eae398ac4813355001064a985b0e028e7ee97aedf6"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2020-01-01_2020-03-30.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=01%2F01%2F2020&dataFim=30%2F03%2F2020",
+      "retrieved_at": "2026-11-25T03:13:39Z",
+      "bytes": 666126,
+      "sha256": "315204636c58c1c93c9109c8ddc4265cca1d15e30a56f780174d338463f14ecc"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2020-03-31_2020-06-28.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=31%2F03%2F2020&dataFim=28%2F06%2F2020",
+      "retrieved_at": "2026-11-25T03:13:40Z",
+      "bytes": 595559,
+      "sha256": "883257a1dd3b73a7910f673fdf0cb7df03017c665c0e4f21dc8ea3e22498cc63"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2020-06-29_2020-09-26.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=29%2F06%2F2020&dataFim=26%2F09%2F2020",
+      "retrieved_at": "2026-11-25T03:13:41Z",
+      "bytes": 680396,
+      "sha256": "4208111278275b8ed6fa7ab3e87a5396a28572d12bcd5942b55549c08cc89bc5"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2020-09-27_2020-12-25.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=27%2F09%2F2020&dataFim=25%2F12%2F2020",
+      "retrieved_at": "2026-11-25T03:13:41Z",
+      "bytes": 680360,
+      "sha256": "ca62cadac60e9c19e3691849ffd43a3772b74282927bc3f416ccf8f310b133e6"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2020-12-26_2021-03-25.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=26%2F12%2F2020&dataFim=25%2F03%2F2021",
+      "retrieved_at": "2026-11-25T03:13:42Z",
+      "bytes": 676489,
+      "sha256": "88bd43591131e018377655d8e5c80c7c9788b89b9eda6471642ce7db9a3c4879"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2021-03-26_2021-06-23.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=26%2F03%2F2021&dataFim=23%2F06%2F2021",
+      "retrieved_at": "2026-11-25T03:13:43Z",
+      "bytes": 683701,
+      "sha256": "69d7b3045af1e965c7eb52bc9eb2d2d07c6396ef4e7be6a3657994a37ee05628"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2021-06-24_2021-09-21.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=24%2F06%2F2021&dataFim=21%2F09%2F2021",
+      "retrieved_at": "2026-11-25T03:13:44Z",
+      "bytes": 682626,
+      "sha256": "47770853b5de48293f94914a186078634f3a4bf3952d539ebdf33076888ec034"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2021-09-22_2021-12-20.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=22%2F09%2F2021&dataFim=20%2F12%2F2021",
+      "retrieved_at": "2026-11-25T03:13:45Z",
+      "bytes": 681778,
+      "sha256": "cf0d5ec87011bec2b934c01f4de7193be5a6f2942740466f923dbe8922eb518d"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2021-12-21_2022-03-20.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=21%2F12%2F2021&dataFim=20%2F03%2F2022",
+      "retrieved_at": "2026-11-25T03:13:45Z",
+      "bytes": 674351,
+      "sha256": "f581d7313f3a86931fea9f5c1e36f6fa2bc85f20f7a0169ab22307b4aef2c495"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2022-03-21_2022-06-18.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=21%2F03%2F2022&dataFim=18%2F06%2F2022",
+      "retrieved_at": "2026-11-25T03:13:46Z",
+      "bytes": 680935,
+      "sha256": "9922e97092e437af688308142484aa4e55433505008c6da3ad134d579404419c"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2022-06-19_2022-09-16.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=19%2F06%2F2022&dataFim=16%2F09%2F2022",
+      "retrieved_at": "2026-11-25T03:13:47Z",
+      "bytes": 679168,
+      "sha256": "a398c141a1a2d4d4039ad5ba6c8fd15ee291d61d4ddbdf088eea883c198bc20e"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2022-09-17_2022-12-15.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=17%2F09%2F2022&dataFim=15%2F12%2F2022",
+      "retrieved_at": "2026-11-25T03:13:48Z",
+      "bytes": 634369,
+      "sha256": "795bbd507cb1afd0dd21faae28d1505091fe15374021f5267dedae2470c977ab"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2022-12-16_2023-03-15.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=16%2F12%2F2022&dataFim=15%2F03%2F2023",
+      "retrieved_at": "2026-11-25T03:13:48Z",
+      "bytes": 664705,
+      "sha256": "9270068fa07739b2d6107f700037df01e623f7ee0030898b3bc73619936f1f6c"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2023-03-16_2023-06-13.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=16%2F03%2F2023&dataFim=13%2F06%2F2023",
+      "retrieved_at": "2026-11-25T03:13:49Z",
+      "bytes": 672368,
+      "sha256": "79ae1f2d24047b5fd9400d04965094944d149328780c7471d39dbdd95156a8e3"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2023-06-14_2023-09-11.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=14%2F06%2F2023&dataFim=11%2F09%2F2023",
+      "retrieved_at": "2026-11-25T03:13:50Z",
+      "bytes": 683327,
+      "sha256": "ce959cb35eb7d267632bdff4b427263b51c0d9b3a7fb3a33c7344c3df7686254"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2023-09-12_2023-12-10.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=12%2F09%2F2023&dataFim=10%2F12%2F2023",
+      "retrieved_at": "2026-11-25T03:13:51Z",
+      "bytes": 631945,
+      "sha256": "e69cd4455d3ac1cdb292f45399e698c9f0ad454d73ac132389c6c5204fe11911"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2023-12-11_2024-03-09.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=11%2F12%2F2023&dataFim=09%2F03%2F2024",
+      "retrieved_at": "2026-11-25T03:13:52Z",
+      "bytes": 618713,
+      "sha256": "65a389d11ed47ab3db8b717af2308aee7b637872611b4528e84f20920fbf0df6"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2024-03-10_2024-06-07.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=10%2F03%2F2024&dataFim=07%2F06%2F2024",
+      "retrieved_at": "2026-11-25T03:13:53Z",
+      "bytes": 711800,
+      "sha256": "fc92322cf42c99497f89ff55547ff84c0e3dc0e249122f6464bd628117a8b997"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2024-06-08_2024-09-05.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=08%2F06%2F2024&dataFim=05%2F09%2F2024",
+      "retrieved_at": "2026-11-25T03:13:54Z",
+      "bytes": 664996,
+      "sha256": "600213b2bdcff6db82197df13558792c985b80e3004eecaf4b80ed15880a47a6"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2024-09-06_2024-12-04.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=06%2F09%2F2024&dataFim=04%2F12%2F2024",
+      "retrieved_at": "2026-11-25T03:13:55Z",
+      "bytes": 586418,
+      "sha256": "a29cea1ef0b5edd65d27845f49979897ab2e5de5b1009068d6c315ae00f0b41e"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2024-12-05_2025-03-04.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=05%2F12%2F2024&dataFim=04%2F03%2F2025",
+      "retrieved_at": "2026-11-25T03:13:56Z",
+      "bytes": 615253,
+      "sha256": "90e1593021d66762ca1b06ce965ed06fac972a8ebb2e7a7ca3474a0097707ebc"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2025-03-05_2025-06-02.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=05%2F03%2F2025&dataFim=02%2F06%2F2025",
+      "retrieved_at": "2026-11-25T03:13:57Z",
+      "bytes": 679975,
+      "sha256": "f1d8ea94edca7004a9175a1544200bb440677d4a71af06f19d316bcb9afcc211"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2025-06-03_2025-08-31.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=03%2F06%2F2025&dataFim=31%2F08%2F2025",
+      "retrieved_at": "2026-11-25T03:13:58Z",
+      "bytes": 674568,
+      "sha256": "7b3863e232cc6a418561bdce9848983c7bee9d3fc5a0ef5f4ddf1dad170c0654"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2025-09-01_2025-11-29.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=01%2F09%2F2025&dataFim=29%2F11%2F2025",
+      "retrieved_at": "2026-11-25T03:13:59Z",
+      "bytes": 647466,
+      "sha256": "190ff9deb93a3b442ff13959c6fbef591affbb1b10540bef4558941794748c7d"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2025-11-30_2026-02-27.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=30%2F11%2F2025&dataFim=27%2F02%2F2026",
+      "retrieved_at": "2026-11-25T03:14:00Z",
+      "bytes": 671017,
+      "sha256": "1e02dbfcb9bdbaa20f6eccf1f53ed2ce5c509a1b0b411e3588cf6ff7901076e3"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2026-02-28_2026-05-28.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=28%2F02%2F2026&dataFim=28%2F05%2F2026",
+      "retrieved_at": "2026-11-25T03:14:01Z",
+      "bytes": 617191,
+      "sha256": "cdcccee6ff7075be13679c1c25883b11bfa29bd7a580ba70adc79736a233639c"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2026-05-29_2026-08-26.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=29%2F05%2F2026&dataFim=26%2F08%2F2026",
+      "retrieved_at": "2026-11-25T03:14:02Z",
+      "bytes": 684583,
+      "sha256": "ee9fc26da3617bed6a63d0c5b5eff8c9be1b2ace5cdae12ce27aae8bef009789"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58788600/2026-08-27_2026-11-24.xml",
+      "station_id": "58788600",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58788600&dataInicio=27%2F08%2F2026&dataFim=24%2F11%2F2026",
+      "retrieved_at": "2026-11-25T03:14:03Z",
+      "bytes": 682425,
+      "sha256": "a15b129fd9656d0710dcb5eaa93732102b514aa0c31c17747309944f20320a25"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2020-01-01_2020-03-30.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=01%2F01%2F2020&dataFim=30%2F03%2F2020",
+      "retrieved_at": "2026-11-25T03:14:04Z",
+      "bytes": 2742034,
+      "sha256": "dd82c3ae0dce8e29868335989e628d67585967f19f5ec40e94c27f08a91f3b95"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2020-03-31_2020-06-28.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=31%2F03%2F2020&dataFim=28%2F06%2F2020",
+      "retrieved_at": "2026-11-25T03:14:05Z",
+      "bytes": 2739979,
+      "sha256": "cfa86332b5ed55bae7c0784f181b9e52b454e0c13a25080c4e6ebf2d294ac262"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2020-06-29_2020-09-26.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=29%2F06%2F2020&dataFim=26%2F09%2F2020",
+      "retrieved_at": "2026-11-25T03:14:06Z",
+      "bytes": 2733554,
+      "sha256": "c5bd253e8da0275e9b8b67d945d270aebf276c3cda233c9ab02640b9662f62cf"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2020-09-27_2020-12-25.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=27%2F09%2F2020&dataFim=25%2F12%2F2020",
+      "retrieved_at": "2026-11-25T03:14:07Z",
+      "bytes": 1923225,
+      "sha256": "3670509d2dcd57918a823c5eb7fe70972c22e3359d4eab458d46172106a84ee9"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2020-12-26_2021-03-25.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=26%2F12%2F2020&dataFim=25%2F03%2F2021",
+      "retrieved_at": "2026-11-25T03:14:08Z",
+      "bytes": 2720167,
+      "sha256": "9e462ce3a9230f79fb96428f6fdf881be1c264646df1acad510cf764f713e2fa"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2021-03-26_2021-06-23.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=26%2F03%2F2021&dataFim=23%2F06%2F2021",
+      "retrieved_at": "2026-11-25T03:14:09Z",
+      "bytes": 2633260,
+      "sha256": "efa62af862cb431d1d729efe0ed359df85323723106caa24368c45fe349d894f"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2021-06-24_2021-09-21.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=24%2F06%2F2021&dataFim=21%2F09%2F2021",
+      "retrieved_at": "2026-11-25T03:14:10Z",
+      "bytes": 2357505,
+      "sha256": "312f0cea2e053dee1593863ac3b021180879321cf8731cc1efc5f29356bec01f"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2021-09-22_2021-12-20.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=22%2F09%2F2021&dataFim=20%2F12%2F2021",
+      "retrieved_at": "2026-11-25T03:14:13Z",
+      "bytes": 2658136,
+      "sha256": "ece232c6ab91ac54aaf3e19ef57d846d6a9cfd936a4d81a58d46dc1e25368400"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2021-12-21_2022-03-20.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=21%2F12%2F2021&dataFim=20%2F03%2F2022",
+      "retrieved_at": "2026-11-25T03:14:14Z",
+      "bytes": 2741883,
+      "sha256": "d4c3a8c5325a087c6633455d1d6e94fb3a81e09c5dc5e9417642aab9926c3f5e"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2022-03-21_2022-06-18.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=21%2F03%2F2022&dataFim=18%2F06%2F2022",
+      "retrieved_at": "2026-11-25T03:14:15Z",
+      "bytes": 2740643,
+      "sha256": "47ed30af2eedc032640e7d6d378b99b8b1dded32c85e422b8eea2b5c1028e2cf"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2022-06-19_2022-09-16.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=19%2F06%2F2022&dataFim=16%2F09%2F2022",
+      "retrieved_at": "2026-11-25T03:14:16Z",
+      "bytes": 2733690,
+      "sha256": "88867a22bb35a966a38e758119bd8857f82a68d9edb4159d65e9bc686e9c166d"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2022-09-17_2022-12-15.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=17%2F09%2F2022&dataFim=15%2F12%2F2022",
+      "retrieved_at": "2026-11-25T03:14:17Z",
+      "bytes": 2685700,
+      "sha256": "c4421580b3ff749e7eba4b5f7abc0c506da0bcf1cbce1583e15aa41935127da6"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2022-12-16_2023-03-15.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=16%2F12%2F2022&dataFim=15%2F03%2F2023",
+      "retrieved_at": "2026-11-25T03:14:18Z",
+      "bytes": 2726819,
+      "sha256": "dfda73174a4c3724a9df3812a739606151f4ed66e38c997d137638a2745ff6ab"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2023-03-16_2023-06-13.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=16%2F03%2F2023&dataFim=13%2F06%2F2023",
+      "retrieved_at": "2026-11-25T03:14:19Z",
+      "bytes": 2736847,
+      "sha256": "afe58b9a18872155f56c14eb6f65f4cac2bbe0551267af5580f7732685a6bcf9"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2023-06-14_2023-09-11.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=14%2F06%2F2023&dataFim=11%2F09%2F2023",
+      "retrieved_at": "2026-11-25T03:14:20Z",
+      "bytes": 2736617,
+      "sha256": "23547ebbd357864cb14cfc1770117b87dbf71a2820708a2aa72f9d6d1c977e64"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2023-09-12_2023-12-10.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=12%2F09%2F2023&dataFim=10%2F12%2F2023",
+      "retrieved_at": "2026-11-25T03:14:21Z",
+      "bytes": 2583279,
+      "sha256": "b66cab07d3d49817183080a1abdbf5b1faf6e65e37d4a39caefb44b5e6b412d7"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2023-12-11_2024-03-09.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=11%2F12%2F2023&dataFim=09%2F03%2F2024",
+      "retrieved_at": "2026-11-25T03:14:22Z",
+      "bytes": 2715743,
+      "sha256": "43c8422d4a09afb78a2684d4d685e88255a8392f2b27a4a6d5e9e7dc525ad246"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2024-03-10_2024-06-07.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=10%2F03%2F2024&dataFim=07%2F06%2F2024",
+      "retrieved_at": "2026-11-25T03:14:22Z",
+      "bytes": 2739029,
+      "sha256": "07ee48230887ba9acd2162791ca3b66f8d016a67b06df2602534327aaf4e85e3"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2024-06-08_2024-09-05.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=08%2F06%2F2024&dataFim=05%2F09%2F2024",
+      "retrieved_at": "2026-11-25T03:14:23Z",
+      "bytes": 2729978,
+      "sha256": "fee54eda3c9aa428c9bcc672100f9ef776ea35250e877b7d5ce0e412c830f795"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2024-09-06_2024-12-04.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=06%2F09%2F2024&dataFim=04%2F12%2F2024",
+      "retrieved_at": "2026-11-25T03:14:25Z",
+      "bytes": 2721228,
+      "sha256": "c8f7fb64f244c5f37bae214cc4d06f7c4d68507648c0066c82f99cb8454192c8"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2024-12-05_2025-03-04.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=05%2F12%2F2024&dataFim=04%2F03%2F2025",
+      "retrieved_at": "2026-11-25T03:14:25Z",
+      "bytes": 2723385,
+      "sha256": "fd38d31c4bfd6e3c05cc38a4feaaad95eecc140966d28ffac0d2e8061130d928"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2025-03-05_2025-06-02.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=05%2F03%2F2025&dataFim=02%2F06%2F2025",
+      "retrieved_at": "2026-11-25T03:14:26Z",
+      "bytes": 2607318,
+      "sha256": "6a6f0b8b8a351e05ab02cbd3fb882939210f37844b648a431c78cb423b854eff"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2025-06-03_2025-08-31.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=03%2F06%2F2025&dataFim=31%2F08%2F2025",
+      "retrieved_at": "2026-11-25T03:14:27Z",
+      "bytes": 2733222,
+      "sha256": "c8ec011bd3c20bf625ca7a52d8f9b43d9d926b45e3f66bab76b1412bcfd76820"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2025-09-01_2025-11-29.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=01%2F09%2F2025&dataFim=29%2F11%2F2025",
+      "retrieved_at": "2026-11-25T03:14:28Z",
+      "bytes": 2718504,
+      "sha256": "4377e9b4b0afeb6a64b70e2db6edd22747a7aae6b08d271a13c778b89be6942a"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2025-11-30_2026-02-27.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=30%2F11%2F2025&dataFim=27%2F02%2F2026",
+      "retrieved_at": "2026-11-25T03:14:29Z",
+      "bytes": 2733694,
+      "sha256": "8dc5beee42ec554e3a1f1e570107956ca0cb1516510cf2b40905d76b08cd89ad"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2026-02-28_2026-05-28.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=28%2F02%2F2026&dataFim=28%2F05%2F2026",
+      "retrieved_at": "2026-11-25T03:14:30Z",
+      "bytes": 2742304,
+      "sha256": "97b36f11d4db13ff211178c1a1505c54c49320063b6c57ca2124a2af32508d5c"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2026-05-29_2026-08-26.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=29%2F05%2F2026&dataFim=26%2F08%2F2026",
+      "retrieved_at": "2026-11-25T03:14:31Z",
+      "bytes": 2714089,
+      "sha256": "7c14b6899704ae24edf70f8f768bbb00e46533d56761dfcb740ed5aaf8de846a"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/telemetric/58770000/2026-08-27_2026-11-24.xml",
+      "station_id": "58770000",
+      "dataset_kind": "telemetric_series",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=58770000&dataInicio=27%2F08%2F2026&dataFim=24%2F11%2F2026",
+      "retrieved_at": "2026-11-25T03:14:32Z",
+      "bytes": 2728105,
+      "sha256": "436db643cab1501cf6ff12e7b6dbfacbef92f3a3a752e6c08eaa184539e74e49"
+    },
+    {
+      "relative_path": "data/raw/hydrology/ana/conventional/58790002_cotas_2020_2025.xml",
+      "station_id": "58790002",
+      "dataset_kind": "conventional_cotas",
+      "source_url": "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/HidroSerieHistorica?codEstacao=58790002&dataInicio=01%2F01%2F2020&dataFim=31%2F12%2F2025&tipoDados=1&nivelConsistencia=",
+      "retrieved_at": "2026-11-25T03:14:33Z",
+      "bytes": 603446,
+      "sha256": "ca1b1e584c2717dc89a2717a54b4be720e663c6e00577937ed228f1012fa03dd"
+    },
+    {
+      "relative_path": "data/raw/hydrology/inea/21304212020_10days_snapshot.xml",
+      "station_id": "INEA-213042120",
+      "dataset_kind": "telemetric_10d_snapshot",
+      "source_url": "https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.xml",
+      "retrieved_at": "2026-11-25T03:14:33Z",
+      "bytes": 431144,
+      "sha256": "9fd65f2887314328a64526416346a180b6015223c7700cef3f2aebe6678f5d65"
+    }
+  ],
+  "processed_outputs": [
+    {
+      "relative_path": "data/processed/hydrology/58770000_normalized.csv",
+      "record_count": 710862,
+      "bytes": 300204674,
+      "sha256": "27d12aa6554f22083e9ced11dc60c6848ac8d2da5b6bc3faa525efec48be7133"
+    },
+    {
+      "relative_path": "data/processed/hydrology/58788600_normalized.csv",
+      "record_count": 174207,
+      "bytes": 76775072,
+      "sha256": "bcfbbfdd93a4ff01586994e8371d31c2ea05d444f9f233556c64bc2b1013d198"
+    },
+    {
+      "relative_path": "data/processed/hydrology/58790002_normalized.csv",
+      "record_count": 712388,
+      "bytes": 329280315,
+      "sha256": "0ddf189718c1f54eb304fcc2a72965ec0f89ea541d62df195192da165add0232"
+    },
+    {
+      "relative_path": "data/processed/hydrology/INEA-213042120_normalized.csv",
+      "record_count": 6727,
+      "bytes": 2494665,
+      "sha256": "9352d61d93741b4f70a8d33d1184804606de181460c76c0e9c8f744ffa9da788"
+    },
+    {
+      "relative_path": "data/processed/hydrology/aligned_hourly_rio_pomba.csv",
+      "record_count": 60480,
+      "bytes": 3772940,
+      "sha256": "d18be5a31dbf2ac4a6b505d05b26b0d2080831e5adb696a6d9535a14e473f8c8"
+    }
+  ],
+  "metadata_outputs": [
+    {
+      "relative_path": "data/metadata/hydrology/station_inventory.json",
+      "bytes": 7096,
+      "sha256": "172b158ac77db9bd009db84dc24d1cd1f7988a5566a4230590563dc4ea643bc9"
+    },
+    {
+      "relative_path": "data/metadata/hydrology/source_access_audit.json",
+      "bytes": 2792,
+      "sha256": "3b7e44ecd938fe9d370cd00f219b20ce7c1406ddb74706e7bc6d60078b0b9734"
+    },
+    {
+      "relative_path": "data/metadata/hydrology/quality_report.json",
+      "bytes": 128627,
+      "sha256": "142814b56297d941416c55db0de3cb5c5008d082fad961ab39fa7a357859a7fc"
+    },
+    {
+      "relative_path": "data/metadata/hydrology/candidate_events.json",
+      "bytes": 48064,
+      "sha256": "5af9962c21dd2de3e777378e82bd6b6b5dafcbf969babfb8a98fea82b8de881d"
+    },
+    {
+      "relative_path": "data/metadata/hydrology/feasibility_pilot_report.json",
+      "bytes": 19036,
+      "sha256": "65d9cd0aaf137204127c0b566b137cee5c87e11fd1e9cc67c77853757ffaf28c"
+    }
+  ]
+}

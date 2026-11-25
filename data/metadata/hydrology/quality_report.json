@@ -1,0 +1,4302 @@
+{
+  "schema_version": 1,
+  "series": {
+    "58770000::discharge_m3s": {
+      "station_id": "58770000",
+      "variable": "discharge_m3s",
+      "unit": "m3/s",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2020-01-01T03:00:00Z",
+      "period_end_utc": "2026-11-25T02:00:00Z",
+      "total_records": 236954,
+      "valid_records": 229956,
+      "missing_records": 6998,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 95.06,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 229727,
+          "75.0": 96,
+          "30.0": 37,
+          "135.0": 33,
+          "60.0": 12
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 191,
+        "max_gap_hours": 1181.25,
+        "total_missing_hours_est": 2981.0,
+        "top_10_largest_gaps": [
+          {
+            "start_utc": "2021-08-11T13:00:00Z",
+            "end_utc": "2021-09-29T18:15:00Z",
+            "gap_hours": 1181.25
+          },
+          {
+            "start_utc": "2023-09-26T02:00:00Z",
+            "end_utc": "2023-10-23T08:00:00Z",
+            "gap_hours": 654.0
+          },
+          {
+            "start_utc": "2020-11-11T23:00:00Z",
+            "end_utc": "2020-11-30T14:15:00Z",
+            "gap_hours": 447.25
+          },
+          {
+            "start_utc": "2020-11-30T14:15:00Z",
+            "end_utc": "2020-12-08T11:15:00Z",
+            "gap_hours": 189.0
+          },
+          {
+            "start_utc": "2025-04-30T17:30:00Z",
+            "end_utc": "2025-05-04T21:00:00Z",
+            "gap_hours": 99.5
+          },
+          {
+            "start_utc": "2023-10-31T23:00:00Z",
+            "end_utc": "2023-11-03T04:00:00Z",
+            "gap_hours": 53.0
+          },
+          {
+            "start_utc": "2025-05-21T20:45:00Z",
+            "end_utc": "2025-05-23T12:00:00Z",
+            "gap_hours": 39.25
+          },
+          {
+            "start_utc": "2026-07-15T20:00:00Z",
+            "end_utc": "2026-07-16T12:15:00Z",
+            "gap_hours": 16.25
+          },
+          {
+            "start_utc": "2026-06-15T20:00:00Z",
+            "end_utc": "2026-06-16T11:30:00Z",
+            "gap_hours": 15.5
+          },
+          {
+            "start_utc": "2022-12-07T00:00:00Z",
+            "end_utc": "2022-12-07T08:15:00Z",
+            "gap_hours": 8.25
+          }
+        ]
+      },
+      "distribution": {
+        "min": 8.23,
+        "p50": 67.8,
+        "p95": 260.4,
+        "p99": 533.729,
+        "max": 1166.25,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2026-02-27T22:00:00Z",
+            "value": 1166.25
+          },
+          {
+            "timestamp_utc": "2026-02-27T22:45:00Z",
+            "value": 1166.25
+          },
+          {
+            "timestamp_utc": "2026-02-27T23:00:00Z",
+            "value": 1166.25
+          },
+          {
+            "timestamp_utc": "2026-02-28T00:15:00Z",
+            "value": 1166.25
+          },
+          {
+            "timestamp_utc": "2026-02-28T00:30:00Z",
+            "value": 1166.25
+          },
+          {
+            "timestamp_utc": "2026-02-27T22:15:00Z",
+            "value": 1164.29
+          },
+          {
+            "timestamp_utc": "2026-02-27T22:30:00Z",
+            "value": 1164.29
+          },
+          {
+            "timestamp_utc": "2026-02-27T23:15:00Z",
+            "value": 1164.29
+          },
+          {
+            "timestamp_utc": "2026-02-27T23:30:00Z",
+            "value": 1164.29
+          },
+          {
+            "timestamp_utc": "2026-02-27T23:45:00Z",
+            "value": 1164.29
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 710862,
+        "valid_timestamp_input": 710862,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 710778,
+        "duplicate_exact_collapsed": 0,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 710862
+      },
+      "yearly": {
+        "2020": {
+          "total_records": 32537,
+          "valid_records": 32535,
+          "expected_slots_full_year": 35136,
+          "completeness_pct_full_year": 92.6,
+          "flatline_records": 0,
+          "min": 31.2,
+          "max": 1142.1
+        },
+        "2021": {
+          "total_records": 33821,
+          "valid_records": 30093,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 85.88,
+          "flatline_records": 0,
+          "min": 11.47,
+          "max": 527.5
+        },
+        "2022": {
+          "total_records": 34852,
+          "valid_records": 34837,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 99.42,
+          "flatline_records": 0,
+          "min": 30.1,
+          "max": 973.5
+        },
+        "2023": {
+          "total_records": 34741,
+          "valid_records": 32085,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 91.57,
+          "flatline_records": 0,
+          "min": 22.7,
+          "max": 1004.0
+        },
+        "2024": {
+          "total_records": 34988,
+          "valid_records": 34988,
+          "expected_slots_full_year": 35136,
+          "completeness_pct_full_year": 99.58,
+          "flatline_records": 0,
+          "min": 15.3,
+          "max": 407.6
+        },
+        "2025": {
+          "total_records": 34626,
+          "valid_records": 34219,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 97.66,
+          "flatline_records": 0,
+          "min": 8.23,
+          "max": 627.51
+        },
+        "2026": {
+          "total_records": 31389,
+          "valid_records": 31199,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 89.04,
+          "flatline_records": 0,
+          "min": 25.29,
+          "max": 1166.25
+        }
+      }
+    },
+    "58770000::rainfall_mm": {
+      "station_id": "58770000",
+      "variable": "rainfall_mm",
+      "unit": "mm",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2020-01-01T03:00:00Z",
+      "period_end_utc": "2026-11-25T02:00:00Z",
+      "total_records": 236954,
+      "valid_records": 231707,
+      "missing_records": 5247,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 95.78,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 231446,
+          "75.0": 123,
+          "45.0": 39,
+          "135.0": 35,
+          "30.0": 23
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 237,
+        "max_gap_hours": 654.0,
+        "total_missing_hours_est": 2546.75,
+        "top_10_largest_gaps": [
+          {
+            "start_utc": "2023-09-26T02:00:00Z",
+            "end_utc": "2023-10-23T08:00:00Z",
+            "gap_hours": 654.0
+          },
+          {
+            "start_utc": "2020-11-11T23:00:00Z",
+            "end_utc": "2020-12-08T11:45:00Z",
+            "gap_hours": 636.75
+          },
+          {
+            "start_utc": "2025-04-28T02:45:00Z",
+            "end_utc": "2025-05-23T14:00:00Z",
+            "gap_hours": 611.25
+          },
+          {
+            "start_utc": "2021-08-11T13:00:00Z",
+            "end_utc": "2021-08-19T16:45:00Z",
+            "gap_hours": 195.75
+          },
+          {
+            "start_utc": "2021-09-27T12:00:00Z",
+            "end_utc": "2021-09-29T18:15:00Z",
+            "gap_hours": 54.25
+          },
+          {
+            "start_utc": "2023-10-31T23:00:00Z",
+            "end_utc": "2023-11-03T04:00:00Z",
+            "gap_hours": 53.0
+          },
+          {
+            "start_utc": "2026-07-15T20:00:00Z",
+            "end_utc": "2026-07-16T12:15:00Z",
+            "gap_hours": 16.25
+          },
+          {
+            "start_utc": "2021-11-22T17:00:00Z",
+            "end_utc": "2021-11-23T08:15:00Z",
+            "gap_hours": 15.25
+          },
+          {
+            "start_utc": "2021-11-21T21:00:00Z",
+            "end_utc": "2021-11-22T10:15:00Z",
+            "gap_hours": 13.25
+          },
+          {
+            "start_utc": "2022-12-07T00:00:00Z",
+            "end_utc": "2022-12-07T08:15:00Z",
+            "gap_hours": 8.25
+          }
+        ]
+      },
+      "distribution": {
+        "min": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 1.0,
+        "max": 60.2,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2022-03-28T00:15:00Z",
+            "value": 60.2
+          },
+          {
+            "timestamp_utc": "2020-12-24T01:15:00Z",
+            "value": 50.0
+          },
+          {
+            "timestamp_utc": "2024-01-24T20:00:00Z",
+            "value": 46.6
+          },
+          {
+            "timestamp_utc": "2023-11-03T13:15:00Z",
+            "value": 45.8
+          },
+          {
+            "timestamp_utc": "2026-02-26T20:00:00Z",
+            "value": 34.8
+          },
+          {
+            "timestamp_utc": "2020-02-02T21:45:00Z",
+            "value": 34.2
+          },
+          {
+            "timestamp_utc": "2020-11-06T02:15:00Z",
+            "value": 30.2
+          },
+          {
+            "timestamp_utc": "2020-02-02T22:00:00Z",
+            "value": 30.0
+          },
+          {
+            "timestamp_utc": "2023-01-23T18:00:00Z",
+            "value": 29.8
+          },
+          {
+            "timestamp_utc": "2026-02-26T20:15:00Z",
+            "value": 29.0
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 710862,
+        "valid_timestamp_input": 710862,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 710778,
+        "duplicate_exact_collapsed": 0,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 710862
+      },
+      "yearly": {
+        "2020": {
+          "total_records": 32537,
+          "valid_records": 32484,
+          "expected_slots_full_year": 35136,
+          "completeness_pct_full_year": 92.45,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 50.0
+        },
+        "2021": {
+          "total_records": 33821,
+          "valid_records": 33570,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 95.8,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 27.0
+        },
+        "2022": {
+          "total_records": 34852,
+          "valid_records": 34754,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 99.18,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 60.2
+        },
+        "2023": {
+          "total_records": 34741,
+          "valid_records": 32081,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 91.56,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 45.8
+        },
+        "2024": {
+          "total_records": 34988,
+          "valid_records": 34968,
+          "expected_slots_full_year": 35136,
+          "completeness_pct_full_year": 99.52,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 46.6
+        },
+        "2025": {
+          "total_records": 34626,
+          "valid_records": 32486,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 92.71,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 21.6
+        },
+        "2026": {
+          "total_records": 31389,
+          "valid_records": 31364,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 89.51,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 34.8
+        }
+      }
+    },
+    "58770000::stage_cm": {
+      "station_id": "58770000",
+      "variable": "stage_cm",
+      "unit": "cm",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2020-01-01T03:00:00Z",
+      "period_end_utc": "2026-11-25T02:00:00Z",
+      "total_records": 236954,
+      "valid_records": 220902,
+      "missing_records": 16052,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 91.31,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 220672,
+          "75.0": 96,
+          "30.0": 38,
+          "135.0": 33,
+          "60.0": 12
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 191,
+        "max_gap_hours": 3538.25,
+        "total_missing_hours_est": 5244.25,
+        "top_10_largest_gaps": [
+          {
+            "start_utc": "2021-05-05T08:00:00Z",
+            "end_utc": "2021-09-29T18:15:00Z",
+            "gap_hours": 3538.25
+          },
+          {
+            "start_utc": "2023-09-26T02:00:00Z",
+            "end_utc": "2023-10-23T08:00:00Z",
+            "gap_hours": 654.0
+          },
+          {
+            "start_utc": "2020-11-11T23:00:00Z",
+            "end_utc": "2020-11-30T14:15:00Z",
+            "gap_hours": 447.25
+          },
+          {
+            "start_utc": "2020-11-30T14:15:00Z",
+            "end_utc": "2020-12-08T11:15:00Z",
+            "gap_hours": 189.0
+          },
+          {
+            "start_utc": "2023-10-31T23:00:00Z",
+            "end_utc": "2023-11-03T04:00:00Z",
+            "gap_hours": 53.0
+          },
+          {
+            "start_utc": "2025-05-21T20:45:00Z",
+            "end_utc": "2025-05-23T15:15:00Z",
+            "gap_hours": 42.5
+          },
+          {
+            "start_utc": "2026-07-15T20:00:00Z",
+            "end_utc": "2026-07-16T12:15:00Z",
+            "gap_hours": 16.25
+          },
+          {
+            "start_utc": "2026-06-15T20:00:00Z",
+            "end_utc": "2026-06-16T11:30:00Z",
+            "gap_hours": 15.5
+          },
+          {
+            "start_utc": "2022-12-07T00:00:00Z",
+            "end_utc": "2022-12-07T08:15:00Z",
+            "gap_hours": 8.25
+          },
+          {
+            "start_utc": "2022-12-10T00:00:00Z",
+            "end_utc": "2022-12-10T08:15:00Z",
+            "gap_hours": 8.25
+          }
+        ]
+      },
+      "distribution": {
+        "min": 64.0,
+        "p50": 127.1,
+        "p95": 275.0,
+        "p99": 482.931,
+        "max": 860.09,
+        "extreme_high_preserved_count": 1955,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2020-01-25T19:15:00Z",
+            "value": 860.09
+          },
+          {
+            "timestamp_utc": "2020-01-25T18:30:00Z",
+            "value": 859.09
+          },
+          {
+            "timestamp_utc": "2020-01-25T19:00:00Z",
+            "value": 859.09
+          },
+          {
+            "timestamp_utc": "2020-01-25T19:30:00Z",
+            "value": 859.09
+          },
+          {
+            "timestamp_utc": "2020-01-25T18:45:00Z",
+            "value": 858.09
+          },
+          {
+            "timestamp_utc": "2020-01-25T19:45:00Z",
+            "value": 858.09
+          },
+          {
+            "timestamp_utc": "2020-01-25T18:15:00Z",
+            "value": 857.1
+          },
+          {
+            "timestamp_utc": "2020-01-25T20:00:00Z",
+            "value": 857.08
+          },
+          {
+            "timestamp_utc": "2020-01-25T18:00:00Z",
+            "value": 856.1
+          },
+          {
+            "timestamp_utc": "2020-01-25T20:15:00Z",
+            "value": 856.08
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 710862,
+        "valid_timestamp_input": 710862,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 710778,
+        "duplicate_exact_collapsed": 0,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 710862
+      },
+      "yearly": {
+        "2020": {
+          "total_records": 32537,
+          "valid_records": 32535,
+          "expected_slots_full_year": 35136,
+          "completeness_pct_full_year": 92.6,
+          "flatline_records": 0,
+          "min": 84.72,
+          "max": 860.09
+        },
+        "2021": {
+          "total_records": 33821,
+          "valid_records": 20666,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 58.98,
+          "flatline_records": 99,
+          "min": 75.0,
+          "max": 479.06
+        },
+        "2022": {
+          "total_records": 34852,
+          "valid_records": 34837,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 99.42,
+          "flatline_records": 848,
+          "min": 86.0,
+          "max": 762.0
+        },
+        "2023": {
+          "total_records": 34741,
+          "valid_records": 32085,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 91.57,
+          "flatline_records": 1459,
+          "min": 76.0,
+          "max": 780.0
+        },
+        "2024": {
+          "total_records": 34988,
+          "valid_records": 34988,
+          "expected_slots_full_year": 35136,
+          "completeness_pct_full_year": 99.58,
+          "flatline_records": 2178,
+          "min": 64.0,
+          "max": 375.0
+        },
+        "2025": {
+          "total_records": 34626,
+          "valid_records": 34592,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 98.72,
+          "flatline_records": 1036,
+          "min": 67.0,
+          "max": 514.41
+        },
+        "2026": {
+          "total_records": 31389,
+          "valid_records": 31199,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 89.04,
+          "flatline_records": 781,
+          "min": 78.8,
+          "max": 815.99
+        }
+      },
+      "flatline_episodes_ge_24h": [
+        {
+          "start_utc": "2021-04-24T22:30:00Z",
+          "end_utc": "2021-04-25T23:00:00Z",
+          "duration_hours": 24.5,
+          "record_count": 99,
+          "constant_value_cm": 101.0
+        },
+        {
+          "start_utc": "2022-08-06T08:15:00Z",
+          "end_utc": "2022-08-07T12:15:00Z",
+          "duration_hours": 28.0,
+          "record_count": 113,
+          "constant_value_cm": 95.0
+        },
+        {
+          "start_utc": "2022-08-12T13:15:00Z",
+          "end_utc": "2022-08-14T01:45:00Z",
+          "duration_hours": 36.5,
+          "record_count": 147,
+          "constant_value_cm": 104.0
+        },
+        {
+          "start_utc": "2022-08-17T03:15:00Z",
+          "end_utc": "2022-08-18T10:15:00Z",
+          "duration_hours": 31.0,
+          "record_count": 125,
+          "constant_value_cm": 109.0
+        },
+        {
+          "start_utc": "2022-08-31T13:45:00Z",
+          "end_utc": "2022-09-02T11:15:00Z",
+          "duration_hours": 45.5,
+          "record_count": 183,
+          "constant_value_cm": 87.0
+        },
+        {
+          "start_utc": "2022-10-12T22:45:00Z",
+          "end_utc": "2022-10-14T02:15:00Z",
+          "duration_hours": 27.5,
+          "record_count": 111,
+          "constant_value_cm": 103.0
+        },
+        {
+          "start_utc": "2022-10-15T19:00:00Z",
+          "end_utc": "2022-10-17T13:00:00Z",
+          "duration_hours": 42.0,
+          "record_count": 169,
+          "constant_value_cm": 102.0
+        },
+        {
+          "start_utc": "2023-07-15T03:45:00Z",
+          "end_utc": "2023-07-16T05:00:00Z",
+          "duration_hours": 25.25,
+          "record_count": 102,
+          "constant_value_cm": 113.0
+        },
+        {
+          "start_utc": "2023-07-18T04:15:00Z",
+          "end_utc": "2023-07-19T14:30:00Z",
+          "duration_hours": 34.25,
+          "record_count": 138,
+          "constant_value_cm": 113.0
+        },
+        {
+          "start_utc": "2023-07-21T19:30:00Z",
+          "end_utc": "2023-07-23T00:30:00Z",
+          "duration_hours": 29.0,
+          "record_count": 117,
+          "constant_value_cm": 114.0
+        },
+        {
+          "start_utc": "2023-07-23T00:45:00Z",
+          "end_utc": "2023-07-25T15:45:00Z",
+          "duration_hours": 63.0,
+          "record_count": 253,
+          "constant_value_cm": 113.0
+        },
+        {
+          "start_utc": "2023-07-31T04:00:00Z",
+          "end_utc": "2023-08-01T10:15:00Z",
+          "duration_hours": 30.25,
+          "record_count": 122,
+          "constant_value_cm": 113.0
+        },
+        {
+          "start_utc": "2023-08-06T08:15:00Z",
+          "end_utc": "2023-08-07T10:30:00Z",
+          "duration_hours": 26.25,
+          "record_count": 106,
+          "constant_value_cm": 119.0
+        },
+        {
+          "start_utc": "2023-08-13T01:45:00Z",
+          "end_utc": "2023-08-14T21:45:00Z",
+          "duration_hours": 44.0,
+          "record_count": 177,
+          "constant_value_cm": 102.0
+        },
+        {
+          "start_utc": "2023-08-16T18:00:00Z",
+          "end_utc": "2023-08-17T19:30:00Z",
+          "duration_hours": 25.5,
+          "record_count": 103,
+          "constant_value_cm": 104.0
+        },
+        {
+          "start_utc": "2023-09-07T15:45:00Z",
+          "end_utc": "2023-09-08T20:15:00Z",
+          "duration_hours": 28.5,
+          "record_count": 115,
+          "constant_value_cm": 104.0
+        },
+        {
+          "start_utc": "2023-09-19T22:30:00Z",
+          "end_utc": "2023-09-20T22:45:00Z",
+          "duration_hours": 24.25,
+          "record_count": 98,
+          "constant_value_cm": 103.0
+        },
+        {
+          "start_utc": "2023-09-24T16:15:00Z",
+          "end_utc": "2023-09-26T00:00:00Z",
+          "duration_hours": 31.75,
+          "record_count": 128,
+          "constant_value_cm": 91.0
+        },
+        {
+          "start_utc": "2024-04-11T04:15:00Z",
+          "end_utc": "2024-04-12T04:30:00Z",
+          "duration_hours": 24.25,
+          "record_count": 98,
+          "constant_value_cm": 120.0
+        },
+        {
+          "start_utc": "2024-04-22T23:30:00Z",
+          "end_utc": "2024-04-24T14:30:00Z",
+          "duration_hours": 39.0,
+          "record_count": 157,
+          "constant_value_cm": 119.0
+        },
+        {
+          "start_utc": "2024-04-24T15:00:00Z",
+          "end_utc": "2024-04-26T01:30:00Z",
+          "duration_hours": 34.5,
+          "record_count": 139,
+          "constant_value_cm": 119.0
+        },
+        {
+          "start_utc": "2024-05-07T23:15:00Z",
+          "end_utc": "2024-05-10T03:00:00Z",
+          "duration_hours": 51.75,
+          "record_count": 208,
+          "constant_value_cm": 109.0
+        },
+        {
+          "start_utc": "2024-05-13T16:30:00Z",
+          "end_utc": "2024-05-14T22:15:00Z",
+          "duration_hours": 29.75,
+          "record_count": 120,
+          "constant_value_cm": 105.0
+        },
+        {
+          "start_utc": "2024-05-17T20:45:00Z",
+          "end_utc": "2024-05-18T22:00:00Z",
+          "duration_hours": 25.25,
+          "record_count": 102,
+          "constant_value_cm": 100.0
+        },
+        {
+          "start_utc": "2024-07-13T18:30:00Z",
+          "end_utc": "2024-07-15T04:00:00Z",
+          "duration_hours": 33.5,
+          "record_count": 135,
+          "constant_value_cm": 89.0
+        },
+        {
+          "start_utc": "2024-07-28T16:00:00Z",
+          "end_utc": "2024-07-30T07:15:00Z",
+          "duration_hours": 39.25,
+          "record_count": 158,
+          "constant_value_cm": 87.0
+        },
+        {
+          "start_utc": "2024-07-30T20:00:00Z",
+          "end_utc": "2024-08-04T01:15:00Z",
+          "duration_hours": 101.25,
+          "record_count": 406,
+          "constant_value_cm": 87.0
+        },
+        {
+          "start_utc": "2024-08-04T14:30:00Z",
+          "end_utc": "2024-08-06T13:00:00Z",
+          "duration_hours": 46.5,
+          "record_count": 187,
+          "constant_value_cm": 83.0
+        },
+        {
+          "start_utc": "2024-08-11T23:00:00Z",
+          "end_utc": "2024-08-14T10:15:00Z",
+          "duration_hours": 59.25,
+          "record_count": 238,
+          "constant_value_cm": 83.0
+        },
+        {
+          "start_utc": "2024-08-16T03:30:00Z",
+          "end_utc": "2024-08-18T12:45:00Z",
+          "duration_hours": 57.25,
+          "record_count": 230,
+          "constant_value_cm": 83.0
+        },
+        {
+          "start_utc": "2025-02-16T00:45:00Z",
+          "end_utc": "2025-02-17T15:15:00Z",
+          "duration_hours": 38.5,
+          "record_count": 155,
+          "constant_value_cm": 137.0
+        },
+        {
+          "start_utc": "2025-03-05T02:30:00Z",
+          "end_utc": "2025-03-06T03:45:00Z",
+          "duration_hours": 25.25,
+          "record_count": 102,
+          "constant_value_cm": 117.0
+        },
+        {
+          "start_utc": "2025-03-07T22:45:00Z",
+          "end_utc": "2025-03-10T00:00:00Z",
+          "duration_hours": 49.25,
+          "record_count": 198,
+          "constant_value_cm": 120.0
+        },
+        {
+          "start_utc": "2025-09-24T20:30:00Z",
+          "end_utc": "2025-09-26T02:00:00Z",
+          "duration_hours": 29.5,
+          "record_count": 119,
+          "constant_value_cm": 89.0
+        },
+        {
+          "start_utc": "2025-09-26T03:45:00Z",
+          "end_utc": "2025-09-29T13:30:00Z",
+          "duration_hours": 81.75,
+          "record_count": 324,
+          "constant_value_cm": 89.0
+        },
+        {
+          "start_utc": "2025-09-29T13:45:00Z",
+          "end_utc": "2025-10-01T00:00:00Z",
+          "duration_hours": 34.25,
+          "record_count": 138,
+          "constant_value_cm": 88.0
+        },
+        {
+          "start_utc": "2026-04-18T19:00:00Z",
+          "end_utc": "2026-04-19T21:45:00Z",
+          "duration_hours": 26.75,
+          "record_count": 108,
+          "constant_value_cm": 140.0
+        },
+        {
+          "start_utc": "2026-05-09T15:00:00Z",
+          "end_utc": "2026-05-11T03:00:00Z",
+          "duration_hours": 36.0,
+          "record_count": 145,
+          "constant_value_cm": 134.0
+        },
+        {
+          "start_utc": "2026-05-25T05:15:00Z",
+          "end_utc": "2026-05-26T18:45:00Z",
+          "duration_hours": 37.5,
+          "record_count": 151,
+          "constant_value_cm": 130.0
+        },
+        {
+          "start_utc": "2026-05-29T22:00:00Z",
+          "end_utc": "2026-06-01T17:00:00Z",
+          "duration_hours": 67.0,
+          "record_count": 269,
+          "constant_value_cm": 130.0
+        },
+        {
+          "start_utc": "2026-06-13T18:30:00Z",
+          "end_utc": "2026-06-14T21:15:00Z",
+          "duration_hours": 26.75,
+          "record_count": 108,
+          "constant_value_cm": 116.0
+        }
+      ]
+    },
+    "58788600::discharge_m3s": {
+      "station_id": "58788600",
+      "variable": "discharge_m3s",
+      "unit": "m3/s",
+      "nominal_cadence_min": 60,
+      "period_start_utc": "2020-01-01T03:00:00Z",
+      "period_end_utc": "2026-11-25T02:00:00Z",
+      "total_records": 58069,
+      "valid_records": 57070,
+      "missing_records": 999,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 94.36,
+      "observed_cadence_min": {
+        "median": 60.0,
+        "p10": 60.0,
+        "p90": 60.0,
+        "top_steps_min": {
+          "60.0": 56435,
+          "120.0": 447,
+          "180.0": 84,
+          "240.0": 19,
+          "360.0": 11
+        }
+      },
+      "gaps": {
+        "threshold_min": 120.0,
+        "gap_count": 187,
+        "max_gap_hours": 381.0,
+        "total_missing_hours_est": 2963.0,
+        "top_10_largest_gaps": [
+          {
+            "start_utc": "2024-03-05T22:00:00Z",
+            "end_utc": "2024-03-21T19:00:00Z",
+            "gap_hours": 381.0
+          },
+          {
+            "start_utc": "2022-02-13T02:00:00Z",
+            "end_utc": "2022-02-22T11:00:00Z",
+            "gap_hours": 225.0
+          },
+          {
+            "start_utc": "2024-10-04T23:00:00Z",
+            "end_utc": "2024-10-11T19:00:00Z",
+            "gap_hours": 164.0
+          },
+          {
+            "start_utc": "2022-01-08T12:00:00Z",
+            "end_utc": "2022-01-14T07:00:00Z",
+            "gap_hours": 139.0
+          },
+          {
+            "start_utc": "2020-03-02T20:00:00Z",
+            "end_utc": "2020-03-07T19:00:00Z",
+            "gap_hours": 119.0
+          },
+          {
+            "start_utc": "2022-12-08T05:00:00Z",
+            "end_utc": "2022-12-12T15:00:00Z",
+            "gap_hours": 106.0
+          },
+          {
+            "start_utc": "2024-09-27T18:00:00Z",
+            "end_utc": "2024-10-01T15:00:00Z",
+            "gap_hours": 93.0
+          },
+          {
+            "start_utc": "2020-02-14T13:00:00Z",
+            "end_utc": "2020-02-17T22:00:00Z",
+            "gap_hours": 81.0
+          },
+          {
+            "start_utc": "2024-12-15T13:00:00Z",
+            "end_utc": "2024-12-18T12:00:00Z",
+            "gap_hours": 71.0
+          },
+          {
+            "start_utc": "2023-12-09T15:00:00Z",
+            "end_utc": "2023-12-12T12:00:00Z",
+            "gap_hours": 69.0
+          }
+        ]
+      },
+      "distribution": {
+        "min": 0.1,
+        "p50": 86.5,
+        "p95": 244.34,
+        "p99": 395.7,
+        "max": 1136.47,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2025-09-19T16:00:00Z",
+            "value": 1136.47
+          },
+          {
+            "timestamp_utc": "2025-09-18T21:00:00Z",
+            "value": 1102.92
+          },
+          {
+            "timestamp_utc": "2025-09-19T15:00:00Z",
+            "value": 1066.52
+          },
+          {
+            "timestamp_utc": "2025-09-19T14:00:00Z",
+            "value": 1050.15
+          },
+          {
+            "timestamp_utc": "2026-02-28T15:00:00Z",
+            "value": 1017.74
+          },
+          {
+            "timestamp_utc": "2026-02-28T14:00:00Z",
+            "value": 1014.53
+          },
+          {
+            "timestamp_utc": "2026-02-28T13:00:00Z",
+            "value": 1004.91
+          },
+          {
+            "timestamp_utc": "2025-09-19T12:00:00Z",
+            "value": 979.45
+          },
+          {
+            "timestamp_utc": "2026-02-28T20:00:00Z",
+            "value": 976.28
+          },
+          {
+            "timestamp_utc": "2026-02-28T22:00:00Z",
+            "value": 976.28
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 175491,
+        "valid_timestamp_input": 175491,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 174123,
+        "duplicate_exact_collapsed": 1284,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 174207
+      },
+      "yearly": {
+        "2020": {
+          "total_records": 8431,
+          "valid_records": 8071,
+          "expected_slots_full_year": 8784,
+          "completeness_pct_full_year": 91.88,
+          "flatline_records": 0,
+          "min": 0.1,
+          "max": 456.4
+        },
+        "2021": {
+          "total_records": 8724,
+          "valid_records": 8670,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 98.97,
+          "flatline_records": 0,
+          "min": 33.5,
+          "max": 456.4
+        },
+        "2022": {
+          "total_records": 8560,
+          "valid_records": 8047,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 91.86,
+          "flatline_records": 0,
+          "min": 42.27,
+          "max": 456.37
+        },
+        "2023": {
+          "total_records": 8436,
+          "valid_records": 8413,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 96.04,
+          "flatline_records": 0,
+          "min": 36.98,
+          "max": 452.86
+        },
+        "2024": {
+          "total_records": 7774,
+          "valid_records": 7772,
+          "expected_slots_full_year": 8784,
+          "completeness_pct_full_year": 88.48,
+          "flatline_records": 0,
+          "min": 0.6,
+          "max": 438.98
+        },
+        "2025": {
+          "total_records": 8529,
+          "valid_records": 8482,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 96.83,
+          "flatline_records": 0,
+          "min": 2.39,
+          "max": 1136.47
+        },
+        "2026": {
+          "total_records": 7615,
+          "valid_records": 7615,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 86.93,
+          "flatline_records": 0,
+          "min": 8.58,
+          "max": 1017.74
+        }
+      }
+    },
+    "58788600::rainfall_mm": {
+      "station_id": "58788600",
+      "variable": "rainfall_mm",
+      "unit": "mm",
+      "nominal_cadence_min": 60,
+      "period_start_utc": "2020-01-01T03:00:00Z",
+      "period_end_utc": "2026-11-25T02:00:00Z",
+      "total_records": 58069,
+      "valid_records": 58069,
+      "missing_records": 0,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 96.01,
+      "observed_cadence_min": {
+        "median": 60.0,
+        "p10": 60.0,
+        "p90": 60.0,
+        "top_steps_min": {
+          "60.0": 57450,
+          "120.0": 452,
+          "180.0": 86,
+          "240.0": 18,
+          "360.0": 10
+        }
+      },
+      "gaps": {
+        "threshold_min": 120.0,
+        "gap_count": 166,
+        "max_gap_hours": 381.0,
+        "total_missing_hours_est": 1959.0,
+        "top_10_largest_gaps": [
+          {
+            "start_utc": "2024-03-05T22:00:00Z",
+            "end_utc": "2024-03-21T19:00:00Z",
+            "gap_hours": 381.0
+          },
+          {
+            "start_utc": "2024-10-04T23:00:00Z",
+            "end_utc": "2024-10-11T19:00:00Z",
+            "gap_hours": 164.0
+          },
+          {
+            "start_utc": "2022-12-08T05:00:00Z",
+            "end_utc": "2022-12-12T15:00:00Z",
+            "gap_hours": 106.0
+          },
+          {
+            "start_utc": "2024-09-27T18:00:00Z",
+            "end_utc": "2024-10-01T15:00:00Z",
+            "gap_hours": 93.0
+          },
+          {
+            "start_utc": "2024-12-15T13:00:00Z",
+            "end_utc": "2024-12-18T12:00:00Z",
+            "gap_hours": 71.0
+          },
+          {
+            "start_utc": "2023-12-09T15:00:00Z",
+            "end_utc": "2023-12-12T12:00:00Z",
+            "gap_hours": 69.0
+          },
+          {
+            "start_utc": "2024-12-20T23:00:00Z",
+            "end_utc": "2024-12-23T16:00:00Z",
+            "gap_hours": 65.0
+          },
+          {
+            "start_utc": "2020-05-30T01:00:00Z",
+            "end_utc": "2020-06-01T11:00:00Z",
+            "gap_hours": 58.0
+          },
+          {
+            "start_utc": "2024-08-31T02:00:00Z",
+            "end_utc": "2024-09-02T10:00:00Z",
+            "gap_hours": 56.0
+          },
+          {
+            "start_utc": "2026-03-22T08:00:00Z",
+            "end_utc": "2026-03-24T15:00:00Z",
+            "gap_hours": 55.0
+          }
+        ]
+      },
+      "distribution": {
+        "min": 0.0,
+        "p50": 0.0,
+        "p95": 0.2,
+        "p99": 2.8,
+        "max": 70.6,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2022-02-15T02:00:00Z",
+            "value": 70.6
+          },
+          {
+            "timestamp_utc": "2026-10-11T02:00:00Z",
+            "value": 58.4
+          },
+          {
+            "timestamp_utc": "2023-04-07T23:00:00Z",
+            "value": 57.2
+          },
+          {
+            "timestamp_utc": "2023-12-23T01:00:00Z",
+            "value": 53.2
+          },
+          {
+            "timestamp_utc": "2021-11-30T21:00:00Z",
+            "value": 49.0
+          },
+          {
+            "timestamp_utc": "2024-10-13T02:00:00Z",
+            "value": 47.2
+          },
+          {
+            "timestamp_utc": "2022-04-10T02:00:00Z",
+            "value": 43.8
+          },
+          {
+            "timestamp_utc": "2023-07-18T22:00:00Z",
+            "value": 40.0
+          },
+          {
+            "timestamp_utc": "2024-03-01T21:00:00Z",
+            "value": 38.0
+          },
+          {
+            "timestamp_utc": "2026-06-02T08:00:00Z",
+            "value": 37.2
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 175491,
+        "valid_timestamp_input": 175491,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 174123,
+        "duplicate_exact_collapsed": 1284,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 174207
+      },
+      "yearly": {
+        "2020": {
+          "total_records": 8431,
+          "valid_records": 8431,
+          "expected_slots_full_year": 8784,
+          "completeness_pct_full_year": 95.98,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 36.6
+        },
+        "2021": {
+          "total_records": 8724,
+          "valid_records": 8724,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 99.59,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 49.0
+        },
+        "2022": {
+          "total_records": 8560,
+          "valid_records": 8560,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 97.72,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 70.6
+        },
+        "2023": {
+          "total_records": 8436,
+          "valid_records": 8436,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 96.3,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 57.2
+        },
+        "2024": {
+          "total_records": 7774,
+          "valid_records": 7774,
+          "expected_slots_full_year": 8784,
+          "completeness_pct_full_year": 88.5,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 47.2
+        },
+        "2025": {
+          "total_records": 8529,
+          "valid_records": 8529,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 97.36,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 30.2
+        },
+        "2026": {
+          "total_records": 7615,
+          "valid_records": 7615,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 86.93,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 58.4
+        }
+      }
+    },
+    "58788600::stage_cm": {
+      "station_id": "58788600",
+      "variable": "stage_cm",
+      "unit": "cm",
+      "nominal_cadence_min": 60,
+      "period_start_utc": "2020-01-01T03:00:00Z",
+      "period_end_utc": "2026-11-25T02:00:00Z",
+      "total_records": 58069,
+      "valid_records": 57900,
+      "missing_records": 82,
+      "invalid_records": 87,
+      "completeness_vs_span_pct": 95.73,
+      "observed_cadence_min": {
+        "median": 60.0,
+        "p10": 60.0,
+        "p90": 60.0,
+        "top_steps_min": {
+          "60.0": 57273,
+          "120.0": 456,
+          "180.0": 86,
+          "240.0": 19,
+          "360.0": 10
+        }
+      },
+      "gaps": {
+        "threshold_min": 120.0,
+        "gap_count": 170,
+        "max_gap_hours": 381.0,
+        "total_missing_hours_est": 2124.0,
+        "top_10_largest_gaps": [
+          {
+            "start_utc": "2024-03-05T22:00:00Z",
+            "end_utc": "2024-03-21T19:00:00Z",
+            "gap_hours": 381.0
+          },
+          {
+            "start_utc": "2024-10-04T23:00:00Z",
+            "end_utc": "2024-10-11T19:00:00Z",
+            "gap_hours": 164.0
+          },
+          {
+            "start_utc": "2022-12-08T05:00:00Z",
+            "end_utc": "2022-12-12T15:00:00Z",
+            "gap_hours": 106.0
+          },
+          {
+            "start_utc": "2024-09-27T18:00:00Z",
+            "end_utc": "2024-10-01T15:00:00Z",
+            "gap_hours": 93.0
+          },
+          {
+            "start_utc": "2020-02-14T13:00:00Z",
+            "end_utc": "2020-02-17T22:00:00Z",
+            "gap_hours": 81.0
+          },
+          {
+            "start_utc": "2024-12-15T13:00:00Z",
+            "end_utc": "2024-12-18T20:00:00Z",
+            "gap_hours": 79.0
+          },
+          {
+            "start_utc": "2023-12-09T15:00:00Z",
+            "end_utc": "2023-12-12T12:00:00Z",
+            "gap_hours": 69.0
+          },
+          {
+            "start_utc": "2024-12-20T23:00:00Z",
+            "end_utc": "2024-12-23T16:00:00Z",
+            "gap_hours": 65.0
+          },
+          {
+            "start_utc": "2020-05-30T01:00:00Z",
+            "end_utc": "2020-06-01T11:00:00Z",
+            "gap_hours": 58.0
+          },
+          {
+            "start_utc": "2024-08-31T02:00:00Z",
+            "end_utc": "2024-09-02T10:00:00Z",
+            "gap_hours": 56.0
+          }
+        ]
+      },
+      "distribution": {
+        "min": 0.0,
+        "p50": 139.0,
+        "p95": 251.0,
+        "p99": 355.0,
+        "max": 1012.0,
+        "extreme_high_preserved_count": 363,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2025-09-18T11:00:00Z",
+            "value": 1012.0
+          },
+          {
+            "timestamp_utc": "2025-09-18T08:00:00Z",
+            "value": 1002.0
+          },
+          {
+            "timestamp_utc": "2025-09-18T09:00:00Z",
+            "value": 993.0
+          },
+          {
+            "timestamp_utc": "2025-09-18T14:00:00Z",
+            "value": 992.0
+          },
+          {
+            "timestamp_utc": "2025-09-17T01:00:00Z",
+            "value": 987.0
+          },
+          {
+            "timestamp_utc": "2025-09-17T05:00:00Z",
+            "value": 966.0
+          },
+          {
+            "timestamp_utc": "2025-09-17T03:00:00Z",
+            "value": 964.0
+          },
+          {
+            "timestamp_utc": "2025-09-16T21:00:00Z",
+            "value": 946.0
+          },
+          {
+            "timestamp_utc": "2025-09-18T16:00:00Z",
+            "value": 929.0
+          },
+          {
+            "timestamp_utc": "2025-09-16T20:00:00Z",
+            "value": 798.0
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 175491,
+        "valid_timestamp_input": 175491,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 174123,
+        "duplicate_exact_collapsed": 1284,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 174207
+      },
+      "yearly": {
+        "2020": {
+          "total_records": 8431,
+          "valid_records": 8349,
+          "expected_slots_full_year": 8784,
+          "completeness_pct_full_year": 95.05,
+          "flatline_records": 60,
+          "min": 32.0,
+          "max": 530.0
+        },
+        "2021": {
+          "total_records": 8724,
+          "valid_records": 8724,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 99.59,
+          "flatline_records": 75,
+          "min": 83.0,
+          "max": 360.0
+        },
+        "2022": {
+          "total_records": 8560,
+          "valid_records": 8513,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 97.18,
+          "flatline_records": 2068,
+          "min": 95.0,
+          "max": 528.0
+        },
+        "2023": {
+          "total_records": 8436,
+          "valid_records": 8436,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 96.3,
+          "flatline_records": 890,
+          "min": 88.0,
+          "max": 333.0
+        },
+        "2024": {
+          "total_records": 7774,
+          "valid_records": 7766,
+          "expected_slots_full_year": 8784,
+          "completeness_pct_full_year": 88.41,
+          "flatline_records": 571,
+          "min": 0.0,
+          "max": 329.0
+        },
+        "2025": {
+          "total_records": 8529,
+          "valid_records": 8497,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 97.0,
+          "flatline_records": 473,
+          "min": 0.0,
+          "max": 1012.0
+        },
+        "2026": {
+          "total_records": 7615,
+          "valid_records": 7615,
+          "expected_slots_full_year": 8760,
+          "completeness_pct_full_year": 86.93,
+          "flatline_records": 2101,
+          "min": 37.0,
+          "max": 560.0
+        }
+      },
+      "flatline_episodes_ge_24h": [
+        {
+          "start_utc": "2020-09-13T04:00:00Z",
+          "end_utc": "2020-09-14T10:00:00Z",
+          "duration_hours": 30.0,
+          "record_count": 31,
+          "constant_value_cm": 92.0
+        },
+        {
+          "start_utc": "2020-09-23T21:00:00Z",
+          "end_utc": "2020-09-25T01:00:00Z",
+          "duration_hours": 28.0,
+          "record_count": 29,
+          "constant_value_cm": 120.0
+        },
+        {
+          "start_utc": "2021-09-08T16:00:00Z",
+          "end_utc": "2021-09-10T11:00:00Z",
+          "duration_hours": 43.0,
+          "record_count": 44,
+          "constant_value_cm": 86.0
+        },
+        {
+          "start_utc": "2021-10-13T18:00:00Z",
+          "end_utc": "2021-10-15T00:00:00Z",
+          "duration_hours": 30.0,
+          "record_count": 31,
+          "constant_value_cm": 199.0
+        },
+        {
+          "start_utc": "2022-01-31T02:00:00Z",
+          "end_utc": "2022-02-02T08:00:00Z",
+          "duration_hours": 54.0,
+          "record_count": 55,
+          "constant_value_cm": 199.0
+        },
+        {
+          "start_utc": "2022-09-28T16:00:00Z",
+          "end_utc": "2022-11-23T14:00:00Z",
+          "duration_hours": 1342.0,
+          "record_count": 1304,
+          "constant_value_cm": 123.0
+        },
+        {
+          "start_utc": "2022-11-23T20:00:00Z",
+          "end_utc": "2022-12-08T05:00:00Z",
+          "duration_hours": 345.0,
+          "record_count": 343,
+          "constant_value_cm": 134.0
+        },
+        {
+          "start_utc": "2022-12-14T04:00:00Z",
+          "end_utc": "2022-12-16T13:00:00Z",
+          "duration_hours": 57.0,
+          "record_count": 57,
+          "constant_value_cm": 181.0
+        },
+        {
+          "start_utc": "2022-12-18T20:00:00Z",
+          "end_utc": "2022-12-22T15:00:00Z",
+          "duration_hours": 91.0,
+          "record_count": 91,
+          "constant_value_cm": 181.0
+        },
+        {
+          "start_utc": "2022-12-22T16:00:00Z",
+          "end_utc": "2022-12-27T08:00:00Z",
+          "duration_hours": 112.0,
+          "record_count": 113,
+          "constant_value_cm": 180.0
+        },
+        {
+          "start_utc": "2022-12-27T14:00:00Z",
+          "end_utc": "2023-01-01T19:00:00Z",
+          "duration_hours": 125.0,
+          "record_count": 125,
+          "constant_value_cm": 180.0
+        },
+        {
+          "start_utc": "2023-01-01T20:00:00Z",
+          "end_utc": "2023-01-03T05:00:00Z",
+          "duration_hours": 33.0,
+          "record_count": 34,
+          "constant_value_cm": 179.0
+        },
+        {
+          "start_utc": "2023-01-03T23:00:00Z",
+          "end_utc": "2023-01-07T10:00:00Z",
+          "duration_hours": 83.0,
+          "record_count": 82,
+          "constant_value_cm": 180.0
+        },
+        {
+          "start_utc": "2023-01-08T09:00:00Z",
+          "end_utc": "2023-01-10T05:00:00Z",
+          "duration_hours": 44.0,
+          "record_count": 41,
+          "constant_value_cm": 178.0
+        },
+        {
+          "start_utc": "2023-01-11T10:00:00Z",
+          "end_utc": "2023-01-12T10:00:00Z",
+          "duration_hours": 24.0,
+          "record_count": 21,
+          "constant_value_cm": 178.0
+        },
+        {
+          "start_utc": "2023-01-13T05:00:00Z",
+          "end_utc": "2023-01-14T12:00:00Z",
+          "duration_hours": 31.0,
+          "record_count": 32,
+          "constant_value_cm": 179.0
+        },
+        {
+          "start_utc": "2023-01-14T13:00:00Z",
+          "end_utc": "2023-01-16T12:00:00Z",
+          "duration_hours": 47.0,
+          "record_count": 48,
+          "constant_value_cm": 180.0
+        },
+        {
+          "start_utc": "2023-01-16T13:00:00Z",
+          "end_utc": "2023-01-18T11:00:00Z",
+          "duration_hours": 46.0,
+          "record_count": 47,
+          "constant_value_cm": 181.0
+        },
+        {
+          "start_utc": "2023-01-18T12:00:00Z",
+          "end_utc": "2023-01-23T02:00:00Z",
+          "duration_hours": 110.0,
+          "record_count": 110,
+          "constant_value_cm": 182.0
+        },
+        {
+          "start_utc": "2023-01-23T03:00:00Z",
+          "end_utc": "2023-01-25T20:00:00Z",
+          "duration_hours": 65.0,
+          "record_count": 62,
+          "constant_value_cm": 181.0
+        },
+        {
+          "start_utc": "2023-01-26T10:00:00Z",
+          "end_utc": "2023-01-27T11:00:00Z",
+          "duration_hours": 25.0,
+          "record_count": 26,
+          "constant_value_cm": 180.0
+        },
+        {
+          "start_utc": "2023-01-27T12:00:00Z",
+          "end_utc": "2023-01-30T13:00:00Z",
+          "duration_hours": 73.0,
+          "record_count": 73,
+          "constant_value_cm": 181.0
+        },
+        {
+          "start_utc": "2023-01-30T21:00:00Z",
+          "end_utc": "2023-02-02T15:00:00Z",
+          "duration_hours": 66.0,
+          "record_count": 56,
+          "constant_value_cm": 182.0
+        },
+        {
+          "start_utc": "2023-02-26T22:00:00Z",
+          "end_utc": "2023-02-28T07:00:00Z",
+          "duration_hours": 33.0,
+          "record_count": 34,
+          "constant_value_cm": 201.0
+        },
+        {
+          "start_utc": "2023-10-31T06:00:00Z",
+          "end_utc": "2023-11-01T10:00:00Z",
+          "duration_hours": 28.0,
+          "record_count": 28,
+          "constant_value_cm": 205.0
+        },
+        {
+          "start_utc": "2023-11-04T15:00:00Z",
+          "end_utc": "2023-11-05T18:00:00Z",
+          "duration_hours": 27.0,
+          "record_count": 28,
+          "constant_value_cm": 204.0
+        },
+        {
+          "start_utc": "2023-12-15T13:00:00Z",
+          "end_utc": "2023-12-16T18:00:00Z",
+          "duration_hours": 29.0,
+          "record_count": 30,
+          "constant_value_cm": 124.0
+        },
+        {
+          "start_utc": "2023-12-17T10:00:00Z",
+          "end_utc": "2023-12-18T21:00:00Z",
+          "duration_hours": 35.0,
+          "record_count": 36,
+          "constant_value_cm": 123.0
+        },
+        {
+          "start_utc": "2023-12-19T21:00:00Z",
+          "end_utc": "2023-12-22T08:00:00Z",
+          "duration_hours": 59.0,
+          "record_count": 55,
+          "constant_value_cm": 122.0
+        },
+        {
+          "start_utc": "2023-12-25T20:00:00Z",
+          "end_utc": "2023-12-26T23:00:00Z",
+          "duration_hours": 27.0,
+          "record_count": 27,
+          "constant_value_cm": 125.0
+        },
+        {
+          "start_utc": "2024-01-11T21:00:00Z",
+          "end_utc": "2024-01-12T21:00:00Z",
+          "duration_hours": 24.0,
+          "record_count": 25,
+          "constant_value_cm": 129.0
+        },
+        {
+          "start_utc": "2024-01-18T21:00:00Z",
+          "end_utc": "2024-01-20T19:00:00Z",
+          "duration_hours": 46.0,
+          "record_count": 47,
+          "constant_value_cm": 131.0
+        },
+        {
+          "start_utc": "2024-02-03T20:00:00Z",
+          "end_utc": "2024-02-04T20:00:00Z",
+          "duration_hours": 24.0,
+          "record_count": 25,
+          "constant_value_cm": 134.0
+        },
+        {
+          "start_utc": "2024-02-04T21:00:00Z",
+          "end_utc": "2024-02-06T09:00:00Z",
+          "duration_hours": 36.0,
+          "record_count": 35,
+          "constant_value_cm": 133.0
+        },
+        {
+          "start_utc": "2024-02-06T10:00:00Z",
+          "end_utc": "2024-02-08T09:00:00Z",
+          "duration_hours": 47.0,
+          "record_count": 45,
+          "constant_value_cm": 132.0
+        },
+        {
+          "start_utc": "2024-02-08T21:00:00Z",
+          "end_utc": "2024-02-11T04:00:00Z",
+          "duration_hours": 55.0,
+          "record_count": 50,
+          "constant_value_cm": 131.0
+        },
+        {
+          "start_utc": "2024-02-13T02:00:00Z",
+          "end_utc": "2024-02-14T19:00:00Z",
+          "duration_hours": 41.0,
+          "record_count": 42,
+          "constant_value_cm": 130.0
+        },
+        {
+          "start_utc": "2024-02-18T01:00:00Z",
+          "end_utc": "2024-02-19T21:00:00Z",
+          "duration_hours": 44.0,
+          "record_count": 43,
+          "constant_value_cm": 131.0
+        },
+        {
+          "start_utc": "2024-02-25T08:00:00Z",
+          "end_utc": "2024-02-26T09:00:00Z",
+          "duration_hours": 25.0,
+          "record_count": 26,
+          "constant_value_cm": 132.0
+        },
+        {
+          "start_utc": "2024-02-26T20:00:00Z",
+          "end_utc": "2024-02-27T20:00:00Z",
+          "duration_hours": 24.0,
+          "record_count": 25,
+          "constant_value_cm": 131.0
+        },
+        {
+          "start_utc": "2024-03-04T20:00:00Z",
+          "end_utc": "2024-03-05T22:00:00Z",
+          "duration_hours": 26.0,
+          "record_count": 27,
+          "constant_value_cm": 131.0
+        },
+        {
+          "start_utc": "2024-11-19T09:00:00Z",
+          "end_utc": "2024-11-20T14:00:00Z",
+          "duration_hours": 29.0,
+          "record_count": 29,
+          "constant_value_cm": 172.0
+        },
+        {
+          "start_utc": "2024-11-20T16:00:00Z",
+          "end_utc": "2024-11-22T15:00:00Z",
+          "duration_hours": 47.0,
+          "record_count": 48,
+          "constant_value_cm": 172.0
+        },
+        {
+          "start_utc": "2024-12-09T21:00:00Z",
+          "end_utc": "2024-12-10T23:00:00Z",
+          "duration_hours": 26.0,
+          "record_count": 27,
+          "constant_value_cm": 172.0
+        },
+        {
+          "start_utc": "2024-12-12T21:00:00Z",
+          "end_utc": "2024-12-14T12:00:00Z",
+          "duration_hours": 39.0,
+          "record_count": 35,
+          "constant_value_cm": 172.0
+        },
+        {
+          "start_utc": "2024-12-19T01:00:00Z",
+          "end_utc": "2024-12-20T20:00:00Z",
+          "duration_hours": 43.0,
+          "record_count": 42,
+          "constant_value_cm": 172.0
+        },
+        {
+          "start_utc": "2025-01-25T23:00:00Z",
+          "end_utc": "2025-01-27T13:00:00Z",
+          "duration_hours": 38.0,
+          "record_count": 35,
+          "constant_value_cm": 172.0
+        },
+        {
+          "start_utc": "2025-02-01T18:00:00Z",
+          "end_utc": "2025-02-03T00:00:00Z",
+          "duration_hours": 30.0,
+          "record_count": 31,
+          "constant_value_cm": 170.0
+        },
+        {
+          "start_utc": "2025-02-05T11:00:00Z",
+          "end_utc": "2025-02-06T12:00:00Z",
+          "duration_hours": 25.0,
+          "record_count": 24,
+          "constant_value_cm": 165.0
+        },
+        {
+          "start_utc": "2025-02-06T13:00:00Z",
+          "end_utc": "2025-02-09T07:00:00Z",
+          "duration_hours": 66.0,
+          "record_count": 65,
+          "constant_value_cm": 164.0
+        },
+        {
+          "start_utc": "2025-02-11T13:00:00Z",
+          "end_utc": "2025-02-12T21:00:00Z",
+          "duration_hours": 32.0,
+          "record_count": 32,
+          "constant_value_cm": 163.0
+        },
+        {
+          "start_utc": "2025-02-13T01:00:00Z",
+          "end_utc": "2025-02-15T08:00:00Z",
+          "duration_hours": 55.0,
+          "record_count": 56,
+          "constant_value_cm": 162.0
+        },
+        {
+          "start_utc": "2025-02-17T05:00:00Z",
+          "end_utc": "2025-02-18T12:00:00Z",
+          "duration_hours": 31.0,
+          "record_count": 31,
+          "constant_value_cm": 161.0
+        },
+        {
+          "start_utc": "2025-02-19T02:00:00Z",
+          "end_utc": "2025-02-20T13:00:00Z",
+          "duration_hours": 35.0,
+          "record_count": 35,
+          "constant_value_cm": 160.0
+        },
+        {
+          "start_utc": "2025-02-20T14:00:00Z",
+          "end_utc": "2025-02-21T20:00:00Z",
+          "duration_hours": 30.0,
+          "record_count": 30,
+          "constant_value_cm": 159.0
+        },
+        {
+          "start_utc": "2025-02-23T03:00:00Z",
+          "end_utc": "2025-02-24T19:00:00Z",
+          "duration_hours": 40.0,
+          "record_count": 40,
+          "constant_value_cm": 159.0
+        },
+        {
+          "start_utc": "2025-02-27T04:00:00Z",
+          "end_utc": "2025-02-28T04:00:00Z",
+          "duration_hours": 24.0,
+          "record_count": 25,
+          "constant_value_cm": 159.0
+        },
+        {
+          "start_utc": "2025-06-22T18:00:00Z",
+          "end_utc": "2025-06-24T03:00:00Z",
+          "duration_hours": 33.0,
+          "record_count": 34,
+          "constant_value_cm": 129.0
+        },
+        {
+          "start_utc": "2025-11-30T00:00:00Z",
+          "end_utc": "2025-12-01T10:00:00Z",
+          "duration_hours": 34.0,
+          "record_count": 35,
+          "constant_value_cm": 91.0
+        },
+        {
+          "start_utc": "2026-03-16T23:00:00Z",
+          "end_utc": "2026-03-18T19:00:00Z",
+          "duration_hours": 44.0,
+          "record_count": 45,
+          "constant_value_cm": 204.0
+        },
+        {
+          "start_utc": "2026-04-04T18:00:00Z",
+          "end_utc": "2026-04-05T20:00:00Z",
+          "duration_hours": 26.0,
+          "record_count": 27,
+          "constant_value_cm": 256.0
+        },
+        {
+          "start_utc": "2026-04-05T21:00:00Z",
+          "end_utc": "2026-04-07T00:00:00Z",
+          "duration_hours": 27.0,
+          "record_count": 28,
+          "constant_value_cm": 255.0
+        },
+        {
+          "start_utc": "2026-04-07T01:00:00Z",
+          "end_utc": "2026-04-08T22:00:00Z",
+          "duration_hours": 45.0,
+          "record_count": 46,
+          "constant_value_cm": 254.0
+        },
+        {
+          "start_utc": "2026-04-13T19:00:00Z",
+          "end_utc": "2026-04-14T22:00:00Z",
+          "duration_hours": 27.0,
+          "record_count": 28,
+          "constant_value_cm": 255.0
+        },
+        {
+          "start_utc": "2026-04-14T23:00:00Z",
+          "end_utc": "2026-04-16T08:00:00Z",
+          "duration_hours": 33.0,
+          "record_count": 34,
+          "constant_value_cm": 254.0
+        },
+        {
+          "start_utc": "2026-04-17T21:00:00Z",
+          "end_utc": "2026-04-19T04:00:00Z",
+          "duration_hours": 31.0,
+          "record_count": 32,
+          "constant_value_cm": 253.0
+        },
+        {
+          "start_utc": "2026-04-19T16:00:00Z",
+          "end_utc": "2026-04-23T02:00:00Z",
+          "duration_hours": 82.0,
+          "record_count": 83,
+          "constant_value_cm": 252.0
+        },
+        {
+          "start_utc": "2026-04-24T21:00:00Z",
+          "end_utc": "2026-04-26T22:00:00Z",
+          "duration_hours": 49.0,
+          "record_count": 50,
+          "constant_value_cm": 251.0
+        },
+        {
+          "start_utc": "2026-04-27T19:00:00Z",
+          "end_utc": "2026-05-01T04:00:00Z",
+          "duration_hours": 81.0,
+          "record_count": 79,
+          "constant_value_cm": 250.0
+        },
+        {
+          "start_utc": "2026-05-03T20:00:00Z",
+          "end_utc": "2026-05-05T18:00:00Z",
+          "duration_hours": 46.0,
+          "record_count": 47,
+          "constant_value_cm": 250.0
+        },
+        {
+          "start_utc": "2026-05-06T20:00:00Z",
+          "end_utc": "2026-05-08T17:00:00Z",
+          "duration_hours": 45.0,
+          "record_count": 46,
+          "constant_value_cm": 249.0
+        },
+        {
+          "start_utc": "2026-05-22T04:00:00Z",
+          "end_utc": "2026-05-23T11:00:00Z",
+          "duration_hours": 31.0,
+          "record_count": 32,
+          "constant_value_cm": 173.0
+        },
+        {
+          "start_utc": "2026-06-25T00:00:00Z",
+          "end_utc": "2026-06-26T04:00:00Z",
+          "duration_hours": 28.0,
+          "record_count": 29,
+          "constant_value_cm": 166.0
+        },
+        {
+          "start_utc": "2026-07-27T19:00:00Z",
+          "end_utc": "2026-07-29T14:00:00Z",
+          "duration_hours": 43.0,
+          "record_count": 44,
+          "constant_value_cm": 134.0
+        },
+        {
+          "start_utc": "2026-08-21T21:00:00Z",
+          "end_utc": "2026-08-22T21:00:00Z",
+          "duration_hours": 24.0,
+          "record_count": 25,
+          "constant_value_cm": 162.0
+        },
+        {
+          "start_utc": "2026-09-26T08:00:00Z",
+          "end_utc": "2026-10-05T11:00:00Z",
+          "duration_hours": 219.0,
+          "record_count": 220,
+          "constant_value_cm": 179.0
+        },
+        {
+          "start_utc": "2026-10-05T13:00:00Z",
+          "end_utc": "2026-11-16T09:00:00Z",
+          "duration_hours": 1004.0,
+          "record_count": 1005,
+          "constant_value_cm": 179.0
+        },
+        {
+          "start_utc": "2026-11-16T18:00:00Z",
+          "end_utc": "2026-11-25T02:00:00Z",
+          "duration_hours": 200.0,
+          "record_count": 201,
+          "constant_value_cm": 179.0
+        }
+      ]
+    },
+    "58790002::daily_stage_cm": {
+      "station_id": "58790002",
+      "variable": "daily_stage_cm",
+      "unit": "cm",
+      "nominal_cadence_min": 1440,
+      "period_start_utc": "2020-01-01T10:00:00Z",
+      "period_end_utc": "2025-12-31T10:00:00Z",
+      "total_records": 2192,
+      "valid_records": 2192,
+      "missing_records": 0,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 100.0,
+      "observed_cadence_min": {
+        "median": 1440.0,
+        "p10": 1440.0,
+        "p90": 1440.0,
+        "top_steps_min": {
+          "1440.0": 2191
+        }
+      },
+      "gaps": {
+        "threshold_min": 2880.0,
+        "gap_count": 0,
+        "max_gap_hours": 0.0,
+        "total_missing_hours_est": 0.0,
+        "top_10_largest_gaps": []
+      },
+      "distribution": {
+        "min": 33.0,
+        "p50": 101.0,
+        "p95": 220.0,
+        "p99": 315.09,
+        "max": 428.0,
+        "extreme_high_preserved_count": 27,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2023-01-08T10:00:00Z",
+            "value": 428.0
+          },
+          {
+            "timestamp_utc": "2022-01-11T10:00:00Z",
+            "value": 420.0
+          },
+          {
+            "timestamp_utc": "2020-02-14T10:00:00Z",
+            "value": 404.0
+          },
+          {
+            "timestamp_utc": "2020-02-15T10:00:00Z",
+            "value": 399.0
+          },
+          {
+            "timestamp_utc": "2023-01-12T10:00:00Z",
+            "value": 392.0
+          },
+          {
+            "timestamp_utc": "2022-01-10T10:00:00Z",
+            "value": 391.0
+          },
+          {
+            "timestamp_utc": "2020-01-26T10:00:00Z",
+            "value": 382.0
+          },
+          {
+            "timestamp_utc": "2023-01-07T10:00:00Z",
+            "value": 378.0
+          },
+          {
+            "timestamp_utc": "2022-01-12T10:00:00Z",
+            "value": 377.0
+          },
+          {
+            "timestamp_utc": "2020-03-06T10:00:00Z",
+            "value": 364.0
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 718233,
+        "valid_timestamp_input": 718233,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 710375,
+        "duplicate_exact_collapsed": 454,
+        "duplicate_conflicts_or_revisions": 5391,
+        "output_unique_records": 712388
+      },
+      "yearly": {
+        "2020": {
+          "total_records": 366,
+          "valid_records": 366,
+          "expected_slots_full_year": 366,
+          "completeness_pct_full_year": 100.0,
+          "flatline_records": 0,
+          "min": 45.0,
+          "max": 404.0
+        },
+        "2021": {
+          "total_records": 365,
+          "valid_records": 365,
+          "expected_slots_full_year": 365,
+          "completeness_pct_full_year": 100.0,
+          "flatline_records": 0,
+          "min": 47.0,
+          "max": 278.0
+        },
+        "2022": {
+          "total_records": 365,
+          "valid_records": 365,
+          "expected_slots_full_year": 365,
+          "completeness_pct_full_year": 100.0,
+          "flatline_records": 0,
+          "min": 67.0,
+          "max": 420.0
+        },
+        "2023": {
+          "total_records": 365,
+          "valid_records": 365,
+          "expected_slots_full_year": 365,
+          "completeness_pct_full_year": 100.0,
+          "flatline_records": 0,
+          "min": 58.0,
+          "max": 428.0
+        },
+        "2024": {
+          "total_records": 366,
+          "valid_records": 366,
+          "expected_slots_full_year": 366,
+          "completeness_pct_full_year": 100.0,
+          "flatline_records": 0,
+          "min": 33.0,
+          "max": 232.5
+        },
+        "2025": {
+          "total_records": 365,
+          "valid_records": 365,
+          "expected_slots_full_year": 365,
+          "completeness_pct_full_year": 100.0,
+          "flatline_records": 0,
+          "min": 50.0,
+          "max": 312.0
+        }
+      }
+    },
+    "58790002::discharge_m3s": {
+      "station_id": "58790002",
+      "variable": "discharge_m3s",
+      "unit": "m3/s",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2020-01-01T03:00:00Z",
+      "period_end_utc": "2026-11-25T02:30:00Z",
+      "total_records": 236732,
+      "valid_records": 228377,
+      "missing_records": 8355,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 94.4,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 228124,
+          "75.0": 111,
+          "135.0": 28,
+          "840.0": 28,
+          "600.0": 27
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 242,
+        "max_gap_hours": 1597.25,
+        "total_missing_hours_est": 3383.0,
+        "top_10_largest_gaps": [
+          {
+            "start_utc": "2021-06-09T03:30:00Z",
+            "end_utc": "2021-08-14T16:45:00Z",
+            "gap_hours": 1597.25
+          },
+          {
+            "start_utc": "2020-11-16T00:30:00Z",
+            "end_utc": "2020-11-30T17:30:00Z",
+            "gap_hours": 353.0
+          },
+          {
+            "start_utc": "2022-04-11T22:30:00Z",
+            "end_utc": "2022-04-22T16:30:00Z",
+            "gap_hours": 258.0
+          },
+          {
+            "start_utc": "2023-10-31T22:30:00Z",
+            "end_utc": "2023-11-03T02:45:00Z",
+            "gap_hours": 52.25
+          },
+          {
+            "start_utc": "2022-04-09T11:30:00Z",
+            "end_utc": "2022-04-11T03:15:00Z",
+            "gap_hours": 39.75
+          },
+          {
+            "start_utc": "2022-04-08T11:30:00Z",
+            "end_utc": "2022-04-09T11:30:00Z",
+            "gap_hours": 24.0
+          },
+          {
+            "start_utc": "2022-02-10T17:30:00Z",
+            "end_utc": "2022-02-11T16:45:00Z",
+            "gap_hours": 23.25
+          },
+          {
+            "start_utc": "2026-05-12T10:00:00Z",
+            "end_utc": "2026-05-13T08:45:00Z",
+            "gap_hours": 22.75
+          },
+          {
+            "start_utc": "2026-07-15T19:30:00Z",
+            "end_utc": "2026-07-16T12:45:00Z",
+            "gap_hours": 17.25
+          },
+          {
+            "start_utc": "2022-04-07T20:30:00Z",
+            "end_utc": "2022-04-08T11:30:00Z",
+            "gap_hours": 15.0
+          }
+        ]
+      },
+      "distribution": {
+        "min": 15.9,
+        "p50": 85.7,
+        "p95": 351.5,
+        "p99": 719.9,
+        "max": 1287.9,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2023-01-08T12:45:00Z",
+            "value": 1287.9
+          },
+          {
+            "timestamp_utc": "2023-01-08T13:00:00Z",
+            "value": 1287.9
+          },
+          {
+            "timestamp_utc": "2023-01-08T13:15:00Z",
+            "value": 1287.9
+          },
+          {
+            "timestamp_utc": "2023-01-08T14:00:00Z",
+            "value": 1287.9
+          },
+          {
+            "timestamp_utc": "2023-01-08T14:15:00Z",
+            "value": 1287.9
+          },
+          {
+            "timestamp_utc": "2023-01-08T14:45:00Z",
+            "value": 1287.9
+          },
+          {
+            "timestamp_utc": "2023-01-08T15:00:00Z",
+            "value": 1287.9
+          },
+          {
+            "timestamp_utc": "2023-01-08T16:45:00Z",
+            "value": 1287.9
+          },
+          {
+            "timestamp_utc": "2023-01-08T11:45:00Z",
+            "value": 1282.2
+          },
+          {
+            "timestamp_utc": "2023-01-08T12:00:00Z",
+            "value": 1282.2
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 718233,
+        "valid_timestamp_input": 718233,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 710375,
+        "duplicate_exact_collapsed": 454,
+        "duplicate_conflicts_or_revisions": 5391,
+        "output_unique_records": 712388
+      },
+      "yearly": {
+        "2020": {
+          "total_records": 33676,
+          "valid_records": 33662,
+          "expected_slots_full_year": 35136,
+          "completeness_pct_full_year": 95.8,
+          "flatline_records": 0,
+          "min": 25.4,
+          "max": 1121.3
+        },
+        "2021": {
+          "total_records": 34996,
+          "valid_records": 28601,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 81.62,
+          "flatline_records": 0,
+          "min": 33.1,
+          "max": 568.0
+        },
+        "2022": {
+          "total_records": 34552,
+          "valid_records": 32865,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 93.79,
+          "flatline_records": 0,
+          "min": 35.25,
+          "max": 1199.7
+        },
+        "2023": {
+          "total_records": 34908,
+          "valid_records": 34693,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 99.01,
+          "flatline_records": 0,
+          "min": 35.0,
+          "max": 1287.9
+        },
+        "2024": {
+          "total_records": 35000,
+          "valid_records": 35000,
+          "expected_slots_full_year": 35136,
+          "completeness_pct_full_year": 99.61,
+          "flatline_records": 0,
+          "min": 15.9,
+          "max": 460.2
+        },
+        "2025": {
+          "total_records": 34956,
+          "valid_records": 34932,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 99.69,
+          "flatline_records": 0,
+          "min": 30.6,
+          "max": 692.03
+        },
+        "2026": {
+          "total_records": 28644,
+          "valid_records": 28624,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 81.69,
+          "flatline_records": 0,
+          "min": 32.78,
+          "max": 1197.7
+        }
+      }
+    },
+    "58790002::rainfall_mm": {
+      "station_id": "58790002",
+      "variable": "rainfall_mm",
+      "unit": "mm",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2020-01-01T03:00:00Z",
+      "period_end_utc": "2026-11-25T02:30:00Z",
+      "total_records": 236732,
+      "valid_records": 231977,
+      "missing_records": 4755,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 95.89,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 231611,
+          "75.0": 111,
+          "45.0": 82,
+          "30.0": 69,
+          "135.0": 28
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 296,
+        "max_gap_hours": 682.5,
+        "total_missing_hours_est": 2468.25,
+        "top_10_largest_gaps": [
+          {
+            "start_utc": "2023-09-25T10:45:00Z",
+            "end_utc": "2023-10-23T21:15:00Z",
+            "gap_hours": 682.5
+          },
+          {
+            "start_utc": "2026-04-17T11:30:00Z",
+            "end_utc": "2026-05-13T09:30:00Z",
+            "gap_hours": 622.0
+          },
+          {
+            "start_utc": "2020-11-16T00:30:00Z",
+            "end_utc": "2020-11-30T15:30:00Z",
+            "gap_hours": 351.0
+          },
+          {
+            "start_utc": "2025-01-29T12:30:00Z",
+            "end_utc": "2025-02-07T14:45:00Z",
+            "gap_hours": 218.25
+          },
+          {
+            "start_utc": "2026-03-24T08:30:00Z",
+            "end_utc": "2026-03-27T12:45:00Z",
+            "gap_hours": 76.25
+          },
+          {
+            "start_utc": "2023-10-31T22:30:00Z",
+            "end_utc": "2023-11-03T02:45:00Z",
+            "gap_hours": 52.25
+          },
+          {
+            "start_utc": "2022-02-10T17:30:00Z",
+            "end_utc": "2022-02-11T17:15:00Z",
+            "gap_hours": 23.75
+          },
+          {
+            "start_utc": "2026-07-15T19:30:00Z",
+            "end_utc": "2026-07-16T12:45:00Z",
+            "gap_hours": 17.25
+          },
+          {
+            "start_utc": "2022-02-08T18:30:00Z",
+            "end_utc": "2022-02-09T08:15:00Z",
+            "gap_hours": 13.75
+          },
+          {
+            "start_utc": "2024-06-07T03:30:00Z",
+            "end_utc": "2024-06-07T16:15:00Z",
+            "gap_hours": 12.75
+          }
+        ]
+      },
+      "distribution": {
+        "min": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.8,
+        "max": 41.0,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2022-02-02T23:45:00Z",
+            "value": 41.0
+          },
+          {
+            "timestamp_utc": "2022-11-15T23:45:00Z",
+            "value": 36.0
+          },
+          {
+            "timestamp_utc": "2021-02-06T21:30:00Z",
+            "value": 30.2
+          },
+          {
+            "timestamp_utc": "2026-11-08T01:15:00Z",
+            "value": 30.0
+          },
+          {
+            "timestamp_utc": "2023-11-03T12:45:00Z",
+            "value": 29.8
+          },
+          {
+            "timestamp_utc": "2023-12-21T20:45:00Z",
+            "value": 29.6
+          },
+          {
+            "timestamp_utc": "2023-12-30T20:30:00Z",
+            "value": 27.4
+          },
+          {
+            "timestamp_utc": "2026-02-08T21:15:00Z",
+            "value": 26.8
+          },
+          {
+            "timestamp_utc": "2020-11-11T23:45:00Z",
+            "value": 24.4
+          },
+          {
+            "timestamp_utc": "2023-10-30T01:30:00Z",
+            "value": 23.6
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 718233,
+        "valid_timestamp_input": 718233,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 710375,
+        "duplicate_exact_collapsed": 454,
+        "duplicate_conflicts_or_revisions": 5391,
+        "output_unique_records": 712388
+      },
+      "yearly": {
+        "2020": {
+          "total_records": 33676,
+          "valid_records": 33535,
+          "expected_slots_full_year": 35136,
+          "completeness_pct_full_year": 95.44,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 24.4
+        },
+        "2021": {
+          "total_records": 34996,
+          "valid_records": 34971,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 99.8,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 30.2
+        },
+        "2022": {
+          "total_records": 34552,
+          "valid_records": 34367,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 98.08,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 41.0
+        },
+        "2023": {
+          "total_records": 34908,
+          "valid_records": 31940,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 91.15,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 29.8
+        },
+        "2024": {
+          "total_records": 35000,
+          "valid_records": 34573,
+          "expected_slots_full_year": 35136,
+          "completeness_pct_full_year": 98.4,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 18.2
+        },
+        "2025": {
+          "total_records": 34956,
+          "valid_records": 34023,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 97.1,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 22.0
+        },
+        "2026": {
+          "total_records": 28644,
+          "valid_records": 28568,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 81.53,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 30.0
+        }
+      }
+    },
+    "58790002::stage_cm": {
+      "station_id": "58790002",
+      "variable": "stage_cm",
+      "unit": "cm",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2020-01-01T03:00:00Z",
+      "period_end_utc": "2026-11-25T02:30:00Z",
+      "total_records": 236732,
+      "valid_records": 228274,
+      "missing_records": 8458,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 94.36,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 228038,
+          "75.0": 111,
+          "135.0": 28,
+          "840.0": 28,
+          "600.0": 27
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 228,
+        "max_gap_hours": 1597.25,
+        "total_missing_hours_est": 3409.5,
+        "top_10_largest_gaps": [
+          {
+            "start_utc": "2021-06-09T03:30:00Z",
+            "end_utc": "2021-08-14T16:45:00Z",
+            "gap_hours": 1597.25
+          },
+          {
+            "start_utc": "2022-04-04T11:15:00Z",
+            "end_utc": "2022-04-22T16:30:00Z",
+            "gap_hours": 437.25
+          },
+          {
+            "start_utc": "2020-11-16T00:30:00Z",
+            "end_utc": "2020-11-30T17:30:00Z",
+            "gap_hours": 353.0
+          },
+          {
+            "start_utc": "2023-10-31T22:30:00Z",
+            "end_utc": "2023-11-03T02:45:00Z",
+            "gap_hours": 52.25
+          },
+          {
+            "start_utc": "2022-02-10T17:30:00Z",
+            "end_utc": "2022-02-11T16:45:00Z",
+            "gap_hours": 23.25
+          },
+          {
+            "start_utc": "2026-05-12T10:00:00Z",
+            "end_utc": "2026-05-13T08:45:00Z",
+            "gap_hours": 22.75
+          },
+          {
+            "start_utc": "2026-07-15T19:30:00Z",
+            "end_utc": "2026-07-16T12:45:00Z",
+            "gap_hours": 17.25
+          },
+          {
+            "start_utc": "2026-03-24T20:00:00Z",
+            "end_utc": "2026-03-25T10:00:00Z",
+            "gap_hours": 14.0
+          },
+          {
+            "start_utc": "2026-03-25T20:00:00Z",
+            "end_utc": "2026-03-26T10:00:00Z",
+            "gap_hours": 14.0
+          },
+          {
+            "start_utc": "2026-03-26T20:00:00Z",
+            "end_utc": "2026-03-27T10:00:00Z",
+            "gap_hours": 14.0
+          }
+        ]
+      },
+      "distribution": {
+        "min": 29.0,
+        "p50": 105.0,
+        "p95": 224.0,
+        "p99": 320.0,
+        "max": 428.0,
+        "extreme_high_preserved_count": 2657,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2023-01-08T12:45:00Z",
+            "value": 428.0
+          },
+          {
+            "timestamp_utc": "2023-01-08T13:00:00Z",
+            "value": 428.0
+          },
+          {
+            "timestamp_utc": "2023-01-08T13:15:00Z",
+            "value": 428.0
+          },
+          {
+            "timestamp_utc": "2023-01-08T14:00:00Z",
+            "value": 428.0
+          },
+          {
+            "timestamp_utc": "2023-01-08T14:15:00Z",
+            "value": 428.0
+          },
+          {
+            "timestamp_utc": "2023-01-08T14:45:00Z",
+            "value": 428.0
+          },
+          {
+            "timestamp_utc": "2023-01-08T15:00:00Z",
+            "value": 428.0
+          },
+          {
+            "timestamp_utc": "2023-01-08T16:45:00Z",
+            "value": 428.0
+          },
+          {
+            "timestamp_utc": "2023-01-08T11:45:00Z",
+            "value": 427.0
+          },
+          {
+            "timestamp_utc": "2023-01-08T12:00:00Z",
+            "value": 427.0
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 718233,
+        "valid_timestamp_input": 718233,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 710375,
+        "duplicate_exact_collapsed": 454,
+        "duplicate_conflicts_or_revisions": 5391,
+        "output_unique_records": 712388
+      },
+      "yearly": {
+        "2020": {
+          "total_records": 33676,
+          "valid_records": 33662,
+          "expected_slots_full_year": 35136,
+          "completeness_pct_full_year": 95.8,
+          "flatline_records": 594,
+          "min": 43.0,
+          "max": 408.0
+        },
+        "2021": {
+          "total_records": 34996,
+          "valid_records": 28601,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 81.62,
+          "flatline_records": 1664,
+          "min": 54.0,
+          "max": 285.71
+        },
+        "2022": {
+          "total_records": 34552,
+          "valid_records": 32769,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 93.52,
+          "flatline_records": 1912,
+          "min": 63.0,
+          "max": 423.0
+        },
+        "2023": {
+          "total_records": 34908,
+          "valid_records": 34693,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 99.01,
+          "flatline_records": 2800,
+          "min": 58.0,
+          "max": 428.0
+        },
+        "2024": {
+          "total_records": 35000,
+          "valid_records": 35000,
+          "expected_slots_full_year": 35136,
+          "completeness_pct_full_year": 99.61,
+          "flatline_records": 1746,
+          "min": 29.0,
+          "max": 254.0
+        },
+        "2025": {
+          "total_records": 34956,
+          "valid_records": 34932,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 99.69,
+          "flatline_records": 3838,
+          "min": 52.0,
+          "max": 310.76
+        },
+        "2026": {
+          "total_records": 28644,
+          "valid_records": 28617,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 81.67,
+          "flatline_records": 1638,
+          "min": 55.0,
+          "max": 412.0
+        }
+      },
+      "flatline_episodes_ge_24h": [
+        {
+          "start_utc": "2020-03-15T14:45:00Z",
+          "end_utc": "2020-03-16T15:30:00Z",
+          "duration_hours": 24.75,
+          "record_count": 100,
+          "constant_value_cm": 176.0
+        },
+        {
+          "start_utc": "2020-03-24T17:30:00Z",
+          "end_utc": "2020-03-26T05:00:00Z",
+          "duration_hours": 35.5,
+          "record_count": 143,
+          "constant_value_cm": 176.0
+        },
+        {
+          "start_utc": "2020-04-26T11:15:00Z",
+          "end_utc": "2020-04-27T11:45:00Z",
+          "duration_hours": 24.5,
+          "record_count": 99,
+          "constant_value_cm": 131.0
+        },
+        {
+          "start_utc": "2020-05-31T05:30:00Z",
+          "end_utc": "2020-06-01T17:00:00Z",
+          "duration_hours": 35.5,
+          "record_count": 143,
+          "constant_value_cm": 99.0
+        },
+        {
+          "start_utc": "2020-07-12T17:00:00Z",
+          "end_utc": "2020-07-13T20:00:00Z",
+          "duration_hours": 27.0,
+          "record_count": 109,
+          "constant_value_cm": 87.0
+        },
+        {
+          "start_utc": "2021-08-21T05:30:00Z",
+          "end_utc": "2021-08-22T09:00:00Z",
+          "duration_hours": 27.5,
+          "record_count": 111,
+          "constant_value_cm": 97.0
+        },
+        {
+          "start_utc": "2021-08-29T04:00:00Z",
+          "end_utc": "2021-08-30T20:45:00Z",
+          "duration_hours": 40.75,
+          "record_count": 164,
+          "constant_value_cm": 57.0
+        },
+        {
+          "start_utc": "2021-08-30T21:45:00Z",
+          "end_utc": "2021-08-31T22:15:00Z",
+          "duration_hours": 24.5,
+          "record_count": 99,
+          "constant_value_cm": 57.0
+        },
+        {
+          "start_utc": "2021-08-31T22:30:00Z",
+          "end_utc": "2021-09-02T16:45:00Z",
+          "duration_hours": 42.25,
+          "record_count": 170,
+          "constant_value_cm": 58.0
+        },
+        {
+          "start_utc": "2021-09-02T20:45:00Z",
+          "end_utc": "2021-09-04T19:15:00Z",
+          "duration_hours": 46.5,
+          "record_count": 187,
+          "constant_value_cm": 58.0
+        },
+        {
+          "start_utc": "2021-09-04T19:30:00Z",
+          "end_utc": "2021-09-07T11:00:00Z",
+          "duration_hours": 63.5,
+          "record_count": 255,
+          "constant_value_cm": 57.0
+        },
+        {
+          "start_utc": "2021-09-09T12:45:00Z",
+          "end_utc": "2021-09-11T01:15:00Z",
+          "duration_hours": 36.5,
+          "record_count": 147,
+          "constant_value_cm": 55.0
+        },
+        {
+          "start_utc": "2021-09-23T18:00:00Z",
+          "end_utc": "2021-09-25T03:15:00Z",
+          "duration_hours": 33.25,
+          "record_count": 130,
+          "constant_value_cm": 55.0
+        },
+        {
+          "start_utc": "2021-09-28T21:15:00Z",
+          "end_utc": "2021-10-01T18:30:00Z",
+          "duration_hours": 69.25,
+          "record_count": 278,
+          "constant_value_cm": 56.0
+        },
+        {
+          "start_utc": "2021-10-01T19:00:00Z",
+          "end_utc": "2021-10-03T01:30:00Z",
+          "duration_hours": 30.5,
+          "record_count": 123,
+          "constant_value_cm": 56.0
+        },
+        {
+          "start_utc": "2022-03-04T22:30:00Z",
+          "end_utc": "2022-03-06T05:00:00Z",
+          "duration_hours": 30.5,
+          "record_count": 123,
+          "constant_value_cm": 176.0
+        },
+        {
+          "start_utc": "2022-03-07T19:15:00Z",
+          "end_utc": "2022-03-10T16:30:00Z",
+          "duration_hours": 69.25,
+          "record_count": 278,
+          "constant_value_cm": 176.0
+        },
+        {
+          "start_utc": "2022-05-03T11:15:00Z",
+          "end_utc": "2022-05-04T11:15:00Z",
+          "duration_hours": 24.0,
+          "record_count": 97,
+          "constant_value_cm": 114.0
+        },
+        {
+          "start_utc": "2022-05-14T11:30:00Z",
+          "end_utc": "2022-05-15T21:30:00Z",
+          "duration_hours": 34.0,
+          "record_count": 137,
+          "constant_value_cm": 113.0
+        },
+        {
+          "start_utc": "2022-06-19T23:30:00Z",
+          "end_utc": "2022-06-21T00:00:00Z",
+          "duration_hours": 24.5,
+          "record_count": 99,
+          "constant_value_cm": 98.0
+        },
+        {
+          "start_utc": "2022-07-27T11:30:00Z",
+          "end_utc": "2022-07-28T19:45:00Z",
+          "duration_hours": 32.25,
+          "record_count": 130,
+          "constant_value_cm": 95.0
+        },
+        {
+          "start_utc": "2022-08-01T05:45:00Z",
+          "end_utc": "2022-08-02T14:30:00Z",
+          "duration_hours": 32.75,
+          "record_count": 132,
+          "constant_value_cm": 81.0
+        },
+        {
+          "start_utc": "2022-08-06T15:45:00Z",
+          "end_utc": "2022-08-08T09:15:00Z",
+          "duration_hours": 41.5,
+          "record_count": 167,
+          "constant_value_cm": 86.0
+        },
+        {
+          "start_utc": "2022-08-12T22:30:00Z",
+          "end_utc": "2022-08-15T18:00:00Z",
+          "duration_hours": 67.5,
+          "record_count": 271,
+          "constant_value_cm": 72.0
+        },
+        {
+          "start_utc": "2022-08-18T03:15:00Z",
+          "end_utc": "2022-08-19T13:30:00Z",
+          "duration_hours": 34.25,
+          "record_count": 138,
+          "constant_value_cm": 84.0
+        },
+        {
+          "start_utc": "2022-08-21T23:00:00Z",
+          "end_utc": "2022-08-23T05:30:00Z",
+          "duration_hours": 30.5,
+          "record_count": 123,
+          "constant_value_cm": 84.0
+        },
+        {
+          "start_utc": "2022-09-26T17:45:00Z",
+          "end_utc": "2022-09-27T23:00:00Z",
+          "duration_hours": 29.25,
+          "record_count": 118,
+          "constant_value_cm": 87.0
+        },
+        {
+          "start_utc": "2022-10-02T17:45:00Z",
+          "end_utc": "2022-10-03T18:15:00Z",
+          "duration_hours": 24.5,
+          "record_count": 99,
+          "constant_value_cm": 101.0
+        },
+        {
+          "start_utc": "2023-02-23T23:00:00Z",
+          "end_utc": "2023-02-25T00:15:00Z",
+          "duration_hours": 25.25,
+          "record_count": 102,
+          "constant_value_cm": 173.0
+        },
+        {
+          "start_utc": "2023-02-27T13:00:00Z",
+          "end_utc": "2023-03-01T04:15:00Z",
+          "duration_hours": 39.25,
+          "record_count": 158,
+          "constant_value_cm": 172.0
+        },
+        {
+          "start_utc": "2023-03-13T15:30:00Z",
+          "end_utc": "2023-03-15T11:30:00Z",
+          "duration_hours": 44.0,
+          "record_count": 177,
+          "constant_value_cm": 171.0
+        },
+        {
+          "start_utc": "2023-06-04T04:30:00Z",
+          "end_utc": "2023-06-05T05:15:00Z",
+          "duration_hours": 24.75,
+          "record_count": 100,
+          "constant_value_cm": 104.0
+        },
+        {
+          "start_utc": "2023-06-05T06:45:00Z",
+          "end_utc": "2023-06-06T11:30:00Z",
+          "duration_hours": 28.75,
+          "record_count": 116,
+          "constant_value_cm": 104.0
+        },
+        {
+          "start_utc": "2023-06-29T13:45:00Z",
+          "end_utc": "2023-06-30T21:15:00Z",
+          "duration_hours": 31.5,
+          "record_count": 124,
+          "constant_value_cm": 94.0
+        },
+        {
+          "start_utc": "2023-07-22T07:45:00Z",
+          "end_utc": "2023-07-23T10:30:00Z",
+          "duration_hours": 26.75,
+          "record_count": 108,
+          "constant_value_cm": 92.0
+        },
+        {
+          "start_utc": "2023-07-24T22:15:00Z",
+          "end_utc": "2023-07-26T02:45:00Z",
+          "duration_hours": 28.5,
+          "record_count": 115,
+          "constant_value_cm": 91.0
+        },
+        {
+          "start_utc": "2023-07-28T21:45:00Z",
+          "end_utc": "2023-07-30T06:00:00Z",
+          "duration_hours": 32.25,
+          "record_count": 130,
+          "constant_value_cm": 95.0
+        },
+        {
+          "start_utc": "2023-08-05T22:45:00Z",
+          "end_utc": "2023-08-08T20:30:00Z",
+          "duration_hours": 69.75,
+          "record_count": 280,
+          "constant_value_cm": 94.0
+        },
+        {
+          "start_utc": "2023-08-10T18:30:00Z",
+          "end_utc": "2023-08-12T12:30:00Z",
+          "duration_hours": 42.0,
+          "record_count": 169,
+          "constant_value_cm": 77.0
+        },
+        {
+          "start_utc": "2023-08-17T07:30:00Z",
+          "end_utc": "2023-08-18T13:00:00Z",
+          "duration_hours": 29.5,
+          "record_count": 119,
+          "constant_value_cm": 68.0
+        },
+        {
+          "start_utc": "2023-08-18T18:15:00Z",
+          "end_utc": "2023-08-20T01:30:00Z",
+          "duration_hours": 31.25,
+          "record_count": 126,
+          "constant_value_cm": 67.0
+        },
+        {
+          "start_utc": "2023-09-03T12:45:00Z",
+          "end_utc": "2023-09-04T13:00:00Z",
+          "duration_hours": 24.25,
+          "record_count": 98,
+          "constant_value_cm": 99.0
+        },
+        {
+          "start_utc": "2023-09-21T02:00:00Z",
+          "end_utc": "2023-09-23T09:15:00Z",
+          "duration_hours": 55.25,
+          "record_count": 222,
+          "constant_value_cm": 88.0
+        },
+        {
+          "start_utc": "2023-09-28T00:00:00Z",
+          "end_utc": "2023-10-01T16:15:00Z",
+          "duration_hours": 88.25,
+          "record_count": 354,
+          "constant_value_cm": 58.0
+        },
+        {
+          "start_utc": "2023-10-14T03:45:00Z",
+          "end_utc": "2023-10-15T14:00:00Z",
+          "duration_hours": 34.25,
+          "record_count": 138,
+          "constant_value_cm": 81.0
+        },
+        {
+          "start_utc": "2023-10-21T23:00:00Z",
+          "end_utc": "2023-10-23T15:45:00Z",
+          "duration_hours": 40.75,
+          "record_count": 164,
+          "constant_value_cm": 66.0
+        },
+        {
+          "start_utc": "2024-05-02T11:30:00Z",
+          "end_utc": "2024-05-03T14:00:00Z",
+          "duration_hours": 26.5,
+          "record_count": 107,
+          "constant_value_cm": 93.0
+        },
+        {
+          "start_utc": "2024-05-11T04:30:00Z",
+          "end_utc": "2024-05-12T19:15:00Z",
+          "duration_hours": 38.75,
+          "record_count": 156,
+          "constant_value_cm": 94.0
+        },
+        {
+          "start_utc": "2024-08-14T14:00:00Z",
+          "end_utc": "2024-08-16T10:15:00Z",
+          "duration_hours": 44.25,
+          "record_count": 178,
+          "constant_value_cm": 56.0
+        },
+        {
+          "start_utc": "2024-08-17T10:15:00Z",
+          "end_utc": "2024-08-19T10:15:00Z",
+          "duration_hours": 48.0,
+          "record_count": 193,
+          "constant_value_cm": 56.0
+        },
+        {
+          "start_utc": "2024-08-19T13:30:00Z",
+          "end_utc": "2024-08-20T14:15:00Z",
+          "duration_hours": 24.75,
+          "record_count": 100,
+          "constant_value_cm": 56.0
+        },
+        {
+          "start_utc": "2024-08-26T07:15:00Z",
+          "end_utc": "2024-08-27T22:45:00Z",
+          "duration_hours": 39.5,
+          "record_count": 159,
+          "constant_value_cm": 56.0
+        },
+        {
+          "start_utc": "2024-08-30T13:45:00Z",
+          "end_utc": "2024-09-02T03:15:00Z",
+          "duration_hours": 61.5,
+          "record_count": 247,
+          "constant_value_cm": 56.0
+        },
+        {
+          "start_utc": "2024-09-24T12:45:00Z",
+          "end_utc": "2024-09-25T20:45:00Z",
+          "duration_hours": 32.0,
+          "record_count": 129,
+          "constant_value_cm": 53.0
+        },
+        {
+          "start_utc": "2024-09-28T01:15:00Z",
+          "end_utc": "2024-09-29T16:00:00Z",
+          "duration_hours": 38.75,
+          "record_count": 156,
+          "constant_value_cm": 53.0
+        },
+        {
+          "start_utc": "2024-10-05T22:30:00Z",
+          "end_utc": "2024-10-07T01:15:00Z",
+          "duration_hours": 26.75,
+          "record_count": 104,
+          "constant_value_cm": 52.0
+        },
+        {
+          "start_utc": "2024-11-25T14:15:00Z",
+          "end_utc": "2024-11-26T18:15:00Z",
+          "duration_hours": 28.0,
+          "record_count": 113,
+          "constant_value_cm": 137.0
+        },
+        {
+          "start_utc": "2024-12-09T00:30:00Z",
+          "end_utc": "2024-12-10T02:15:00Z",
+          "duration_hours": 25.75,
+          "record_count": 104,
+          "constant_value_cm": 137.0
+        },
+        {
+          "start_utc": "2025-01-20T19:00:00Z",
+          "end_utc": "2025-01-22T00:45:00Z",
+          "duration_hours": 29.75,
+          "record_count": 120,
+          "constant_value_cm": 137.0
+        },
+        {
+          "start_utc": "2025-01-25T10:45:00Z",
+          "end_utc": "2025-01-26T19:45:00Z",
+          "duration_hours": 33.0,
+          "record_count": 133,
+          "constant_value_cm": 136.0
+        },
+        {
+          "start_utc": "2025-02-08T00:00:00Z",
+          "end_utc": "2025-02-10T17:15:00Z",
+          "duration_hours": 65.25,
+          "record_count": 262,
+          "constant_value_cm": 138.0
+        },
+        {
+          "start_utc": "2025-04-01T13:15:00Z",
+          "end_utc": "2025-04-02T20:30:00Z",
+          "duration_hours": 31.25,
+          "record_count": 126,
+          "constant_value_cm": 133.0
+        },
+        {
+          "start_utc": "2025-04-02T23:30:00Z",
+          "end_utc": "2025-04-04T06:30:00Z",
+          "duration_hours": 31.0,
+          "record_count": 125,
+          "constant_value_cm": 138.0
+        },
+        {
+          "start_utc": "2025-05-03T06:30:00Z",
+          "end_utc": "2025-05-04T09:15:00Z",
+          "duration_hours": 26.75,
+          "record_count": 108,
+          "constant_value_cm": 108.0
+        },
+        {
+          "start_utc": "2025-05-06T23:15:00Z",
+          "end_utc": "2025-05-08T03:30:00Z",
+          "duration_hours": 28.25,
+          "record_count": 114,
+          "constant_value_cm": 108.0
+        },
+        {
+          "start_utc": "2025-05-21T09:15:00Z",
+          "end_utc": "2025-05-22T15:30:00Z",
+          "duration_hours": 30.25,
+          "record_count": 122,
+          "constant_value_cm": 78.0
+        },
+        {
+          "start_utc": "2025-06-29T10:00:00Z",
+          "end_utc": "2025-06-30T19:45:00Z",
+          "duration_hours": 33.75,
+          "record_count": 136,
+          "constant_value_cm": 71.0
+        },
+        {
+          "start_utc": "2025-07-06T12:45:00Z",
+          "end_utc": "2025-07-07T15:45:00Z",
+          "duration_hours": 27.0,
+          "record_count": 109,
+          "constant_value_cm": 79.0
+        },
+        {
+          "start_utc": "2025-07-17T14:15:00Z",
+          "end_utc": "2025-07-21T02:15:00Z",
+          "duration_hours": 84.0,
+          "record_count": 337,
+          "constant_value_cm": 77.0
+        },
+        {
+          "start_utc": "2025-07-21T09:00:00Z",
+          "end_utc": "2025-07-23T23:00:00Z",
+          "duration_hours": 62.0,
+          "record_count": 249,
+          "constant_value_cm": 76.0
+        },
+        {
+          "start_utc": "2025-07-27T01:00:00Z",
+          "end_utc": "2025-07-29T15:00:00Z",
+          "duration_hours": 62.0,
+          "record_count": 249,
+          "constant_value_cm": 77.0
+        },
+        {
+          "start_utc": "2025-08-02T08:45:00Z",
+          "end_utc": "2025-08-03T10:00:00Z",
+          "duration_hours": 25.25,
+          "record_count": 102,
+          "constant_value_cm": 77.0
+        },
+        {
+          "start_utc": "2025-08-11T17:30:00Z",
+          "end_utc": "2025-08-13T05:15:00Z",
+          "duration_hours": 35.75,
+          "record_count": 144,
+          "constant_value_cm": 74.0
+        },
+        {
+          "start_utc": "2025-08-14T08:15:00Z",
+          "end_utc": "2025-08-15T09:30:00Z",
+          "duration_hours": 25.25,
+          "record_count": 102,
+          "constant_value_cm": 68.0
+        },
+        {
+          "start_utc": "2025-08-15T16:30:00Z",
+          "end_utc": "2025-08-17T12:00:00Z",
+          "duration_hours": 43.5,
+          "record_count": 175,
+          "constant_value_cm": 68.0
+        },
+        {
+          "start_utc": "2025-08-17T12:15:00Z",
+          "end_utc": "2025-08-19T17:15:00Z",
+          "duration_hours": 53.0,
+          "record_count": 213,
+          "constant_value_cm": 67.0
+        },
+        {
+          "start_utc": "2025-08-21T15:00:00Z",
+          "end_utc": "2025-08-25T17:30:00Z",
+          "duration_hours": 98.5,
+          "record_count": 395,
+          "constant_value_cm": 66.0
+        },
+        {
+          "start_utc": "2025-09-14T02:15:00Z",
+          "end_utc": "2025-09-15T20:15:00Z",
+          "duration_hours": 42.0,
+          "record_count": 169,
+          "constant_value_cm": 58.0
+        },
+        {
+          "start_utc": "2025-10-11T15:30:00Z",
+          "end_utc": "2025-10-14T01:15:00Z",
+          "duration_hours": 57.75,
+          "record_count": 232,
+          "constant_value_cm": 53.0
+        },
+        {
+          "start_utc": "2025-10-17T08:30:00Z",
+          "end_utc": "2025-10-18T13:15:00Z",
+          "duration_hours": 28.75,
+          "record_count": 116,
+          "constant_value_cm": 58.0
+        },
+        {
+          "start_utc": "2026-04-13T18:45:00Z",
+          "end_utc": "2026-04-15T00:15:00Z",
+          "duration_hours": 29.5,
+          "record_count": 119,
+          "constant_value_cm": 140.0
+        },
+        {
+          "start_utc": "2026-06-26T18:30:00Z",
+          "end_utc": "2026-06-28T15:15:00Z",
+          "duration_hours": 44.75,
+          "record_count": 180,
+          "constant_value_cm": 98.0
+        },
+        {
+          "start_utc": "2026-07-01T10:00:00Z",
+          "end_utc": "2026-07-02T12:30:00Z",
+          "duration_hours": 26.5,
+          "record_count": 107,
+          "constant_value_cm": 96.0
+        },
+        {
+          "start_utc": "2026-07-10T16:00:00Z",
+          "end_utc": "2026-07-12T12:45:00Z",
+          "duration_hours": 44.75,
+          "record_count": 180,
+          "constant_value_cm": 73.0
+        },
+        {
+          "start_utc": "2026-07-16T21:15:00Z",
+          "end_utc": "2026-07-19T10:30:00Z",
+          "duration_hours": 61.25,
+          "record_count": 246,
+          "constant_value_cm": 84.0
+        },
+        {
+          "start_utc": "2026-07-19T10:45:00Z",
+          "end_utc": "2026-07-20T11:45:00Z",
+          "duration_hours": 25.0,
+          "record_count": 101,
+          "constant_value_cm": 85.0
+        },
+        {
+          "start_utc": "2026-07-28T05:15:00Z",
+          "end_utc": "2026-07-29T22:30:00Z",
+          "duration_hours": 41.25,
+          "record_count": 166,
+          "constant_value_cm": 94.0
+        },
+        {
+          "start_utc": "2026-07-30T08:30:00Z",
+          "end_utc": "2026-07-31T15:45:00Z",
+          "duration_hours": 31.25,
+          "record_count": 126,
+          "constant_value_cm": 83.0
+        },
+        {
+          "start_utc": "2026-08-07T21:30:00Z",
+          "end_utc": "2026-08-09T09:45:00Z",
+          "duration_hours": 36.25,
+          "record_count": 146,
+          "constant_value_cm": 62.0
+        },
+        {
+          "start_utc": "2026-08-10T09:15:00Z",
+          "end_utc": "2026-08-11T20:30:00Z",
+          "duration_hours": 35.25,
+          "record_count": 142,
+          "constant_value_cm": 62.0
+        },
+        {
+          "start_utc": "2026-08-12T01:30:00Z",
+          "end_utc": "2026-08-13T08:30:00Z",
+          "duration_hours": 31.0,
+          "record_count": 125,
+          "constant_value_cm": 58.0
+        }
+      ]
+    },
+    "INEA-213042120::rain_acc_1h_mm": {
+      "station_id": "INEA-213042120",
+      "variable": "rain_acc_1h_mm",
+      "unit": "mm",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2026-11-15T03:00:00Z",
+      "period_end_utc": "2026-11-25T03:00:00Z",
+      "total_records": 961,
+      "valid_records": 961,
+      "missing_records": 0,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 100.0,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 960
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 0,
+        "max_gap_hours": 0.0,
+        "total_missing_hours_est": 0.0,
+        "top_10_largest_gaps": []
+      },
+      "distribution": {
+        "min": 0.0,
+        "p50": 0.0,
+        "p95": 0.4,
+        "p99": 3.16,
+        "max": 7.2,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2026-11-19T10:15:00Z",
+            "value": 7.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T10:30:00Z",
+            "value": 7.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T10:45:00Z",
+            "value": 6.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T10:00:00Z",
+            "value": 5.6
+          },
+          {
+            "timestamp_utc": "2026-11-19T11:00:00Z",
+            "value": 4.2
+          },
+          {
+            "timestamp_utc": "2026-11-16T21:45:00Z",
+            "value": 3.8
+          },
+          {
+            "timestamp_utc": "2026-11-16T22:00:00Z",
+            "value": 3.8
+          },
+          {
+            "timestamp_utc": "2026-11-19T09:30:00Z",
+            "value": 3.6
+          },
+          {
+            "timestamp_utc": "2026-11-19T09:45:00Z",
+            "value": 3.6
+          },
+          {
+            "timestamp_utc": "2026-11-16T22:15:00Z",
+            "value": 3.4
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 6727,
+        "valid_timestamp_input": 6727,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 6720,
+        "duplicate_exact_collapsed": 0,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 6727
+      },
+      "yearly": {
+        "2026": {
+          "total_records": 961,
+          "valid_records": 961,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 2.74,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 7.2
+        }
+      }
+    },
+    "INEA-213042120::rain_acc_24h_mm": {
+      "station_id": "INEA-213042120",
+      "variable": "rain_acc_24h_mm",
+      "unit": "mm",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2026-11-15T03:00:00Z",
+      "period_end_utc": "2026-11-25T03:00:00Z",
+      "total_records": 961,
+      "valid_records": 961,
+      "missing_records": 0,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 100.0,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 960
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 0,
+        "max_gap_hours": 0.0,
+        "total_missing_hours_est": 0.0,
+        "top_10_largest_gaps": []
+      },
+      "distribution": {
+        "min": 0.0,
+        "p50": 0.2,
+        "p95": 12.4,
+        "p99": 12.4,
+        "max": 12.4,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2026-11-19T12:45:00Z",
+            "value": 12.4
+          },
+          {
+            "timestamp_utc": "2026-11-19T13:00:00Z",
+            "value": 12.4
+          },
+          {
+            "timestamp_utc": "2026-11-19T13:15:00Z",
+            "value": 12.4
+          },
+          {
+            "timestamp_utc": "2026-11-19T13:30:00Z",
+            "value": 12.4
+          },
+          {
+            "timestamp_utc": "2026-11-19T13:45:00Z",
+            "value": 12.4
+          },
+          {
+            "timestamp_utc": "2026-11-19T14:00:00Z",
+            "value": 12.4
+          },
+          {
+            "timestamp_utc": "2026-11-19T14:15:00Z",
+            "value": 12.4
+          },
+          {
+            "timestamp_utc": "2026-11-19T14:30:00Z",
+            "value": 12.4
+          },
+          {
+            "timestamp_utc": "2026-11-19T14:45:00Z",
+            "value": 12.4
+          },
+          {
+            "timestamp_utc": "2026-11-19T15:00:00Z",
+            "value": 12.4
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 6727,
+        "valid_timestamp_input": 6727,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 6720,
+        "duplicate_exact_collapsed": 0,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 6727
+      },
+      "yearly": {
+        "2026": {
+          "total_records": 961,
+          "valid_records": 961,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 2.74,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 12.4
+        }
+      }
+    },
+    "INEA-213042120::rain_acc_30d_mm": {
+      "station_id": "INEA-213042120",
+      "variable": "rain_acc_30d_mm",
+      "unit": "mm",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2026-11-15T03:00:00Z",
+      "period_end_utc": "2026-11-25T03:00:00Z",
+      "total_records": 961,
+      "valid_records": 961,
+      "missing_records": 0,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 100.0,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 960
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 0,
+        "max_gap_hours": 0.0,
+        "total_missing_hours_est": 0.0,
+        "top_10_largest_gaps": []
+      },
+      "distribution": {
+        "min": 0.0,
+        "p50": 17.6,
+        "p95": 24.2,
+        "p99": 24.6,
+        "max": 24.6,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2026-11-23T04:15:00Z",
+            "value": 24.6
+          },
+          {
+            "timestamp_utc": "2026-11-23T04:30:00Z",
+            "value": 24.6
+          },
+          {
+            "timestamp_utc": "2026-11-23T04:45:00Z",
+            "value": 24.6
+          },
+          {
+            "timestamp_utc": "2026-11-23T05:00:00Z",
+            "value": 24.6
+          },
+          {
+            "timestamp_utc": "2026-11-23T05:15:00Z",
+            "value": 24.6
+          },
+          {
+            "timestamp_utc": "2026-11-23T05:30:00Z",
+            "value": 24.6
+          },
+          {
+            "timestamp_utc": "2026-11-23T05:45:00Z",
+            "value": 24.6
+          },
+          {
+            "timestamp_utc": "2026-11-23T06:00:00Z",
+            "value": 24.6
+          },
+          {
+            "timestamp_utc": "2026-11-23T06:15:00Z",
+            "value": 24.6
+          },
+          {
+            "timestamp_utc": "2026-11-23T06:30:00Z",
+            "value": 24.6
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 6727,
+        "valid_timestamp_input": 6727,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 6720,
+        "duplicate_exact_collapsed": 0,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 6727
+      },
+      "yearly": {
+        "2026": {
+          "total_records": 961,
+          "valid_records": 961,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 2.74,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 24.6
+        }
+      }
+    },
+    "INEA-213042120::rain_acc_4h_mm": {
+      "station_id": "INEA-213042120",
+      "variable": "rain_acc_4h_mm",
+      "unit": "mm",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2026-11-15T03:00:00Z",
+      "period_end_utc": "2026-11-25T03:00:00Z",
+      "total_records": 961,
+      "valid_records": 961,
+      "missing_records": 0,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 100.0,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 960
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 0,
+        "max_gap_hours": 0.0,
+        "total_missing_hours_est": 0.0,
+        "top_10_largest_gaps": []
+      },
+      "distribution": {
+        "min": 0.0,
+        "p50": 0.0,
+        "p95": 2.4,
+        "p99": 10.68,
+        "max": 12.2,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2026-11-19T12:00:00Z",
+            "value": 12.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T12:15:00Z",
+            "value": 12.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T12:30:00Z",
+            "value": 12.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T11:45:00Z",
+            "value": 12.0
+          },
+          {
+            "timestamp_utc": "2026-11-19T11:15:00Z",
+            "value": 11.8
+          },
+          {
+            "timestamp_utc": "2026-11-19T11:30:00Z",
+            "value": 11.8
+          },
+          {
+            "timestamp_utc": "2026-11-19T11:00:00Z",
+            "value": 11.6
+          },
+          {
+            "timestamp_utc": "2026-11-19T10:45:00Z",
+            "value": 11.4
+          },
+          {
+            "timestamp_utc": "2026-11-19T10:30:00Z",
+            "value": 10.8
+          },
+          {
+            "timestamp_utc": "2026-11-19T12:45:00Z",
+            "value": 10.8
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 6727,
+        "valid_timestamp_input": 6727,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 6720,
+        "duplicate_exact_collapsed": 0,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 6727
+      },
+      "yearly": {
+        "2026": {
+          "total_records": 961,
+          "valid_records": 961,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 2.74,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 12.2
+        }
+      }
+    },
+    "INEA-213042120::rain_acc_96h_mm": {
+      "station_id": "INEA-213042120",
+      "variable": "rain_acc_96h_mm",
+      "unit": "mm",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2026-11-15T03:00:00Z",
+      "period_end_utc": "2026-11-25T03:00:00Z",
+      "total_records": 961,
+      "valid_records": 961,
+      "missing_records": 0,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 100.0,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 960
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 0,
+        "max_gap_hours": 0.0,
+        "total_missing_hours_est": 0.0,
+        "top_10_largest_gaps": []
+      },
+      "distribution": {
+        "min": 0.0,
+        "p50": 7.8,
+        "p95": 20.2,
+        "p99": 20.2,
+        "max": 20.2,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2026-11-19T12:45:00Z",
+            "value": 20.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T13:00:00Z",
+            "value": 20.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T13:15:00Z",
+            "value": 20.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T13:30:00Z",
+            "value": 20.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T13:45:00Z",
+            "value": 20.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T14:00:00Z",
+            "value": 20.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T14:15:00Z",
+            "value": 20.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T14:30:00Z",
+            "value": 20.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T14:45:00Z",
+            "value": 20.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T15:00:00Z",
+            "value": 20.2
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 6727,
+        "valid_timestamp_input": 6727,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 6720,
+        "duplicate_exact_collapsed": 0,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 6727
+      },
+      "yearly": {
+        "2026": {
+          "total_records": 961,
+          "valid_records": 961,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 2.74,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 20.2
+        }
+      }
+    },
+    "INEA-213042120::rain_interval_15m_mm": {
+      "station_id": "INEA-213042120",
+      "variable": "rain_interval_15m_mm",
+      "unit": "mm",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2026-11-15T03:00:00Z",
+      "period_end_utc": "2026-11-25T03:00:00Z",
+      "total_records": 961,
+      "valid_records": 931,
+      "missing_records": 30,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 96.98,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 903,
+          "30.0": 25,
+          "45.0": 2
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 2,
+        "max_gap_hours": 0.75,
+        "total_missing_hours_est": 1.0,
+        "top_10_largest_gaps": [
+          {
+            "start_utc": "2026-11-15T11:45:00Z",
+            "end_utc": "2026-11-15T12:30:00Z",
+            "gap_hours": 0.75
+          },
+          {
+            "start_utc": "2026-11-18T17:15:00Z",
+            "end_utc": "2026-11-18T18:00:00Z",
+            "gap_hours": 0.75
+          }
+        ]
+      },
+      "distribution": {
+        "min": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.74,
+        "max": 2.4,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2026-11-16T21:45:00Z",
+            "value": 2.4
+          },
+          {
+            "timestamp_utc": "2026-11-19T10:00:00Z",
+            "value": 2.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T10:15:00Z",
+            "value": 2.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T08:45:00Z",
+            "value": 1.6
+          },
+          {
+            "timestamp_utc": "2026-11-19T09:45:00Z",
+            "value": 1.6
+          },
+          {
+            "timestamp_utc": "2026-11-19T09:30:00Z",
+            "value": 1.2
+          },
+          {
+            "timestamp_utc": "2026-11-19T10:30:00Z",
+            "value": 1.2
+          },
+          {
+            "timestamp_utc": "2026-11-16T20:45:00Z",
+            "value": 1.0
+          },
+          {
+            "timestamp_utc": "2026-11-23T02:00:00Z",
+            "value": 0.8
+          },
+          {
+            "timestamp_utc": "2026-11-23T03:45:00Z",
+            "value": 0.8
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 6727,
+        "valid_timestamp_input": 6727,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 6720,
+        "duplicate_exact_collapsed": 0,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 6727
+      },
+      "yearly": {
+        "2026": {
+          "total_records": 961,
+          "valid_records": 931,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 2.66,
+          "flatline_records": 0,
+          "min": 0.0,
+          "max": 2.4
+        }
+      }
+    },
+    "INEA-213042120::stage_cm": {
+      "station_id": "INEA-213042120",
+      "variable": "stage_cm",
+      "unit": "cm",
+      "nominal_cadence_min": 15,
+      "period_start_utc": "2026-11-15T03:00:00Z",
+      "period_end_utc": "2026-11-25T03:00:00Z",
+      "total_records": 961,
+      "valid_records": 932,
+      "missing_records": 29,
+      "invalid_records": 0,
+      "completeness_vs_span_pct": 96.98,
+      "observed_cadence_min": {
+        "median": 15.0,
+        "p10": 15.0,
+        "p90": 15.0,
+        "top_steps_min": {
+          "15.0": 904,
+          "30.0": 25,
+          "45.0": 2
+        }
+      },
+      "gaps": {
+        "threshold_min": 30.0,
+        "gap_count": 2,
+        "max_gap_hours": 0.75,
+        "total_missing_hours_est": 1.0,
+        "top_10_largest_gaps": [
+          {
+            "start_utc": "2026-11-15T11:45:00Z",
+            "end_utc": "2026-11-15T12:30:00Z",
+            "gap_hours": 0.75
+          },
+          {
+            "start_utc": "2026-11-18T17:15:00Z",
+            "end_utc": "2026-11-18T18:00:00Z",
+            "gap_hours": 0.75
+          }
+        ]
+      },
+      "distribution": {
+        "min": 243.0,
+        "p50": 289.0,
+        "p95": 365.35,
+        "p99": 425.0,
+        "max": 426.0,
+        "extreme_high_preserved_count": 0,
+        "top_10_peaks": [
+          {
+            "timestamp_utc": "2026-11-24T22:00:00Z",
+            "value": 426.0
+          },
+          {
+            "timestamp_utc": "2026-11-24T22:45:00Z",
+            "value": 426.0
+          },
+          {
+            "timestamp_utc": "2026-11-24T23:00:00Z",
+            "value": 426.0
+          },
+          {
+            "timestamp_utc": "2026-11-24T23:30:00Z",
+            "value": 426.0
+          },
+          {
+            "timestamp_utc": "2026-11-24T23:45:00Z",
+            "value": 426.0
+          },
+          {
+            "timestamp_utc": "2026-11-25T00:30:00Z",
+            "value": 426.0
+          },
+          {
+            "timestamp_utc": "2026-11-24T21:45:00Z",
+            "value": 425.0
+          },
+          {
+            "timestamp_utc": "2026-11-24T22:15:00Z",
+            "value": 425.0
+          },
+          {
+            "timestamp_utc": "2026-11-24T22:30:00Z",
+            "value": 425.0
+          },
+          {
+            "timestamp_utc": "2026-11-24T23:15:00Z",
+            "value": 425.0
+          }
+        ]
+      },
+      "normalization_stats": {
+        "input_total": 6727,
+        "valid_timestamp_input": 6727,
+        "invalid_timestamp_rejected": 0,
+        "out_of_order_input_count": 6720,
+        "duplicate_exact_collapsed": 0,
+        "duplicate_conflicts_or_revisions": 0,
+        "output_unique_records": 6727
+      },
+      "yearly": {
+        "2026": {
+          "total_records": 961,
+          "valid_records": 932,
+          "expected_slots_full_year": 35040,
+          "completeness_pct_full_year": 2.66,
+          "flatline_records": 0,
+          "min": 243.0,
+          "max": 426.0
+        }
+      },
+      "flatline_episodes_ge_24h": []
+    }
+  },
+  "conventional_vs_telemetric_58790002": {
+    "comparison": "telemetric_minus_conventional_07h_BRT",
+    "paired_days": 2086,
+    "overall_mean_diff_cm": 1.41,
+    "overall_median_diff_cm": 1.0,
+    "overall_std_diff_cm": 7.94,
+    "yearly": {
+      "2020": {
+        "n_days": 351,
+        "mean_diff_cm": 2.23,
+        "median_diff_cm": 2.0,
+        "std_diff_cm": 10.85,
+        "max_abs_diff_cm": 78.0
+      },
+      "2021": {
+        "n_days": 297,
+        "mean_diff_cm": 4.16,
+        "median_diff_cm": 3.0,
+        "std_diff_cm": 9.72,
+        "max_abs_diff_cm": 37.0
+      },
+      "2022": {
+        "n_days": 345,
+        "mean_diff_cm": 1.12,
+        "median_diff_cm": 1.0,
+        "std_diff_cm": 7.27,
+        "max_abs_diff_cm": 42.0
+      },
+      "2023": {
+        "n_days": 363,
+        "mean_diff_cm": 0.35,
+        "median_diff_cm": 0.0,
+        "std_diff_cm": 6.86,
+        "max_abs_diff_cm": 60.0
+      },
+      "2024": {
+        "n_days": 366,
+        "mean_diff_cm": 0.42,
+        "median_diff_cm": 0.0,
+        "std_diff_cm": 5.88,
+        "max_abs_diff_cm": 32.0
+      },
+      "2025": {
+        "n_days": 364,
+        "mean_diff_cm": 0.7,
+        "median_diff_cm": 0.48,
+        "std_diff_cm": 5.46,
+        "max_abs_diff_cm": 30.76
+      }
+    }
+  },
+  "pairwise_overlaps": {
+    "58790002_vs_58788600_hourly_all": {
+      "paired_count": 54667,
+      "overlap_start_utc": "2020-01-01T03:00:00Z",
+      "overlap_end_utc": "2026-11-25T02:00:00Z",
+      "diff_a_minus_b_cm": {
+        "mean": -29.78,
+        "std": 38.79,
+        "min": -938.0,
+        "max": 356.0
+      },
+      "pearson_r_zero_lag": 0.7504
+    },
+    "58790002_vs_58788600_hourly_nonflatline": {
+      "paired_count": 48790,
+      "overlap_start_utc": "2020-01-01T03:00:00Z",
+      "overlap_end_utc": "2026-10-05T12:00:00Z",
+      "diff_a_minus_b_cm": {
+        "mean": -32.19,
+        "std": 36.7,
+        "min": -938.0,
+        "max": 356.0
+      },
+      "pearson_r_zero_lag": 0.783
+    },
+    "58790002_vs_58770000_15min": {
+      "paired_count": 215486,
+      "overlap_start_utc": "2020-01-01T03:00:00Z",
+      "overlap_end_utc": "2026-11-25T02:00:00Z",
+      "diff_a_minus_b_cm": {
+        "mean": -26.07,
+        "std": 37.64,
+        "min": -532.67,
+        "max": 171.0
+      },
+      "pearson_r_zero_lag": 0.891
+    },
+    "INEA_213042120_vs_58790002_15min": {
+      "paired_count": 926,
+      "overlap_start_utc": "2026-11-15T03:00:00Z",
+      "overlap_end_utc": "2026-11-25T02:30:00Z",
+      "diff_a_minus_b_cm": {
+        "mean": 111.02,
+        "std": 13.95,
+        "min": 88.0,
+        "max": 159.0
+      },
+      "pearson_r_zero_lag": 0.9821,
+      "scientific_note": "Exploratory 10-day overlap diagnostic only. Non-constant offset (spread of min..max diffs) demonstrates that INEA-213042120 and RHN 58790002 are NOT on the same gauge zero. NO-GO for direct INEA -> SGB spatial mapping without multi-event calibration."
+    }
+  }
+}

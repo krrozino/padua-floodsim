@@ -1,0 +1,12 @@
+[project]
+name = "padua-floodsim-hydrology-research"
+version = "1.0.0"
+description = "Reproducible acquisition, normalization, quality control, and exploratory feasibility pipeline for Rio Pomba historical hydrological datasets."
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.padua_floodsim]
+runtime_policy = "pure-python-stdlib-zero-external-deps"
+verified_python = "3.14.7"
+parser_version = "1.0.0"
+pipeline_version = "1.0.0"
