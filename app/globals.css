@@ -298,14 +298,55 @@ a { color: inherit; }
 .card { padding: 16px; }
 .card-heading { display: flex; justify-content: space-between; align-items: center; color: var(--navy); }
 .live-mock { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #b45309; font-weight: 700; background: #fef3c7; padding: 2px 8px; border-radius: 999px; border: 1px solid #fde68a; }
-.realtime h2 { margin: 18px 0 13px; color: var(--navy); }
+.realtime h2 { margin: 14px 0 4px; color: var(--navy); }
+.hydro-heading { align-items: flex-start; }
+.hydro-tag-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.hydro-status-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+  border: 1px solid #cbd5e1; background: #f8fafc; color: #475569;
+}
+.hydro-status-pill i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #94a3b8; }
+.hydro-status-pill.fresh { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
+.hydro-status-pill.fresh i { background: #10b981; }
+.hydro-status-pill.stale { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+.hydro-status-pill.stale i { background: #f59e0b; }
+.hydro-status-pill.unavailable,
+.hydro-status-pill.invalid { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+.hydro-status-pill.unavailable i,
+.hydro-status-pill.invalid i { background: #dc2626; }
+.hydro-station-meta { margin: 0 0 12px; font-size: 11px; color: var(--muted); font-weight: 600; }
 .river-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-.river-grid > div { background: white; padding: 13px; min-height: 78px; }
-.river-grid span { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
-.river-grid b { color: var(--blue); font-size: 25px; }
+.river-grid > div { background: white; padding: 12px; min-height: 78px; }
+.river-grid span { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.river-grid b { color: var(--blue); font-size: 24px; display: block; line-height: 1.1; }
+.hydro-cell-sub { display: block; margin-top: 4px; font-style: normal; font-size: 10px; color: #64748b; line-height: 1.3; }
+.hydro-time-val { display: block; font-size: 12px; color: var(--navy); line-height: 1.35; }
+.hydro-trend-falling { color: #0369a1; }
+.hydro-value-muted { font-size: 14px; color: var(--muted); }
+.hydro-value-unavailable { font-size: 14px; color: var(--danger); }
+.hydro-rain-box { margin-top: 10px; padding: 10px; border-radius: 10px; background: #f8fafc; border: 1px solid var(--border); }
+.hydro-rain-title { display: block; font-size: 11px; font-weight: 700; color: var(--navy); margin-bottom: 7px; }
+.hydro-rain-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.hydro-rain-chip { background: #ffffff; border: 1px solid var(--border); border-radius: 7px; padding: 5px 7px; }
+.hydro-rain-chip span { display: block; font-size: 10px; color: var(--muted); }
+.hydro-rain-chip strong { display: block; font-size: 12px; color: #1e293b; margin-top: 1px; }
+.hydro-condition-alert { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; font-size: 11px; line-height: 1.4; font-weight: 600; }
+.hydro-condition-alert.stale { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
+.hydro-condition-alert.unavailable,
+.hydro-condition-alert.invalid { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+.hydro-gauge-ref { margin: 10px 0 0; font-size: 11px; color: #475569; line-height: 1.4; }
+.hydro-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.hydro-refresh-btn {
+  background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8;
+  border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 700;
+  transition: background 0.15s ease;
+}
+.hydro-refresh-btn:hover:not(:disabled) { background: #dbeafe; }
+.hydro-refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .warning { color: var(--warning); }
 .danger { color: var(--danger); }
-.realtime > small { display: block; margin-top: 11px; color: #8a96a5; line-height: 1.45; }
+.realtime > small { display: block; margin-top: 11px; color: #526174; line-height: 1.45; }
 
 .official-layer-legend {
   display: grid; grid-template-columns: 44px 1fr; gap: 11px; align-items: start;

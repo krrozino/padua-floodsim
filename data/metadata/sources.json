@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-23",
+  "updatedAt": "2026-11-25",
   "areaOfInterest": {
     "name": "Santo Antônio de Pádua - trecho urbano coberto pelas manchas SGB",
     "crs": "EPSG:4674",
@@ -100,12 +100,74 @@
     {
       "id": "inea-flood-alert-21304212020",
       "classification": "observed",
-      "institution": "INEA",
-      "title": "Alerta de Cheias - Santo Antônio de Pádua",
+      "institution": "INEA — Instituto Estadual do Ambiente",
+      "title": "Alerta de Cheias - Santo Antônio de Pádua (XML e página pública)",
+      "stationId": "213042120",
+      "stationType": "Plu/Flu",
+      "river": "Rio Pomba",
+      "coordinates": {
+        "latitude": -21.511110305786,
+        "longitude": -42.207527160645,
+        "crs": "EPSG:4326"
+      },
       "url": "https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.html",
-      "status": "gauge-reference-crosswalk-pending",
-      "warning": "Não associar diretamente nível INEA às cotas SGB antes de validar a referência das réguas.",
-      "rightsStatus": "observation source; integration/access conditions to be documented before automated production use"
+      "xmlEndpoint": "https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.xml",
+      "cadenceMinutes": 15,
+      "staleAfterMinutes": 45,
+      "timezone": "America/Sao_Paulo",
+      "units": {
+        "stage": "m",
+        "rainfall": "mm"
+      },
+      "gaugeZeroMeters": null,
+      "verticalDatum": null,
+      "rhnCode": null,
+      "publishedThresholdsMeters": {
+        "attention80Percent": 4.0,
+        "overflow": 5.0
+      },
+      "status": "operational-observed-crosswalk-pending",
+      "warning": "Estação com localização física distinta de SGB/ANA 58790002 (~5,9 km); zero da régua e datum do INEA ainda não identificados; equivalência entre referências não estabelecida; comparação direta e associação automática às manchas SGB não validadas (crosswalkValidated: false).",
+      "liveValidation": {
+        "date": "2026-11-25",
+        "retrievedAtUtc": "2026-11-25T02:56:27Z",
+        "script": "scripts/validate-hydro-live.mjs",
+        "sampleMeasuredAt": "2026-11-24T23:45:00-03:00",
+        "sampleStageMeters": 4.17,
+        "originalExcerptSha256": "073ed554f98a8fc181d81902eb710caffcd00beaca10e2bed1afa2cb384dc048",
+        "originalExcerptBytes": 4111
+      },
+      "tlsIntermediateAudit": {
+        "subjectCn": "Sectigo Public Server Authentication CA DV R36",
+        "issuerCn": "Sectigo Public Server Authentication Root R46",
+        "serialNumber": "397A66CC2756362E0DAA87CA6EABE3B1",
+        "fingerprint256": "8C:54:C3:34:B6:6B:A4:E4:26:77:2A:F4:A3:F9:13:6C:19:A1:AE:C7:29:FD:B2:8C:53:5C:07:A5:A4:EF:22:E0",
+        "validFrom": "2021-03-22T00:00:00Z",
+        "validTo": "2036-03-21T23:59:59Z"
+      },
+      "rightsStatus": "public_endpoint_without_explicit_redistribution_license; automated_consumption_storage_and_redistribution_confirmation_pending_with_INEA (geseg@inea.rj.gov.br / alertadecheias@gmail.com); no real XML fixture redistributed in working tree"
+    },
+    {
+      "id": "sgb-sace-sah-pomba-points",
+      "classification": "official_reference",
+      "institution": "Serviço Geológico do Brasil (SGB)",
+      "title": "SACE SAH-Pomba — Pontos de Monitoramento GeoJSON",
+      "url": "https://sace.sgb.gov.br/pomba/api/geojson/point",
+      "portalUrl": "https://sace.sgb.gov.br/pomba/",
+      "auditedStations": [
+        {
+          "rhnCode": "58790002",
+          "name": "Santo Antônio de Pádua II",
+          "coordinates": {
+            "latitude": -21.53786,
+            "longitude": -42.15778,
+            "crs": "EPSG:4326"
+          },
+          "drainageAreaKm2": 8235.0
+        }
+      ],
+      "status": "audited-metadata-and-qualitative-alert-only",
+      "notes": "GeoJSON público expõe metadados e classe qualitativa de alerta, sem série numérica direta; estação 58788600 ausente dos 7 pontos ativos."
     }
   ],
   "provenancePolicy": {

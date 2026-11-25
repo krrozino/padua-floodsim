@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SYNTHETIC TEST FIXTURE (NOT REAL INEA OBSERVATIONS).
+  Created solely to exercise the INEA XML schema and deterministic parser offline
+  while redistribution authorization for real INEA XML excerpts remains pending.
+  Original audit evidence metadata and SHA-256 hash are preserved in
+  docs/DATA_SOURCES.md and data/metadata/sources.json.
+-->
+<estacao codigo="213042120" tipo="Plu/Flu">
+    <nome_estacao>Santo Antônio de Pádua</nome_estacao>
+    <dados_ultimos_10_dias>
+        <registro>
+            <nome_estacao>Santo Antônio de Pádua</nome_estacao>
+            <data_hora>15/06/2026 14:45</data_hora>
+            <chuva_ultimo>0.0</chuva_ultimo>
+            <chuva_1h>0.0</chuva_1h>
+            <chuva_4h>0.4</chuva_4h>
+            <chuva_24h>1.2</chuva_24h>
+            <chuva_96h>5.8</chuva_96h>
+            <chuva_30d>22.4</chuva_30d>
+            <nivel_rio_ultimo>3.42</nivel_rio_ultimo>
+        </registro>
+        <registro>
+            <nome_estacao>Santo Antônio de Pádua</nome_estacao>
+            <data_hora>15/06/2026 14:30</data_hora>
+            <chuva_ultimo>0.0</chuva_ultimo>
+            <chuva_1h>0.0</chuva_1h>
+            <chuva_4h>0.4</chuva_4h>
+            <chuva_24h>1.2</chuva_24h>
+            <chuva_96h>5.8</chuva_96h>
+            <chuva_30d>22.4</chuva_30d>
+            <nivel_rio_ultimo>3.44</nivel_rio_ultimo>
+        </registro>
+        <registro>
+            <nome_estacao>Santo Antônio de Pádua</nome_estacao>
+            <data_hora>15/06/2026 14:15</data_hora>
+            <chuva_ultimo>0.0</chuva_ultimo>
+            <chuva_1h>0.0</chuva_1h>
+            <chuva_4h>0.4</chuva_4h>
+            <chuva_24h>1.2</chuva_24h>
+            <chuva_96h>5.8</chuva_96h>
+            <chuva_30d>22.4</chuva_30d>
+            <nivel_rio_ultimo>3.46</nivel_rio_ultimo>
+        </registro>
+        <registro>
+            <nome_estacao>Santo Antônio de Pádua</nome_estacao>
+            <data_hora>15/06/2026 14:00</data_hora>
+            <chuva_ultimo>0.0</chuva_ultimo>
+            <chuva_1h>0.2</chuva_1h>
+            <chuva_4h>0.4</chuva_4h>
+            <chuva_24h>1.2</chuva_24h>
+            <chuva_96h>5.8</chuva_96h>
+            <chuva_30d>22.4</chuva_30d>
+            <nivel_rio_ultimo>3.47</nivel_rio_ultimo>
+        </registro>
+        <registro>
+            <nome_estacao>Santo Antônio de Pádua</nome_estacao>
+            <data_hora>15/06/2026 13:45</data_hora>
+            <chuva_ultimo>0.2</chuva_ultimo>
+            <chuva_1h>0.2</chuva_1h>
+            <chuva_4h>0.4</chuva_4h>
+            <chuva_24h>1.2</chuva_24h>
+            <chuva_96h>5.8</chuva_96h>
+            <chuva_30d>22.4</chuva_30d>
+            <nivel_rio_ultimo>3.48</nivel_rio_ultimo>
+        </registro>
+        <registro>
+            <nome_estacao>Santo Antônio de Pádua</nome_estacao>
+            <data_hora>06/06/2026 14:45</data_hora>
+            <chuva_ultimo>Dado Nulo</chuva_ultimo>
+            <chuva_1h>0.0</chuva_1h>
+            <chuva_4h>0.0</chuva_4h>
+            <chuva_24h>0.0</chuva_24h>
+            <chuva_96h>0.0</chuva_96h>
+            <chuva_30d>0.0</chuva_30d>
+            <nivel_rio_ultimo>2.15</nivel_rio_ultimo>
+        </registro>
+    </dados_ultimos_10_dias>
+</estacao>

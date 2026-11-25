@@ -6,6 +6,7 @@ import {
   type FloodLayerStatus,
 } from "@/components/map/FloodMap";
 import { MethodologyModal } from "@/components/dashboard/MethodologyModal";
+import { HydroMonitoringCard } from "@/components/monitoring/HydroMonitoringCard";
 import { REFERENCE_NEIGHBORHOODS } from "@/lib/map/neighborhoods";
 import { SGB_STAGE_ELEVATIONS, type SgbFloodLevelCm } from "@/lib/sgb/stages";
 
@@ -112,9 +113,9 @@ export function FloodDashboard() {
 
         <div
           className="status-pill"
-          title="Versão 1.0 experimental · Dados oficiais de referência: SGB 2024"
+          title="Versão experimental · Referência SGB 2024 + Monitoramento observado INEA"
         >
-          <i /> V1 · SGB 2024
+          <i /> V1 · SGB + INEA
         </div>
       </header>
 
@@ -281,40 +282,7 @@ export function FloodDashboard() {
       {/* Right Information & Monitoring Panel */}
       <aside className="right-panel">
         <p className="research-warning">Projeto acadêmico e experimental. Não é previsão nem alerta oficial; consulte INEA e Defesa Civil. O futuro modelo DEM permanece separado dos cenários SGB.</p>
-        {/* Real-time Monitoring Card (Explicitly MOCK) */}
-        <article ref={realtimeCardRef} id="realtime-card" tabIndex={-1} className="card realtime">
-          <div className="card-heading">
-            <strong>Monitoramento demonstrativo</strong>
-            <span className="live-mock">
-              <i /> MOCK / DEMO
-            </span>
-          </div>
-          <h2>Rio Pomba · Estação INEA</h2>
-          <div className="river-grid">
-            <div>
-              <span>Nível fictício</span>
-              <b>4,35 m</b>
-            </div>
-            <div>
-              <span>Tendência</span>
-              <strong className="warning">subindo ↗</strong>
-            </div>
-            <div>
-              <span>Transbordamento INEA</span>
-              <strong className="danger">5,00 m</strong>
-            </div>
-            <div>
-              <span>Chuva 24h</span>
-              <strong>62 mm</strong>
-            </div>
-          </div>
-          <small>
-            ⚠️ <strong>Aviso:</strong> Nível, tendência e chuva exibidos neste painel são
-            fictícios (mock demonstrativo). A régua do INEA não é convertida
-            automaticamente para as cotas SGB até que a equivalência entre os zeros de régua
-            seja tecnicamente validada.
-          </small>
-        </article>
+        <HydroMonitoringCard cardRef={realtimeCardRef} />
 
         {/* Official SGB Inundation Layer Card */}
         <article className="card">
