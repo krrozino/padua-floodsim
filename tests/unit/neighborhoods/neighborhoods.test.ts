@@ -4,9 +4,12 @@ import path from "node:path";
 import { describe, it } from "node:test";
 import type { MultiPolygon, Polygon } from "geojson";
 import {
+  DEFAULT_UNKNOWN_MODEL_COVERAGE_DOMAIN,
   NEIGHBORHOOD_SAFETY_DISCLAIMERS,
   PROVISIONAL_GLOBAL_GEOMETRIC_SCHEME_V0,
+  SGB_2024_MAPSERVER_ENVELOPE_BBOX,
   isValidThresholdScheme,
+  type FloodModelCoverageDomain,
   type NeighborhoodBoundaryRecord,
   type NeighborhoodThresholdScheme,
 } from "../../../lib/neighborhoods/contract.ts";
@@ -26,8 +29,30 @@ import {
   getPriorityNeighborhoods,
   validateUniqueNeighborhoodRecords,
 } from "../../../lib/neighborhoods/registry.ts";
+import { computeDerivedFloodArea } from "../../../lib/sgb/area.ts";
+import { compareFloodScenarios } from "../../../lib/sgb/compare.ts";
 
-// Synthetic 0.01° x 0.01° square strictly inside SGB_2024_MODEL_BBOX (-42.19..-42.18, -21.54..-21.53)
+// Validated synthetic hydraulic model domain polygon strictly inside SGB_2024_MAPSERVER_ENVELOPE_BBOX
+const VALIDATED_MODEL_DOMAIN_POLYGON: Polygon = {
+  type: "Polygon",
+  coordinates: [
+    [
+      [-42.205, -21.55],
+      [-42.15, -21.55],
+      [-42.15, -21.515],
+      [-42.205, -21.515],
+      [-42.205, -21.55],
+    ],
+  ],
+};
+
+const VALIDATED_POLYGON_COVERAGE: FloodModelCoverageDomain = {
+  kind: "polygon",
+  geometry: VALIDATED_MODEL_DOMAIN_POLYGON,
+  label: "Domínio espacial sintético validado do modelo hidráulico",
+};
+
+// Synthetic 0.01° x 0.01° square strictly inside VALIDATED_MODEL_DOMAIN_POLYGON
 const SYNTHETIC_SQUARE_IN_MODEL: Polygon = {
   type: "Polygon",
   coordinates: [
@@ -41,7 +66,7 @@ const SYNTHETIC_SQUARE_IN_MODEL: Polygon = {
   ],
 };
 
-// Synthetic square completely outside SGB_2024_MODEL_BBOX (upstream near Paraoquena)
+// Synthetic square outside VALIDATED_MODEL_DOMAIN_POLYGON and outside MapServer bbox
 const SYNTHETIC_SQUARE_OUTSIDE_MODEL: Polygon = {
   type: "Polygon",
   coordinates: [
@@ -55,16 +80,16 @@ const SYNTHETIC_SQUARE_OUTSIDE_MODEL: Polygon = {
   ],
 };
 
-// Synthetic square straddling the western edge (-42.209) of SGB_2024_MODEL_BBOX
+// Synthetic square straddling the western edge (-42.205) of VALIDATED_MODEL_DOMAIN_POLYGON
 const SYNTHETIC_SQUARE_STRADDLING_MODEL: Polygon = {
   type: "Polygon",
   coordinates: [
     [
-      [-42.215, -21.54],
-      [-42.205, -21.54],
-      [-42.205, -21.53],
-      [-42.215, -21.53],
-      [-42.215, -21.54],
+      [-42.21, -21.54],
+      [-42.2, -21.54],
+      [-42.2, -21.53],
+      [-42.21, -21.53],
+      [-42.21, -21.54],
     ],
   ],
 };
@@ -187,7 +212,10 @@ describe("Municipal neighborhood registry & metadata parity (R02-F)", () => {
       { ...OFFICIAL_NEIGHBORHOOD_REGISTRY[1], id: OFFICIAL_NEIGHBORHOOD_REGISTRY[0].id },
     ];
     assert.throws(
-      () => evaluateNeighborhoodPanel(duplicatedId, SYNTHETIC_SQUARE_IN_MODEL, 300),
+      () =>
+        evaluateNeighborhoodPanel(duplicatedId, SYNTHETIC_SQUARE_IN_MODEL, 300, {
+          modelCoverage: VALIDATED_POLYGON_COVERAGE,
+        }),
       /duplicado/i,
     );
 
@@ -200,18 +228,97 @@ describe("Municipal neighborhood registry & metadata parity (R02-F)", () => {
     ];
     assert.throws(
       () =>
-        evaluateNeighborhoodPanel(duplicatedNumber, SYNTHETIC_SQUARE_IN_MODEL, 300),
+        evaluateNeighborhoodPanel(
+          duplicatedNumber,
+          SYNTHETIC_SQUARE_IN_MODEL,
+          300,
+          { modelCoverage: VALIDATED_POLYGON_COVERAGE },
+        ),
       /duplicado/i,
     );
   });
 });
 
-describe("Neighborhood spatial overlap & 3-way status separation (R02-F)", () => {
+describe("Neighborhood spatial overlap, unknown-default coverage & PR #54 core integration (R02-F)", () => {
+  it("uses unknown model coverage by default and never assigns green when MapServer bbox or default unknown domain is used", () => {
+    assert.equal(DEFAULT_UNKNOWN_MODEL_COVERAGE_DOMAIN.kind, "unknown");
+
+    const centro = OFFICIAL_NEIGHBORHOOD_REGISTRY.find(
+      (n) => n.id === "centro",
+    )!;
+    const validNb = makeSyntheticRecord(centro, SYNTHETIC_SQUARE_IN_MODEL);
+
+    const disjointFlood: Polygon = {
+      type: "Polygon",
+      coordinates: [
+        [
+          [-42.17, -21.54],
+          [-42.16, -21.54],
+          [-42.16, -21.53],
+          [-42.17, -21.53],
+          [-42.17, -21.54],
+        ],
+      ],
+    };
+
+    // 1. Default (no modelCoverage passed) -> must default to "unknown" -> gray, NEVER green!
+    const defaultRes = evaluateNeighborhoodScenarioOverlap(
+      validNb,
+      disjointFlood,
+      300,
+    );
+    assert.equal(defaultRes.visualClass, "gray");
+    assert.equal(defaultRes.coverageAndQuality.boundaryStatus, "valid");
+    assert.equal(defaultRes.coverageAndQuality.modelCoverageStatus, "unknown");
+    assert.equal(
+      defaultRes.coverageAndQuality.calculationStatus,
+      "skipped_outside_model_coverage",
+    );
+    assert.ok(defaultRes.territorialAreaM2 !== null && defaultRes.territorialAreaM2 > 1_000_000);
+    assert.equal(defaultRes.interceptedPercent, null);
+
+    // 2. Passing MapServer envelope bbox still does NOT grant "covered" inside bbox -> gray (unknown)
+    const insideBboxOnlyRes = evaluateNeighborhoodScenarioOverlap(
+      validNb,
+      disjointFlood,
+      300,
+      {
+        modelCoverage: {
+          kind: "bbox",
+          bbox: SGB_2024_MAPSERVER_ENVELOPE_BBOX,
+          label: "Envelope MapServer SGB",
+        },
+      },
+    );
+    assert.equal(insideBboxOnlyRes.visualClass, "gray");
+    assert.equal(insideBboxOnlyRes.coverageAndQuality.modelCoverageStatus, "unknown");
+
+    // 3. Outside MapServer envelope bbox -> outside_model_extent -> gray
+    const outsideBboxRes = evaluateNeighborhoodScenarioOverlap(
+      makeSyntheticRecord(centro, SYNTHETIC_SQUARE_OUTSIDE_MODEL),
+      disjointFlood,
+      300,
+      {
+        modelCoverage: {
+          kind: "bbox",
+          bbox: SGB_2024_MAPSERVER_ENVELOPE_BBOX,
+          label: "Envelope MapServer SGB",
+        },
+      },
+    );
+    assert.equal(outsideBboxRes.visualClass, "gray");
+    assert.equal(
+      outsideBboxRes.coverageAndQuality.modelCoverageStatus,
+      "outside_model_extent",
+    );
+  });
+
   it("classifies all 27 neighborhoods as Cinza under current BLOCKED_DATA_SOURCE while reporting scenarioStatus separately", () => {
     const panel = evaluateNeighborhoodPanel(
       OFFICIAL_NEIGHBORHOOD_REGISTRY,
       SYNTHETIC_SQUARE_IN_MODEL,
       300,
+      { modelCoverage: VALIDATED_POLYGON_COVERAGE },
     );
 
     assert.equal(panel.acquisitionStatus, "BLOCKED_DATA_SOURCE");
@@ -245,7 +352,9 @@ describe("Neighborhood spatial overlap & 3-way status separation (R02-F)", () =>
       makeSyntheticRecord(rec, SYNTHETIC_SQUARE_IN_MODEL),
     );
 
-    const panel = evaluateNeighborhoodPanel(fullSynthetic, null, 350);
+    const panel = evaluateNeighborhoodPanel(fullSynthetic, null, 350, {
+      modelCoverage: VALIDATED_POLYGON_COVERAGE,
+    });
 
     assert.equal(panel.acquisitionStatus, "COMPLETE_OFFICIAL_COVERAGE");
     assert.equal(panel.boundaryAvailableCount, 27);
@@ -259,12 +368,12 @@ describe("Neighborhood spatial overlap & 3-way status separation (R02-F)", () =>
     assert.equal(sample.visualClass, "gray");
     assert.equal(sample.coverageAndQuality.boundaryStatus, "valid");
     assert.equal(sample.coverageAndQuality.isBoundaryValid, true);
+    assert.equal(sample.coverageAndQuality.modelCoverageStatus, "covered");
     assert.equal(sample.coverageAndQuality.scenarioStatus, "unavailable");
     assert.equal(
       sample.coverageAndQuality.calculationStatus,
       "skipped_scenario_unavailable",
     );
-    // Territorial area of the valid municipal boundary remains known even when scenario fails.
     assert.ok(
       sample.territorialAreaM2 !== null && sample.territorialAreaM2 > 1_000_000,
     );
@@ -272,16 +381,16 @@ describe("Neighborhood spatial overlap & 3-way status separation (R02-F)", () =>
     assert.equal(sample.interceptedPercent, null);
   });
 
-  it("never classifies neighborhoods outside, straddling, or with unknown flood model coverage as green", () => {
+  it("never classifies neighborhoods outside or straddling validated polygon domain as green, and fails closed on invalid domain polygons", () => {
     const centro = OFFICIAL_NEIGHBORHOOD_REGISTRY.find(
       (n) => n.id === "centro",
     )!;
 
-    // Outside SGB 2024 extent bbox -> must be gray, NOT green
     const outsideRes = evaluateNeighborhoodScenarioOverlap(
       makeSyntheticRecord(centro, SYNTHETIC_SQUARE_OUTSIDE_MODEL),
       SYNTHETIC_SQUARE_IN_MODEL,
       300,
+      { modelCoverage: VALIDATED_POLYGON_COVERAGE },
     );
     assert.equal(outsideRes.visualClass, "gray");
     assert.equal(outsideRes.coverageAndQuality.boundaryStatus, "valid");
@@ -293,50 +402,45 @@ describe("Neighborhood spatial overlap & 3-way status separation (R02-F)", () =>
       outsideRes.coverageAndQuality.calculationStatus,
       "skipped_outside_model_coverage",
     );
-    assert.equal(outsideRes.interceptedPercent, null);
 
-    // Straddling SGB 2024 extent bbox -> partial_model_coverage -> must be gray
     const straddlingRes = evaluateNeighborhoodScenarioOverlap(
       makeSyntheticRecord(centro, SYNTHETIC_SQUARE_STRADDLING_MODEL),
       SYNTHETIC_SQUARE_IN_MODEL,
       300,
+      { modelCoverage: VALIDATED_POLYGON_COVERAGE },
     );
     assert.equal(straddlingRes.visualClass, "gray");
     assert.equal(
       straddlingRes.coverageAndQuality.modelCoverageStatus,
       "partial_model_coverage",
     );
-    assert.equal(straddlingRes.interceptedPercent, null);
 
-    // Unknown model coverage -> must be gray, NOT green
-    const unknownDomainRes = evaluateNeighborhoodScenarioOverlap(
+    // Invalid polygon domain fails closed to "unknown" -> gray
+    const invalidDomainRes = evaluateNeighborhoodScenarioOverlap(
       makeSyntheticRecord(centro, SYNTHETIC_SQUARE_IN_MODEL),
-      {
-        type: "Polygon",
-        coordinates: [
-          [
-            [-42.17, -21.54],
-            [-42.16, -21.54],
-            [-42.16, -21.53],
-            [-42.17, -21.53],
-            [-42.17, -21.54],
-          ],
-        ],
-      },
+      SYNTHETIC_SQUARE_IN_MODEL,
       300,
       {
         modelCoverage: {
-          kind: "unknown",
-          reason: "Domínio espacial não informado.",
+          kind: "polygon",
+          geometry: {
+            type: "Polygon",
+            coordinates: [
+              [
+                [-42.19, -21.54],
+                [-42.18, -21.54],
+              ],
+            ],
+          },
+          label: "Domínio inválido",
         },
       },
     );
-    assert.equal(unknownDomainRes.visualClass, "gray");
-    assert.equal(unknownDomainRes.coverageAndQuality.modelCoverageStatus, "unknown");
-    assert.equal(unknownDomainRes.interceptedPercent, null);
+    assert.equal(invalidDomainRes.visualClass, "gray");
+    assert.equal(invalidDomainRes.coverageAndQuality.modelCoverageStatus, "unknown");
   });
 
-  it("evaluates green, yellow, orange, and red deterministically within covered extent and preserves provisional 5%/20% scheme", () => {
+  it("evaluates green, yellow, orange, and red deterministically within validated polygon coverage and matches single prepared scenario", () => {
     assert.equal(PROVISIONAL_GLOBAL_GEOMETRIC_SCHEME_V0.lowMaxPercent, 5);
     assert.equal(PROVISIONAL_GLOBAL_GEOMETRIC_SCHEME_V0.highMaxPercent, 20);
     assert.equal(
@@ -365,7 +469,12 @@ describe("Neighborhood spatial overlap & 3-way status separation (R02-F)", () =>
         ],
       ],
     };
-    const greenRes = evaluateNeighborhoodScenarioOverlap(validNb, disjointFlood, 300);
+    const greenRes = evaluateNeighborhoodScenarioOverlap(
+      validNb,
+      disjointFlood,
+      300,
+      { modelCoverage: VALIDATED_POLYGON_COVERAGE },
+    );
     assert.equal(greenRes.visualClass, "green");
     assert.equal(greenRes.thresholdCalibrationStatus, "provisional_uncalibrated");
     assert.equal(greenRes.interceptedAreaM2, 0);
@@ -388,6 +497,7 @@ describe("Neighborhood spatial overlap & 3-way status separation (R02-F)", () =>
       validNb,
       makeStripFlood(-42.1898), // ~2%
       350,
+      { modelCoverage: VALIDATED_POLYGON_COVERAGE },
     );
     assert.equal(yellowRes.visualClass, "yellow");
 
@@ -395,6 +505,7 @@ describe("Neighborhood spatial overlap & 3-way status separation (R02-F)", () =>
       validNb,
       makeStripFlood(-42.1888), // ~12%
       425,
+      { modelCoverage: VALIDATED_POLYGON_COVERAGE },
     );
     assert.equal(orangeRes.visualClass, "orange");
 
@@ -402,16 +513,77 @@ describe("Neighborhood spatial overlap & 3-way status separation (R02-F)", () =>
       validNb,
       makeStripFlood(-42.1865), // ~35%
       550,
+      { modelCoverage: VALIDATED_POLYGON_COVERAGE },
     );
     assert.equal(redRes.visualClass, "red");
 
-    // Pre-prepared scenario matches panel evaluation deterministically
-    const prepared = prepareFloodScenario(makeStripFlood(-42.1865), 550);
+    const prepared = prepareFloodScenario(
+      makeStripFlood(-42.1865),
+      550,
+      VALIDATED_POLYGON_COVERAGE,
+    );
     const singlePreparedRes = evaluateNeighborhoodWithPreparedScenario(
       validNb,
       prepared,
     );
     assert.deepEqual(singlePreparedRes, redRes);
+  });
+
+  it("integrates consistently with R02-C compareFloodScenarios and computeDerivedFloodArea over nested flood stages", () => {
+    const scenario300: Polygon = {
+      type: "Polygon",
+      coordinates: [
+        [
+          [-42.19, -21.54],
+          [-42.189, -21.54],
+          [-42.189, -21.53],
+          [-42.19, -21.53],
+          [-42.19, -21.54],
+        ],
+      ],
+    };
+    const scenario550: Polygon = {
+      type: "Polygon",
+      coordinates: [
+        [
+          [-42.19, -21.54],
+          [-42.186, -21.54],
+          [-42.186, -21.53],
+          [-42.19, -21.53],
+          [-42.19, -21.54],
+        ],
+      ],
+    };
+
+    const area300 = computeDerivedFloodArea(scenario300, 300);
+    const area550 = computeDerivedFloodArea(scenario550, 550);
+    const cmp = compareFloodScenarios(scenario300, 300, scenario550, 550);
+    assert.equal(area300.status, "valid");
+    assert.equal(area550.status, "valid");
+    assert.equal(cmp.status, "valid");
+    assert.equal(cmp.isNestedAInB, true);
+    assert.equal(cmp.conservation.withinTolerance, true);
+
+    const centro = makeSyntheticRecord(
+      OFFICIAL_NEIGHBORHOOD_REGISTRY.find((n) => n.id === "centro")!,
+      SYNTHETIC_SQUARE_IN_MODEL,
+    );
+
+    const nb300 = evaluateNeighborhoodScenarioOverlap(centro, scenario300, 300, {
+      modelCoverage: VALIDATED_POLYGON_COVERAGE,
+    });
+    const nb550 = evaluateNeighborhoodScenarioOverlap(centro, scenario550, 550, {
+      modelCoverage: VALIDATED_POLYGON_COVERAGE,
+    });
+
+    assert.equal(nb300.visualClass, "orange"); // ~10%
+    assert.equal(nb550.visualClass, "red"); // ~40%
+    assert.ok(nb300.interceptedAreaM2 !== null && nb550.interceptedAreaM2 !== null);
+    assert.ok(nb550.interceptedAreaM2 > nb300.interceptedAreaM2);
+    // When neighborhood encloses both nested scenarios inside validated coverage,
+    // delta in intercepted neighborhood area equals R02-C exclusive expansion B \ A.
+    const deltaIntercepted = nb550.interceptedAreaM2 - nb300.interceptedAreaM2;
+    assert.ok(Math.abs(deltaIntercepted - cmp.onlyB.areaSquareMeters) < 1e-3);
   });
 
   it("handles holes, overlapping scenario MultiPolygons, partial coverage, fail-closed rejections, and safety disclaimers", () => {
@@ -439,7 +611,9 @@ describe("Neighborhood spatial overlap & 3-way status separation (R02-F)", () =>
       rec.maintainerPriority ? makeSyntheticRecord(rec, nbWithHole) : rec,
     );
 
-    const panel = evaluateNeighborhoodPanel(partialRegistry, duplicatedFlood, 450);
+    const panel = evaluateNeighborhoodPanel(partialRegistry, duplicatedFlood, 450, {
+      modelCoverage: VALIDATED_POLYGON_COVERAGE,
+    });
     assert.equal(panel.acquisitionStatus, "PARTIAL_OFFICIAL_COVERAGE");
     assert.equal(panel.boundaryAvailableCount, 7);
     assert.equal(panel.evaluatedNeighborhoodCount, 7);
@@ -468,6 +642,7 @@ describe("Neighborhood spatial overlap & 3-way status separation (R02-F)", () =>
       }),
       SYNTHETIC_SQUARE_IN_MODEL,
       400,
+      { modelCoverage: VALIDATED_POLYGON_COVERAGE },
     );
     assert.equal(corruptedHoleRes.visualClass, "gray");
     assert.equal(

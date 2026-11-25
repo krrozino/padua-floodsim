@@ -123,18 +123,18 @@ A inspeção página a página das `137` páginas de `lei_sancionada_no_3.864-17
 
 Sem alterar nenhum componente público de interface nesta etapa, o contrato de domínio e o motor determinístico foram implementados em:
 
-- [`lib/neighborhoods/contract.ts`](../../lib/neighborhoods/contract.ts) — contrato técnico, separação ortogonal de estados, domínio espacial do modelo e esquema de limiares provisórios;
+- [`lib/neighborhoods/contract.ts`](../../lib/neighborhoods/contract.ts) — contrato técnico, separação ortogonal de estados, domínio espacial (`unknown` por padrão) e esquema de limiares provisórios;
 - [`lib/neighborhoods/registry.ts`](../../lib/neighborhoods/registry.ts) — inventário dos `27` bairros, `7` prioritários e validação de unicidade de identificadores/números oficiais;
-- [`lib/neighborhoods/evaluate.ts`](../../lib/neighborhoods/evaluate.ts) — preparação única da geometria do cenário por painel (`prepareFloodScenario`), delegação da validação *fail-closed* a [`lib/sgb/area.ts`](../../lib/sgb/area.ts) e cálculo geodésico de interseção sobre o elipsoide WGS84;
-- [`tests/unit/neighborhoods/neighborhoods.test.ts`](../../tests/unit/neighborhoods/neighborhoods.test.ts) — suíte de testes unitários cobrindo todas as invariantes.
+- [`lib/neighborhoods/evaluate.ts`](../../lib/neighborhoods/evaluate.ts) — preparação única da geometria do cenário por painel (`prepareFloodScenario`), reuso direto de `extractAndDissolvePolygons` e `computeDissolvedAreaMetrics` de [`lib/sgb/area.ts`](../../lib/sgb/area.ts) (integrados da R02-C / PR `#54` na `main` `63f191b`) em passo único, e cálculo geodésico de interseção sobre o elipsoide WGS84;
+- [`tests/unit/neighborhoods/neighborhoods.test.ts`](../../tests/unit/neighborhoods/neighborhoods.test.ts) — suíte de testes unitários cobrindo todas as invariantes e integração combinada com [`compareFloodScenarios`](../../lib/sgb/compare.ts).
 
 ### 5.1 Separação estrita entre disponibilidade municipal, cobertura do modelo e cálculo de interseção
 
 Para evitar falsos negativos ou falsos positivos semânticos, [`NeighborhoodCoverageQuality`](../../lib/neighborhoods/contract.ts#L194-L206) distingue independentemente:
 
 1. **Disponibilidade e qualidade dos limites municipais (`boundaryStatus`):** `"valid"`, `"unavailable"`, `"invalid_geometry"` ou `"partial_unverified"`. Se a consulta da mancha de inundação falhar (`scenarioStatus: "unavailable" | "invalid"`), `boundaryStatus` **não** muda para `"unavailable"` e a área territorial conhecida do bairro continua preservada.
-2. **Cobertura espacial do modelo de inundação (`modelCoverageStatus`):** `"covered"`, `"partial_model_coverage"`, `"outside_model_extent"` ou `"unknown"`, avaliada contra a extensão publicada do modelo SGB (`SGB_2024_MODEL_BBOX` em [`data/metadata/sources.json`](../../data/metadata/sources.json) ou domínio explícito). Um bairro situado fora, parcialmente fora ou sob cobertura desconhecida do modelo recebe obrigatoriamente **Cinza** (`calculationStatus: "skipped_outside_model_coverage"`), **nunca Verde**.
-3. **Sucesso ou falha do cálculo de interseção (`calculationStatus`):** `"computed"` somente quando limite municipal válido, cenário válido e cobertura completa do modelo estão satisfeitos simultaneamente e a conservação física $0 \le A_{\text{inter}} \le A_{\text{bairro}}$ é verificada.
+2. **Cobertura espacial do modelo de inundação (`modelCoverageStatus`):** `"covered"`, `"partial_model_coverage"`, `"outside_model_extent"` ou `"unknown"`. **Por padrão, o domínio espacial é `DEFAULT_UNKNOWN_MODEL_COVERAGE_DOMAIN` (`kind: "unknown"`):** o retângulo envolvente (`bbox`) publicado pelo MapServer SGB 2024 (`SGB_2024_MAPSERVER_ENVELOPE_BBOX`) serve apenas como filtro externo negativo (`outside_model_extent`), pois **não comprova cobertura hidráulica integral no seu interior**. Somente um polígono validado do domínio do modelo (`kind: "polygon"`) autoriza classificar um bairro como `"covered"`. Qualquer bairro fora, parcialmente fora ou sob cobertura desconhecida do modelo recebe obrigatoriamente **Cinza** (`calculationStatus: "skipped_outside_model_coverage"`), **nunca Verde**.
+3. **Sucesso ou falha do cálculo de interseção (`calculationStatus`):** `"computed"` somente quando limite municipal válido, cenário válido e cobertura completa (`"covered"`) estão satisfeitos simultaneamente e a conservação física $0 \le A_{\text{inter}} \le A_{\text{bairro}}$ é verificada via `computeDissolvedAreaMetrics`. Falhas topológicas ou de medição (`status !== "valid"`) **nunca são convertidas em área `0`** e falham fechadas em **Cinza**.
 4. **Unicidade de identificadores:** [`validateUniqueNeighborhoodRecords`](../../lib/neighborhoods/registry.ts#L204-L220) bloqueia qualquer duplicidade de `id` ou `officialNumber` antes da agregação do painel.
 
 ### 5.2 Metodologia justificável e estatuto provisório dos limiares (`5%` e `20%`)
@@ -249,9 +249,10 @@ Atenciosamente,
 
 ## 8. Viabilidade da Próxima Sprint e Próximos Passos
 
-1. **Painel público de bairros na UI (`#10` -> `#20`): BLOQUEADO (`BLOCKED_DATA_SOURCE`)** no momento (`0/27` polígonos utilizáveis), sem ativação pública até a obtenção dos limites oficiais junto à Prefeitura e sua validação topológica.
-2. **Domínio e testes de interseção (`#20` offline/desacoplado): PRONTOS**, com separação explícita entre disponibilidade dos limites municipais, cobertura espacial do modelo e sucesso do cálculo, validação de unicidade de bairros e preparação única do cenário por painel. Após a integração do PR `#54` na `main`, um ajuste mínimo conectará [`prepareValidatedGeometry`](../../lib/neighborhoods/evaluate.ts) diretamente a `extractAndDissolvePolygons` e `computeDissolvedAreaMetrics` para execução em passo único.
+1. **Painel público de bairros na UI (`#10` -> `#20`): BLOQUEADO (`BLOCKED_DATA_SOURCE`)** no momento (`0/27` polígonos utilizáveis), sem alteração nem ativação pública até a obtenção dos limites oficiais junto à Prefeitura e sua validação topológica.
+2. **Domínio e testes de interseção (`#20` integrado ao núcleo da R02-C / `main` `63f191b`):** **CONCLUÍDOS E PRONTOS**, reutilizando diretamente `extractAndDissolvePolygons` e `computeDissolvedAreaMetrics` ([`lib/sgb/area.ts`](../../lib/sgb/area.ts)) em passo único, preparação única do cenário por painel, separação estrita dos estados de limites/modelo/cenário/cálculo, cobertura desconhecida por padrão e proteção contra falsos verdes. Enquanto a R02-C (PR `#54`, `#50`) já integra a `main` aprovada e publicada (`63f191b19e4f12a239520aa5f4ed85ef5d589a0b`), a camada de bairros permanece exclusivamente no domínio/pesquisa sem exposição na interface pública.
 3. **Próximos passos imediatos (sem reaquisição desnecessária):**
    - protocolar a solicitação da Seção 7 à Prefeitura (mediante autorização do mantenedor);
+   - obter/validar o polígono de domínio efetivo do modelo hidráulico SGB antes de habilitar qualquer classificação `Verde` em produção;
    - solicitar ao SGB acesso técnico ao MDE VANTE de `10 cm`, perfis longitudinais WSE (`doc/25035`) e esclarecimento formal de licença do pacote `doc/15089`;
    - em trilha paralela de pesquisa, avaliar eixos viários OpenStreetMap (`ODbL 1.0`, atribuição explícita) conforme [`docs/FLOOD_MODEL.md`](../FLOOD_MODEL.md#L200-L203), mantendo-os estritamente separados de limites oficiais de bairros.

@@ -69,10 +69,11 @@ export type IntersectionCalculationStatus =
   | "failed_intersection_topology";
 
 /**
- * Official SGB 2024 MapServer extent in EPSG:4674 / WGS84 from data/metadata/sources.json:
- * [minLon, minLat, maxLon, maxLat].
+ * Envelope retangular publicado pelo MapServer SGB (2024) em EPSG:4674 / WGS84
+ * (`data/metadata/sources.json`). ATENÇÃO: trata-se apenas da caixa envolvente
+ * do serviço GIS e NÃO comprova cobertura hidráulica integral no seu interior.
  */
-export const SGB_2024_MODEL_BBOX = [
+export const SGB_2024_MAPSERVER_ENVELOPE_BBOX = [
   -42.20900097927306,
   -21.553311556725685,
   -42.14556243623249,
@@ -83,13 +84,18 @@ export type BoundingBox2D = readonly [number, number, number, number];
 
 export type FloodModelCoverageDomain =
   | {
-      readonly kind: "bbox";
-      readonly bbox: BoundingBox2D;
+      readonly kind: "polygon";
+      readonly geometry: FloodAreaInput;
       readonly label: string;
     }
   | {
-      readonly kind: "polygon";
-      readonly geometry: FloodAreaInput;
+      /**
+       * Envelope auxiliar apenas para exclusão externa (`outside_model_extent`).
+       * Bairros internos ao retângulo permanecem com cobertura `"unknown"` por não
+       * haver prova de cobertura hidráulica integral sem polígono validado do domínio.
+       */
+      readonly kind: "bbox";
+      readonly bbox: BoundingBox2D;
       readonly label: string;
     }
   | {
@@ -97,11 +103,10 @@ export type FloodModelCoverageDomain =
       readonly reason: string;
     };
 
-export const DEFAULT_SGB_MODEL_COVERAGE_DOMAIN: FloodModelCoverageDomain = {
-  kind: "bbox",
-  bbox: SGB_2024_MODEL_BBOX,
-  label:
-    "Extensão espacial publicada do MapServer SGB (2024) — EPSG:4674 / WGS84",
+export const DEFAULT_UNKNOWN_MODEL_COVERAGE_DOMAIN: FloodModelCoverageDomain = {
+  kind: "unknown",
+  reason:
+    "Domínio espacial validado do modelo hidráulico ainda não fornecido; o bbox do MapServer SGB (2024) não comprova cobertura hidráulica integral.",
 };
 
 /**
