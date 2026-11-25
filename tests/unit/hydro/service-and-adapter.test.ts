@@ -5,6 +5,7 @@ import { describe, it } from "node:test";
 import { validateHydroMonitoringResponse } from "../../../lib/hydro/contract.ts";
 import {
   buildHydroCacheControlHeader,
+  isLiveIneaMonitoringEnabled,
   validateHydroQueryParams,
 } from "../../../lib/hydro/httpPolicy.ts";
 import { parseIneaStationXml } from "../../../lib/hydro/ineaParser.ts";
@@ -226,6 +227,43 @@ describe("HTTP query protection and shared CDN cache policy", () => {
       buildHydroCacheControlHeader(invalidObs, freshNow.getTime()),
       "no-store",
     );
+  });
+
+  it("keeps live INEA collector disabled by default until FLOODSIM_ENABLE_LIVE_INEA=true", async () => {
+    assert.equal(isLiveIneaMonitoringEnabled({}), false);
+    assert.equal(
+      isLiveIneaMonitoringEnabled({ FLOODSIM_ENABLE_LIVE_INEA: "false" }),
+      false,
+    );
+    assert.equal(
+      isLiveIneaMonitoringEnabled({ FLOODSIM_ENABLE_LIVE_INEA: "1" }),
+      false,
+    );
+    assert.equal(
+      isLiveIneaMonitoringEnabled({ FLOODSIM_ENABLE_LIVE_INEA: "true" }),
+      true,
+    );
+
+    let fetchCalls = 0;
+    const adapter = createIneaAdapter({
+      fetchImpl: async () => {
+        fetchCalls += 1;
+        return new Response(SYNTHETIC_FIXTURE_XML, { status: 200 });
+      },
+    });
+    const disabledService = createHydroMonitoringService({
+      adapter,
+      clock: { now: () => new Date("2026-06-15T17:57:00Z") },
+      isEnabled: () => false,
+    });
+
+    const res = await disabledService.getLatestObservation();
+    assert.equal(fetchCalls, 0);
+    assert.equal(validateHydroMonitoringResponse(res), true);
+    assert.equal(res.status, "unavailable");
+    assert.equal(res.latestStage, null);
+    assert.match(res.message, /em homologação/i);
+    assert.equal(buildHydroCacheControlHeader(res), "no-store");
   });
 });
 

@@ -2,6 +2,18 @@ import type { HydroMonitoringResponse } from "./contract.ts";
 import { INEA_PADUA_STATION_ID } from "./ineaParser.ts";
 
 export const ALLOWED_HYDRO_QUERY_PARAMS = new Set(["provider", "station"]);
+export const LIVE_INEA_FEATURE_FLAG = "FLOODSIM_ENABLE_LIVE_INEA";
+
+/**
+ * Server-side opt-in gate for live INEA collection (disabled by default, no secret required).
+ * Prevents involuntary public activation before operational homologation and institutional
+ * confirmation of automated consumption terms.
+ */
+export function isLiveIneaMonitoringEnabled(
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  return env[LIVE_INEA_FEATURE_FLAG]?.trim().toLowerCase() === "true";
+}
 
 export type HydroQueryValidationResult =
   | { ok: true }

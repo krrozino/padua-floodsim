@@ -313,7 +313,7 @@ https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.html
 **Exportação estruturada oficial (XML):**  
 https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.xml  
 **Classificação:** `observed`  
-**Status de auditoria:** operacional (verificada em **2026-11-24 / 2026-11-25 UTC**)
+**Status de auditoria:** implementado e testado offline (evidência original coletada em **2026-11-24 / 2026-11-25 UTC**; smoke test em ambiente CLOUD bloqueado por indisponibilidade/egresso de rede; coletor ao vivo desativado por padrão via `FLOODSIM_ENABLE_LIVE_INEA=true` até homologação operacional e confirmação institucional de permissões de consumo)
 
 ### Identidade e metadados auditados
 

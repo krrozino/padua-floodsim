@@ -1,4 +1,5 @@
-import type { HydroMonitoringResponse } from "./contract.ts";
+import type { HydroMonitoringResponse, HydroQualityFlag } from "./contract.ts";
+import { isLiveIneaMonitoringEnabled } from "./httpPolicy.ts";
 import {
   INEA_FRESHNESS_POLICY,
   INEA_INSTITUTION,
@@ -25,12 +26,16 @@ const SYSTEM_CLOCK: HydroClock = {
   now: () => new Date(),
 };
 
+export const INEA_HOMOLOGATION_DISABLED_MESSAGE =
+  "Monitoramento observado INEA em homologação: coleta automática desativada por padrão até validação operacional e confirmação das condições de consumo. Nenhuma leitura fictícia é exibida.";
+
 export interface HydroMonitoringServiceOptions {
   adapter?: HydroProviderAdapter;
   clock?: HydroClock;
   cacheTtlMs?: number;
   errorCacheTtlMs?: number;
   staleAfterMinutes?: number;
+  isEnabled?: () => boolean;
 }
 
 interface CachedPayload {
@@ -51,6 +56,7 @@ function buildUnavailableResponse(
   staleAfterMinutes: number,
   sourceUrl: string,
   detailMessage: string,
+  qualityFlags: HydroQualityFlag[] = ["upstream_error"],
 ): HydroMonitoringResponse {
   return {
     schemaVersion: "1.0",
@@ -78,7 +84,7 @@ function buildUnavailableResponse(
     latestStage: null,
     recentTrend: null,
     rainfall: [],
-    qualityFlags: ["upstream_error"],
+    qualityFlags,
     message: detailMessage,
     scientificDisclaimer: INEA_SCIENTIFIC_DISCLAIMER,
   };
@@ -94,6 +100,7 @@ export function createHydroMonitoringService(
   const errorCacheTtlMs = options.errorCacheTtlMs ?? 30_000;
   const staleAfterMinutes =
     options.staleAfterMinutes ?? INEA_FRESHNESS_POLICY.staleAfterMinutes;
+  const isEnabled = options.isEnabled ?? (() => true);
 
   let cachedPayload: CachedPayload | null = null;
   let cachedFailure: CachedFailure | null = null;
@@ -200,6 +207,17 @@ export function createHydroMonitoringService(
   return {
     async getLatestObservation(): Promise<HydroMonitoringResponse> {
       const now = clock.now();
+
+      if (!isEnabled()) {
+        return buildUnavailableResponse(
+          now,
+          staleAfterMinutes,
+          adapter.sourceUrl ?? INEA_PADUA_XML_URL,
+          INEA_HOMOLOGATION_DISABLED_MESSAGE,
+          [],
+        );
+      }
+
       const nowMs = now.getTime();
 
       if (cachedPayload && nowMs - cachedPayload.fetchedAtMs < cacheTtlMs) {
@@ -226,4 +244,6 @@ export function createHydroMonitoringService(
   };
 }
 
-export const hydroMonitoringService = createHydroMonitoringService();
+export const hydroMonitoringService = createHydroMonitoringService({
+  isEnabled: () => isLiveIneaMonitoringEnabled(),
+});

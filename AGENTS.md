@@ -2,6 +2,8 @@
 
 This repository is the source of truth for the Pádua FloodSim academic project.
 
+**Engineering profile:** Programations Engineering Standard 2.0 — Research (reference revision: 24/11/2026).
+
 ## Mission
 
 Build an experimental and reproducible platform to **monitor, forecast and spatially interpret** Rio Pomba flood conditions in Santo Antônio de Pádua, RJ.
@@ -21,6 +23,7 @@ Before changing code or scientific behavior, read the relevant docs:
 - `README.md`
 - `docs/PROJECT_CHARTER.md` — mission, users and product/research scope
 - `docs/ACADEMIC_METHODOLOGY.md` — canonical scientific baseline
+- `docs/OBSERVATION_CONTRACT.md` — hydrological observation contract and scientific gates (G1–G5)
 - `docs/FORECAST_MODEL.md` — temporal prediction research rules
 - `docs/FLOOD_MODEL.md` — spatial model and SGB reference rules
 - `docs/DATA_SOURCES.md`
@@ -206,12 +209,19 @@ Production deployment happens only after coherent changes are merged and reviewe
 Normally run:
 
 ```bash
-npm install
+npm ci
 npm run typecheck
+npm run test:unit
 npm run build
 ```
 
 Interactive/map work must also be checked in a browser.
+
+### Python hydrological research pipeline
+
+```bash
+python -m unittest discover -s tests/research -v
+```
 
 ### Spatial research
 
@@ -234,6 +244,14 @@ Use:
 - metrics per horizon;
 - event-level error analysis;
 - uncertainty evaluation.
+
+## Skills
+
+Use the repository skills when applicable:
+
+- `verify-floodsim` — end-to-end validation of web/map changes and scientific semantics before PR/review;
+- `audit-hydro-source` (`.agents/skills/audit-hydro-source/SKILL.md`) — legal and technical audit of official hydrological sources before ingestion;
+- `verify-hydro-observations` (`.agents/skills/verify-hydro-observations/SKILL.md`) — verification of observed data normalization, freshness/staleness, traceability, and SGB independence.
 
 ## Agent roles
 

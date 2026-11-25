@@ -472,6 +472,17 @@ test("rejects refresh=1 and arbitrary query params at API boundary and preserves
   expect(arbitraryRes.status()).toBe(400);
   expect(arbitraryRes.headers()["cache-control"]).toBe("no-store");
 
+  // Without FLOODSIM_ENABLE_LIVE_INEA=true, the server-side collector stays disabled by default
+  // and returns an honest unavailable homologation state (never mocks).
+  const defaultRes = await request.get("/api/hydro/observations");
+  expect(defaultRes.status()).toBe(503);
+  expect(defaultRes.headers()["cache-control"]).toBe("no-store");
+  const defaultBody = await defaultRes.json();
+  expect(defaultBody.status).toBe("unavailable");
+  expect(defaultBody.classification).toBe("observed");
+  expect(defaultBody.latestStage).toBeNull();
+  expect(defaultBody.message).toMatch(/homologação/i);
+
   await page.clock.setFixedTime(new Date("2026-11-25T02:57:00Z"));
   await stubBaseMapAndSgb(page);
   await page.route("**/api/hydro/observations*", async (route) => {

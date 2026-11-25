@@ -33,6 +33,13 @@ MONITORAR -> PREVER -> TRADUZIR EM IMPACTO ESPACIAL
 
 A partir deste marco, previsão deixa de ser "feature avançada eventual" e passa a ser uma das frentes centrais de pesquisa, sem antecipar afirmações operacionais.
 
+## Estado consolidado — Sprint R01 (25/11/2026)
+
+- **Contrato e skills (`docs/OBSERVATION_CONTRACT.md`, `audit-hydro-source`, `verify-hydro-observations`):** integrados.
+- **Monitoramento observado INEA (`213042120`):** implementado e testado offline; coleta ao vivo desativada por padrão no servidor (`FLOODSIM_ENABLE_LIVE_INEA=true`) até homologação operacional (smoke CLOUD bloqueado por indisponibilidade de rede) e confirmação institucional das permissões de consumo/armazenamento/redistribuição.
+- **Pipeline histórico em Python (`scripts/research/hydrology/`):** implementado com CI determinístico offline; [`EXP-2026-001`](experiments/EXP-2026-001-historical-hydrological-datasets.md) permanece **exploratório** (reprodução com inputs locais originais em `BLOCKED_LOCAL_DATA`); [`EXP-2026-002`](experiments/EXP-2026-002-forecast-protocol.md) pré-registrado e **ainda não executado**.
+- **Limites científicos ativos:** nenhum crosswalk validado (`crosswalkValidated: false`); nenhuma previsão temporal autorizada para exposição pública.
+
 ---
 
 ## R0 — Governança científica — em andamento

@@ -4,7 +4,7 @@ Plataforma acadêmica e experimental de **monitoramento, previsão de curto praz
 
 > **Importante:** o Pádua FloodSim não é um sistema oficial de alerta e não substitui INEA, Defesa Civil, Serviço Geológico do Brasil (SGB), ANA ou outras fontes oficiais.
 
-## Estado atual da aplicação
+## Estado atual da aplicação (Sprint R01 — 25/11/2026)
 
 A aplicação V1 disponível hoje usa como referência as **11 manchas oficiais do SGB entre 3,00 m e 5,50 m**, em intervalos de 25 cm.
 
@@ -12,10 +12,11 @@ No estado atual:
 
 - a mancha exibida é `official_reference`, não uma previsão FloodSim;
 - não há profundidade real calculada a partir das manchas SGB;
-- não há previsão temporal validada;
 - os bairros ainda não possuem polígonos oficiais integrados;
-- o painel INEA existente é mock/demo e permanece separado das manchas;
-- a equivalência entre régua INEA e referência SGB **não está validada**.
+- o **monitoramento observado INEA (`213042120`)** substituiu o antigo painel mock e está implementado e testado offline; porém, a coleta ao vivo permanece **desativada por padrão** no servidor (`FLOODSIM_ENABLE_LIVE_INEA=true` para ativação deliberada), exibindo estado honesto de indisponibilidade/homologação até validação operacional em ambiente com egresso (smoke CLOUD bloqueado por rede) e confirmação institucional das condições de consumo;
+- o **pipeline histórico em Python** (`scripts/research/hydrology/`) está implementado com CI determinístico offline; o experimento [`EXP-2026-001`](docs/experiments/EXP-2026-001-historical-hydrological-datasets.md) permanece **exploratório** (reprodução com os inputs locais originais classificada como `BLOCKED_LOCAL_DATA` em Cloud) e o protocolo [`EXP-2026-002`](docs/experiments/EXP-2026-002-forecast-protocol.md) ainda **não foi executado**;
+- **nenhum crosswalk** entre a estação INEA (`213042120`) e a referência SGB/RHN (`58790002`) está validado (`crosswalkValidated: false`);
+- **nenhuma previsão temporal** está validada ou autorizada para exposição pública.
 
 Veja [a revisão técnica da V1](docs/PR17_REVIEW.md).
 
@@ -58,6 +59,7 @@ Após compatibilizar e validar as referências de nível, transformar observaç�
 
 - [Project Charter](docs/PROJECT_CHARTER.md) — missão, objetivos e escopo do produto/pesquisa;
 - [Metodologia acadêmica](docs/ACADEMIC_METHODOLOGY.md) — base científica;
+- [Contrato de observações](docs/OBSERVATION_CONTRACT.md) — contrato canônico e gates científicos (G1–G5);
 - [Modelo espacial de inundação](docs/FLOOD_MODEL.md) — referência SGB e modelo topográfico experimental;
 - [Modelo de previsão](docs/FORECAST_MODEL.md) — linha de pesquisa temporal;
 - [Fontes de dados](docs/DATA_SOURCES.md) — proveniência e compatibilidade;
