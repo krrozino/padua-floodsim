@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import * as maplibregl from "maplibre-gl";
 import { buildHydroStationsGeoJSON } from "@/lib/hydro/stations";
 import type { DerivedFloodAreaResult } from "@/lib/sgb/area";
+import {
+  compareFloodScenarios,
+  type ScenarioComparisonResult,
+} from "@/lib/sgb/compare";
 import {
   useSgbFlood,
   EMPTY_FLOOD,
@@ -41,6 +45,15 @@ const MAP_STYLE: maplibregl.StyleSpecification = {
   ],
 };
 
+const COMPARE_LAYER_IDS = [
+  "flood-compare-common-fill",
+  "flood-compare-common-line",
+  "flood-compare-only-a-fill",
+  "flood-compare-only-a-line",
+  "flood-compare-only-b-fill",
+  "flood-compare-only-b-line",
+] as const;
+
 function ensureFloodLayers(map: maplibregl.Map) {
   if (!map.getSource("flood-zone")) {
     map.addSource("flood-zone", {
@@ -74,6 +87,80 @@ function ensureFloodLayers(map: maplibregl.Map) {
         "line-opacity": 0.85,
       },
     });
+  }
+}
+
+function ensureComparisonLayers(map: maplibregl.Map) {
+  const specs: readonly {
+    sourceId: string;
+    fillId: string;
+    lineId: string;
+    fillColor: string;
+    fillOpacity: number;
+    lineColor: string;
+    lineWidth: number;
+  }[] = [
+    {
+      sourceId: "flood-compare-common",
+      fillId: "flood-compare-common-fill",
+      lineId: "flood-compare-common-line",
+      fillColor: "#1d4ed8",
+      fillOpacity: 0.46,
+      lineColor: "#1e3a8a",
+      lineWidth: 1.5,
+    },
+    {
+      sourceId: "flood-compare-only-a",
+      fillId: "flood-compare-only-a-fill",
+      lineId: "flood-compare-only-a-line",
+      fillColor: "#ea580c",
+      fillOpacity: 0.56,
+      lineColor: "#9a3412",
+      lineWidth: 1.8,
+    },
+    {
+      sourceId: "flood-compare-only-b",
+      fillId: "flood-compare-only-b-fill",
+      lineId: "flood-compare-only-b-line",
+      fillColor: "#7c3aed",
+      fillOpacity: 0.52,
+      lineColor: "#4c1d95",
+      lineWidth: 1.8,
+    },
+  ];
+
+  for (const spec of specs) {
+    if (!map.getSource(spec.sourceId)) {
+      map.addSource(spec.sourceId, {
+        type: "geojson",
+        data: EMPTY_FLOOD,
+      });
+    }
+    if (!map.getLayer(spec.fillId)) {
+      map.addLayer({
+        id: spec.fillId,
+        type: "fill",
+        source: spec.sourceId,
+        layout: { visibility: "none" },
+        paint: {
+          "fill-color": spec.fillColor,
+          "fill-opacity": spec.fillOpacity,
+        },
+      });
+    }
+    if (!map.getLayer(spec.lineId)) {
+      map.addLayer({
+        id: spec.lineId,
+        type: "line",
+        source: spec.sourceId,
+        layout: { visibility: "none" },
+        paint: {
+          "line-color": spec.lineColor,
+          "line-width": spec.lineWidth,
+          "line-opacity": 0.9,
+        },
+      });
+    }
   }
 }
 
@@ -152,47 +239,123 @@ function ensureHydroStationLayers(map: maplibregl.Map) {
 
 export type FloodMapProps = {
   level: number;
+  mode?: "single" | "compare";
+  compareLevelB?: number;
   onStatusChange?: (status: FloodLayerStatus) => void;
+  onStatusBChange?: (status: FloodLayerStatus | null) => void;
   onDerivedAreaChange?: (area: DerivedFloodAreaResult | null) => void;
+  onDerivedAreaBChange?: (area: DerivedFloodAreaResult | null) => void;
+  onComparisonChange?: (comparison: ScenarioComparisonResult | null) => void;
   retryToken?: number;
+  retryTokenB?: number;
   isVisible?: boolean;
 };
 
 export function FloodMap({
   level,
+  mode = "single",
+  compareLevelB = 5.5,
   onStatusChange,
+  onStatusBChange,
   onDerivedAreaChange,
+  onDerivedAreaBChange,
+  onComparisonChange,
   retryToken = 0,
+  retryTokenB = 0,
   isVisible = true,
 }: FloodMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const onStatusChangeRef = useRef(onStatusChange);
+  const onStatusBChangeRef = useRef(onStatusBChange);
   const onDerivedAreaChangeRef = useRef(onDerivedAreaChange);
+  const onDerivedAreaBChangeRef = useRef(onDerivedAreaBChange);
+  const onComparisonChangeRef = useRef(onComparisonChange);
+
   const [renderedData, setRenderedData] = useState<FloodGeometry | null>(null);
+  const [renderedComparison, setRenderedComparison] =
+    useState<ScenarioComparisonResult | null>(null);
   const [readyMap, setReadyMap] = useState<maplibregl.Map | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapRetry, setMapRetry] = useState(0);
   const [showFlood, setShowFlood] = useState(true);
   const [showStations, setShowStations] = useState(true);
-  const { status, geojson, derivedArea } = useSgbFlood(level, retryToken);
+
+  const scenarioA = useSgbFlood(level, retryToken, true);
+  const scenarioB = useSgbFlood(
+    compareLevelB,
+    retryTokenB,
+    mode === "compare",
+  );
+
+  const comparison: ScenarioComparisonResult | null = useMemo(() => {
+    if (mode !== "compare") return null;
+    if (
+      scenarioA.status.state !== "official" ||
+      scenarioB.status.state !== "official"
+    ) {
+      return null;
+    }
+    return compareFloodScenarios(
+      scenarioA.geojson,
+      scenarioA.status.levelCm,
+      scenarioB.geojson,
+      scenarioB.status.levelCm,
+    );
+  }, [
+    mode,
+    scenarioA.status.state,
+    scenarioA.status.levelCm,
+    scenarioA.geojson,
+    scenarioB.status.state,
+    scenarioB.status.levelCm,
+    scenarioB.geojson,
+  ]);
 
   useEffect(() => {
     onStatusChangeRef.current = onStatusChange;
   }, [onStatusChange]);
 
   useEffect(() => {
+    onStatusBChangeRef.current = onStatusBChange;
+  }, [onStatusBChange]);
+
+  useEffect(() => {
     onDerivedAreaChangeRef.current = onDerivedAreaChange;
   }, [onDerivedAreaChange]);
 
   useEffect(() => {
-    onStatusChangeRef.current?.(status);
-  }, [status]);
+    onDerivedAreaBChangeRef.current = onDerivedAreaBChange;
+  }, [onDerivedAreaBChange]);
 
   useEffect(() => {
-    onDerivedAreaChangeRef.current?.(derivedArea);
-  }, [derivedArea]);
+    onComparisonChangeRef.current = onComparisonChange;
+  }, [onComparisonChange]);
+
+  useEffect(() => {
+    onStatusChangeRef.current?.(scenarioA.status);
+  }, [scenarioA.status]);
+
+  useEffect(() => {
+    onStatusBChangeRef.current?.(
+      mode === "compare" ? scenarioB.status : null,
+    );
+  }, [mode, scenarioB.status]);
+
+  useEffect(() => {
+    onDerivedAreaChangeRef.current?.(scenarioA.derivedArea);
+  }, [scenarioA.derivedArea]);
+
+  useEffect(() => {
+    onDerivedAreaBChangeRef.current?.(
+      mode === "compare" ? scenarioB.derivedArea : null,
+    );
+  }, [mode, scenarioB.derivedArea]);
+
+  useEffect(() => {
+    onComparisonChangeRef.current?.(comparison);
+  }, [comparison]);
 
   useEffect(() => {
     if (isVisible && mapRef.current) {
@@ -235,6 +398,7 @@ export function FloodMap({
     const initLayers = () => {
       try {
         ensureFloodLayers(map);
+        ensureComparisonLayers(map);
         ensureHydroStationLayers(map);
         setReadyMap(map);
       } catch {
@@ -323,15 +487,15 @@ export function FloodMap({
     };
   }, [mapRetry]);
 
+  // Single-scenario raw official SGB source update (never alters official coordinates)
   useEffect(() => {
     if (!readyMap || readyMap !== mapRef.current) return;
     const source = readyMap.getSource("flood-zone") as maplibregl.GeoJSONSource;
-    // MapLibre queues replacements in order; cleanup suppresses stale completion/errors.
     let active = true;
     void source
-      .setData(geojson)
+      .setData(scenarioA.geojson)
       .then(() => {
-        if (active) setRenderedData(geojson);
+        if (active) setRenderedData(scenarioA.geojson);
       })
       .catch(() => {
         if (active)
@@ -340,17 +504,87 @@ export function FloodMap({
     return () => {
       active = false;
     };
-  }, [readyMap, geojson]);
+  }, [readyMap, scenarioA.geojson]);
 
+  // Topological comparison sources update (A ∩ B, A \ B, B \ A)
   useEffect(() => {
     if (!readyMap || readyMap !== mapRef.current) return;
+    const commonSource = readyMap.getSource(
+      "flood-compare-common",
+    ) as maplibregl.GeoJSONSource;
+    const onlyASource = readyMap.getSource(
+      "flood-compare-only-a",
+    ) as maplibregl.GeoJSONSource;
+    const onlyBSource = readyMap.getSource(
+      "flood-compare-only-b",
+    ) as maplibregl.GeoJSONSource;
+
+    const commonData =
+      mode === "compare" && comparison?.status === "valid"
+        ? comparison.geometries.common
+        : EMPTY_FLOOD;
+    const onlyAData =
+      mode === "compare" && comparison?.status === "valid"
+        ? comparison.geometries.onlyA
+        : EMPTY_FLOOD;
+    const onlyBData =
+      mode === "compare" && comparison?.status === "valid"
+        ? comparison.geometries.onlyB
+        : EMPTY_FLOOD;
+
+    let active = true;
+    void Promise.all([
+      commonSource.setData(commonData),
+      onlyASource.setData(onlyAData),
+      onlyBSource.setData(onlyBData),
+    ])
+      .then(() => {
+        if (active) {
+          setRenderedComparison(
+            mode === "compare" && comparison?.status === "valid"
+              ? comparison
+              : null,
+          );
+        }
+      })
+      .catch(() => {
+        if (active)
+          setMapError(
+            "Falha ao desenhar a comparação das camadas SGB. Tente recarregar o mapa.",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, [readyMap, mode, comparison]);
+
+  // Layer visibility controller
+  useEffect(() => {
+    if (!readyMap || readyMap !== mapRef.current) return;
+
+    const singleVisible =
+      mode === "single" && showFlood && renderedData === scenarioA.geojson;
     for (const id of ["flood-zone-fill", "flood-zone-line"]) {
       readyMap.setLayoutProperty(
         id,
         "visibility",
-        showFlood && renderedData === geojson ? "visible" : "none",
+        singleVisible ? "visible" : "none",
       );
     }
+
+    const compareVisible =
+      mode === "compare" &&
+      showFlood &&
+      comparison?.status === "valid" &&
+      renderedComparison === comparison;
+    for (const id of COMPARE_LAYER_IDS) {
+      readyMap.setLayoutProperty(
+        id,
+        "visibility",
+        compareVisible ? "visible" : "none",
+      );
+    }
+
     for (const id of ["hydro-stations-circle", "hydro-stations-label"]) {
       readyMap.setLayoutProperty(
         id,
@@ -363,7 +597,16 @@ export function FloodMap({
       popupRef.current = null;
       readyMap.getCanvas().style.cursor = "";
     }
-  }, [readyMap, showFlood, showStations, renderedData, geojson]);
+  }, [
+    readyMap,
+    mode,
+    showFlood,
+    showStations,
+    renderedData,
+    scenarioA.geojson,
+    renderedComparison,
+    comparison,
+  ]);
 
   // Handler to recenter the map
   const handleRecenter = useCallback(() => {
@@ -420,14 +663,18 @@ export function FloodMap({
         <div className="map-layer-toggles">
           <label
             className="toggle-label"
-            title="Alternar exibição da mancha oficial SGB"
+            title={
+              mode === "compare"
+                ? "Alternar exibição das manchas comparadas SGB"
+                : "Alternar exibição da mancha oficial SGB"
+            }
           >
             <input
               type="checkbox"
               checked={showFlood}
               onChange={(e) => setShowFlood(e.target.checked)}
             />
-            <span>Mancha SGB</span>
+            <span>{mode === "compare" ? "Manchas comparadas" : "Mancha SGB"}</span>
           </label>
 
           <label

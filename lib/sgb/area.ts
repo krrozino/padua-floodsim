@@ -267,6 +267,127 @@ function extractClipPolygons(input: FloodAreaInput): {
   return { polygons, invalidReason };
 }
 
+export type { ClipMultiPolygon, ClipPolygon };
+
+export const MAX_PLAUSIBLE_FLOOD_AREA_M2 = MAX_PLAUSIBLE_SCENARIO_AREA_M2;
+
+export type DissolvedPolygonsResult =
+  | {
+      readonly status: "valid";
+      readonly dissolved: ClipMultiPolygon;
+    }
+  | {
+      readonly status: "empty" | "invalid";
+      readonly dissolved: null;
+      readonly reason: string;
+    };
+
+export type DissolvedAreaMetrics =
+  | {
+      readonly status: "valid";
+      readonly areaSquareMeters: number;
+      readonly polygonPartCount: number;
+      readonly holeCount: number;
+    }
+  | {
+      readonly status: "invalid";
+      readonly areaSquareMeters: null;
+      readonly polygonPartCount: number;
+      readonly holeCount: number;
+      readonly reason: string;
+    };
+
+/**
+ * Extracts, validates (fail-closed), and topologically dissolves all polygons from a GeoJSON input.
+ */
+export function extractAndDissolvePolygons(
+  input: FloodAreaInput,
+): DissolvedPolygonsResult {
+  const { polygons, invalidReason } = extractClipPolygons(input);
+
+  if (invalidReason) {
+    return {
+      status: "invalid",
+      dissolved: null,
+      reason: invalidReason,
+    };
+  }
+
+  if (polygons.length === 0) {
+    return {
+      status: "empty",
+      dissolved: null,
+      reason: "Nenhum polígono carregado para o cenário selecionado.",
+    };
+  }
+
+  try {
+    const dissolved =
+      polygons.length === 1
+        ? polygonClipping.union(polygons[0])
+        : polygonClipping.union(polygons[0], ...polygons.slice(1));
+    return {
+      status: "valid",
+      dissolved,
+    };
+  } catch {
+    return {
+      status: "invalid",
+      dissolved: null,
+      reason: "Falha topológica ao unificar polígonos do cenário.",
+    };
+  }
+}
+
+/**
+ * Computes WGS84 authalic ellipsoidal area metrics over an already dissolved ClipMultiPolygon.
+ * Allows empty arrays (area = 0 m²), which is valid for empty set-difference/intersection results.
+ */
+export function computeDissolvedAreaMetrics(
+  dissolved: ClipMultiPolygon,
+): DissolvedAreaMetrics {
+  let totalAreaM2 = 0;
+  let holeCount = 0;
+  let polygonPartCount = 0;
+
+  for (const poly of dissolved) {
+    if (!poly || poly.length === 0) continue;
+    polygonPartCount += 1;
+    let polyAreaM2 = computeGeodesicRingAreaM2(poly[0]);
+    for (let i = 1; i < poly.length; i += 1) {
+      polyAreaM2 -= computeGeodesicRingAreaM2(poly[i]);
+      holeCount += 1;
+    }
+    if (!Number.isFinite(polyAreaM2) || polyAreaM2 < 0) {
+      return {
+        status: "invalid",
+        areaSquareMeters: null,
+        polygonPartCount,
+        holeCount,
+        reason: "Área líquida inválida após subtração de anéis internos.",
+      };
+    }
+    totalAreaM2 += polyAreaM2;
+  }
+
+  if (!Number.isFinite(totalAreaM2) || totalAreaM2 < 0) {
+    return {
+      status: "invalid",
+      areaSquareMeters: null,
+      polygonPartCount,
+      holeCount,
+      reason: "Área calculada não finita ou negativa.",
+    };
+  }
+
+  return {
+    status: "valid",
+    areaSquareMeters: totalAreaM2,
+    polygonPartCount,
+    holeCount,
+  };
+}
+
 /**
  * Computes the overlap-free derived area (numerical approximation in WGS84 authalic
  * latitude) of an official SGB flood Polygon/MultiPolygon layer.
@@ -287,9 +408,26 @@ export function computeDerivedFloodArea(
   const maxPlausibleAreaM2 =
     options.maxPlausibleAreaM2 ?? MAX_PLAUSIBLE_SCENARIO_AREA_M2;
 
-  const { polygons, invalidReason } = extractClipPolygons(input);
+  const extracted = extractAndDissolvePolygons(input);
+  if (extracted.status !== "valid") {
+    return {
+      status: extracted.status,
+      classification: "derived",
+      method: SGB_AREA_METHOD_ID,
+      crs: "EPSG:4326",
+      source: SGB_AREA_SOURCE,
+      levelCm,
+      areaSquareMeters: null,
+      areaHectares: null,
+      areaSquareKm: null,
+      polygonPartCount: 0,
+      holeCount: 0,
+      reason: extracted.reason,
+    };
+  }
 
-  if (invalidReason) {
+  const metrics = computeDissolvedAreaMetrics(extracted.dissolved);
+  if (metrics.status !== "valid") {
     return {
       status: "invalid",
       classification: "derived",
@@ -300,85 +438,15 @@ export function computeDerivedFloodArea(
       areaSquareMeters: null,
       areaHectares: null,
       areaSquareKm: null,
-      polygonPartCount: 0,
-      holeCount: 0,
-      reason: invalidReason,
+      polygonPartCount: metrics.polygonPartCount,
+      holeCount: metrics.holeCount,
+      reason: metrics.reason,
     };
-  }
-
-  if (polygons.length === 0) {
-    return {
-      status: "empty",
-      classification: "derived",
-      method: SGB_AREA_METHOD_ID,
-      crs: "EPSG:4326",
-      source: SGB_AREA_SOURCE,
-      levelCm,
-      areaSquareMeters: null,
-      areaHectares: null,
-      areaSquareKm: null,
-      polygonPartCount: 0,
-      holeCount: 0,
-      reason: "Nenhum polígono carregado para o cenário selecionado.",
-    };
-  }
-
-  let dissolved: ClipMultiPolygon;
-  try {
-    dissolved =
-      polygons.length === 1
-        ? polygonClipping.union(polygons[0])
-        : polygonClipping.union(polygons[0], ...polygons.slice(1));
-  } catch {
-    return {
-      status: "invalid",
-      classification: "derived",
-      method: SGB_AREA_METHOD_ID,
-      crs: "EPSG:4326",
-      source: SGB_AREA_SOURCE,
-      levelCm,
-      areaSquareMeters: null,
-      areaHectares: null,
-      areaSquareKm: null,
-      polygonPartCount: 0,
-      holeCount: 0,
-      reason: "Falha topológica ao unificar polígonos do cenário.",
-    };
-  }
-
-  let totalAreaM2 = 0;
-  let holeCount = 0;
-
-  for (const poly of dissolved) {
-    if (!poly || poly.length === 0) continue;
-    let polyAreaM2 = computeGeodesicRingAreaM2(poly[0]);
-    for (let i = 1; i < poly.length; i += 1) {
-      polyAreaM2 -= computeGeodesicRingAreaM2(poly[i]);
-      holeCount += 1;
-    }
-    if (!Number.isFinite(polyAreaM2) || polyAreaM2 < 0) {
-      return {
-        status: "invalid",
-        classification: "derived",
-        method: SGB_AREA_METHOD_ID,
-        crs: "EPSG:4326",
-        source: SGB_AREA_SOURCE,
-        levelCm,
-        areaSquareMeters: null,
-        areaHectares: null,
-        areaSquareKm: null,
-        polygonPartCount: dissolved.length,
-        holeCount,
-        reason: "Área líquida inválida após subtração de anéis internos.",
-      };
-    }
-    totalAreaM2 += polyAreaM2;
   }
 
   if (
-    !Number.isFinite(totalAreaM2) ||
-    totalAreaM2 <= 0 ||
-    totalAreaM2 > maxPlausibleAreaM2
+    metrics.areaSquareMeters <= 0 ||
+    metrics.areaSquareMeters > maxPlausibleAreaM2
   ) {
     return {
       status: "invalid",
@@ -390,8 +458,8 @@ export function computeDerivedFloodArea(
       areaSquareMeters: null,
       areaHectares: null,
       areaSquareKm: null,
-      polygonPartCount: dissolved.length,
-      holeCount,
+      polygonPartCount: metrics.polygonPartCount,
+      holeCount: metrics.holeCount,
       reason: "Área calculada fora dos limites de plausibilidade.",
     };
   }
@@ -403,11 +471,11 @@ export function computeDerivedFloodArea(
     crs: "EPSG:4326",
     source: SGB_AREA_SOURCE,
     levelCm,
-    areaSquareMeters: totalAreaM2,
-    areaHectares: totalAreaM2 / 10_000,
-    areaSquareKm: totalAreaM2 / 1_000_000,
-    polygonPartCount: dissolved.length,
-    holeCount,
+    areaSquareMeters: metrics.areaSquareMeters,
+    areaHectares: metrics.areaSquareMeters / 10_000,
+    areaSquareKm: metrics.areaSquareMeters / 1_000_000,
+    polygonPartCount: metrics.polygonPartCount,
+    holeCount: metrics.holeCount,
   };
 }
 
@@ -436,4 +504,25 @@ export function formatFloodArea(areaSquareMeters: number): {
     primary: `${Math.round(areaSquareMeters).toLocaleString("pt-BR")} m²`,
     secondary: `${hectares.toFixed(2).replace(".", ",")} ha`,
   };
+}
+
+export function formatHectares(hectares: number, decimals = 2): string {
+  const normalized = Math.abs(hectares) < 1e-9 ? 0 : hectares;
+  return `${normalized.toFixed(decimals).replace(".", ",")} ha`;
+}
+
+export function formatSignedHectares(deltaHectares: number, decimals = 2): string {
+  if (Math.abs(deltaHectares) < 0.005) {
+    return `0,${"0".repeat(decimals)} ha`;
+  }
+  const sign = deltaHectares > 0 ? "+" : "−";
+  return `${sign}${Math.abs(deltaHectares).toFixed(decimals).replace(".", ",")} ha`;
+}
+
+export function formatSignedPercent(deltaPercent: number, decimals = 1): string {
+  if (Math.abs(deltaPercent) < 0.05) {
+    return `0,${"0".repeat(decimals)}%`;
+  }
+  const sign = deltaPercent > 0 ? "+" : "−";
+  return `${sign}${Math.abs(deltaPercent).toFixed(decimals).replace(".", ",")}%`;
 }

@@ -14,13 +14,16 @@ export type FloodLayerStatus = {
 };
 type FloodResult = { status: FloodLayerStatus; geojson: FloodGeometry; retryToken: number };
 
-export function useSgbFlood(level: number, retryToken: number) {
+export function useSgbFlood(level: number, retryToken: number, enabled = true) {
   const levelCm = Math.round(level * 100);
   const [result, setResult] = useState<FloodResult>({
     status: { state: "loading", levelCm }, geojson: EMPTY_FLOOD, retryToken,
   });
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     const controller = new AbortController();
     let active = true;
     const loading: FloodResult = {
@@ -57,18 +60,18 @@ export function useSgbFlood(level: number, retryToken: number) {
       }
     })();
     return () => { active = false; clearTimeout(timeout); controller.abort(); };
-  }, [levelCm, retryToken]);
+  }, [levelCm, retryToken, enabled]);
 
   // Never expose the previous scenario in the render preceding effect cleanup.
   const current =
-    result.status.levelCm === levelCm && result.retryToken === retryToken
+    enabled && result.status.levelCm === levelCm && result.retryToken === retryToken
       ? result
       : { status: { state: "loading" as const, levelCm }, geojson: EMPTY_FLOOD, retryToken };
 
   const derivedArea: DerivedFloodAreaResult | null = useMemo(() => {
-    if (current.status.state !== "official") return null;
+    if (!enabled || current.status.state !== "official") return null;
     return computeDerivedFloodArea(current.geojson, current.status.levelCm);
-  }, [current.status.state, current.status.levelCm, current.geojson]);
+  }, [enabled, current.status.state, current.status.levelCm, current.geojson]);
 
   return { ...current, derivedArea };
 }
