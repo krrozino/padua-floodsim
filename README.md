@@ -1,137 +1,60 @@
 # Pádua FloodSim
 
-Plataforma acadêmica e experimental de **monitoramento, previsão de curto prazo e visualização espacial de cheias do Rio Pomba** em **Santo Antônio de Pádua - RJ**.
+Plataforma acadêmica e reprodutível de **consulta hidrológica, pesquisa de previsão de curto prazo e visualização espacial de cheias do Rio Pomba** em **Santo Antônio de Pádua, RJ**.
 
-> **Importante:** o Pádua FloodSim não é um sistema oficial de alerta e não substitui INEA, Defesa Civil, Serviço Geológico do Brasil (SGB), ANA ou outras fontes oficiais.
+> **Aviso institucional:** o Pádua FloodSim tem caráter acadêmico e **não substitui os alertas e as orientações dos órgãos oficiais** (Defesa Civil Municipal, INEA, Serviço Geológico do Brasil — SGB e ANA).
 
-[Aplicação pública](https://padua-floodsim.vercel.app) · [Issues](https://github.com/krrozino/padua-floodsim/issues) · [Pull requests](https://github.com/krrozino/padua-floodsim/pulls) · [Releases](https://github.com/krrozino/padua-floodsim/releases)
+[Aplicação em produção](https://padua-floodsim.vercel.app) · [Issues](https://github.com/krrozino/padua-floodsim/issues) · [Pull requests](https://github.com/krrozino/padua-floodsim/pulls) · [Releases](https://github.com/krrozino/padua-floodsim/releases)
 
-## Estado atual — 25/11/2026
+---
 
-**Produção / última release:** V1 cartográfica e pre-release `v0.1.0-academic` (tag não alterada). **Candidata em revisão:** [PR #44](https://github.com/krrozino/padua-floodsim/pull/44) (consolida #41–#43), com evolução de interface pública funcional em R02-B (Issue #21, branch `feat/research-r02-public-platform`). A auditoria do acervo INEA [#45](https://github.com/krrozino/padua-floodsim/pull/45) permanece independente. Nenhum deles está integrado à main nesta data.
+## Estado atual do projeto — 25/11/2026
 
-### Funcionalidades e estado da candidata R01 / R02-B
+O Pádua FloodSim distingue explicitamente o código integrado, a versão candidata à publicação acadêmica e a versão em produção:
 
-A V1 cartográfica usa como referência as **11 manchas oficiais do SGB entre 3,00 m e 5,50 m**, em intervalos de 25 cm.
+| Frente | Estado atual | Referência |
+|---|---|---|
+| **A. Código integrado na `main`** | PRs #41, #42, #43, #44, #45 e #48 integrados (plataforma pública funcional, área derivada validada, contrato/adaptador INEA com coleta desligada, auditoria do acervo histórico INEA e pipeline científico Python). Correção do Quality Gate de segurança no CI e preparação da release em PR dedicado (#38, #47). | `main` (`ced6c02` + PR de fechamento) |
+| **B. Versão candidata à publicação** | **`v0.2.0-academic` (não publicada)** — notas consolidadas e `CITATION.cff` preparados; sem tag criada, sem release publicada e sem DOI novo emitido até confirmação do Quality Gate verde na `main` pós-merge e autorização de publicação. | [`docs/releases/v0.2.0-academic.md`](docs/releases/v0.2.0-academic.md) |
+| **C. Versão em produção / última release publicada** | **`v0.1.0-academic`** (V1 cartográfica publicada em 23/09/2026). Deploy automático na Vercel permanece **desabilitado** (`vercel.json`: `"deploymentEnabled": false`); a aplicação em produção só é atualizada mediante deploy explícito e autorizado. | [v0.1.0-academic](https://github.com/krrozino/padua-floodsim/releases/tag/v0.1.0-academic) · DOI `10.5281/zenodo.22928810` |
 
-Na candidata R01 / R02-B:
+---
 
-- **plataforma pública funcional (R02-B / #21):** navegação real em quatro módulos (*Mapa e cenários*, *Monitoramento*, *Dados e fontes* e *Sobre e metodologia*), sem botões desabilitados "em breve", sem selos de protótipo e sem marcadores/métricas fictícias de bairros ou ruas no fluxo público;
-- **primeira métrica espacial derivada (`derived`):** cálculo geodésico (elipsoide WGS84 com união topológica prévia via `polygon-clipping`, método `wgs84-ellipsoidal-geodesic-union-v1`) da **Área da mancha selecionada** sobre os polígonos oficiais efetivamente carregados, omitida automaticamente se inválida ou vazia;
-- **camada real de estações hidrológicas:** pontos verificados documentalmente (INEA Santo Antônio de Pádua `213042120` / `ANA FLU 58774000` e INEA Ponte Paraoquena `ANA FLU 58789000`), com omissão explícita da estação RHN `58790002` no mapa até resolução da divergência de coordenadas (~2,4 km) entre ANA e SGB;
-- a mancha exibida é `official_reference` (apresentada ao cidadão como *Cenário oficial SGB*), não uma previsão FloodSim nem extensão atual do rio;
-- não há profundidade real calculada a partir das manchas SGB;
-- os bairros ainda não possuem polígonos oficiais integrados;
-- o **monitoramento observado INEA (`213042120`)** substituiu o antigo painel mock e está implementado e testado offline; porém, a coleta ao vivo permanece **desativada por padrão** no servidor (`FLOODSIM_ENABLE_LIVE_INEA=true` para ativação deliberada), exibindo mensagem objetiva de indisponibilidade com link oficial do INEA até validação operacional e confirmação institucional das condições de consumo;
-- o **pipeline histórico em Python** (`scripts/research/hydrology/`) está implementado com CI determinístico offline; o experimento [`EXP-2026-001`](docs/experiments/EXP-2026-001-historical-hydrological-datasets.md) permanece **exploratório** (reprodução com os inputs locais originais classificada como `BLOCKED_LOCAL_DATA` em Cloud) e o protocolo [`EXP-2026-002`](docs/experiments/EXP-2026-002-forecast-protocol.md) ainda **não foi executado**;
-- **nenhum crosswalk** entre a estação INEA (`213042120`) e a referência SGB/RHN (`58790002`) está validado (`crosswalkValidated: false`);
-- **nenhuma previsão temporal** está validada ou autorizada para exposição pública.
+## Funcionalidades implementadas (árvore `main` / candidata `v0.2.0-academic`)
 
-Veja [a revisão técnica da V1](docs/PR17_REVIEW.md).
+- **Interface pública funcional em quatro módulos reais:** *Mapa e cenários*, *Monitoramento*, *Dados e fontes* (com tabela interativa das 11 cotas oficiais SGB) e *Sobre e metodologia*, sem marcadores mockados de bairros, métricas fictícias ou placeholders de módulos inexistentes.
+- **11 cenários oficiais de inundação SGB (`official_reference`):** polígonos oficiais publicados pelo Serviço Geológico do Brasil (2024) entre **3,00 m (300 cm)** e **5,50 m (550 cm)**, em intervalos de **25 cm**, referenciados à estação **Santo Antônio de Pádua II (`RHN 58790002`, zero `79,709 m`, datum `hgeoHNOR_IMBITUBA`)**.
+- **Primeira métrica espacial derivada (`derived`):** **Área da mancha selecionada** (`lib/sgb/area.ts`, método `wgs84-ellipsoidal-geodesic-union-v1`), calculada por aproximação numérica em latitude autálica no elipsoide WGS84 após união topológica (`polygon-clipping`), com subtração de anéis internos e **falha fechada estrita** para geometrias ou anéis inválidos. Validada de forma independente com `pyproj 3.8.0` / `shapely 2.2.0` nas 11 camadas reais SGB (diferença máxima `0,003 m²` / `< 0,000001%` vs. área geodésica exata de Karney WGS84; ver [`docs/research/SGB_AREA_VALIDATION_2026-11-25.md`](docs/research/SGB_AREA_VALIDATION_2026-11-25.md)).
+- **Camada real de estações hidrológicas (`lib/hydro/stations.ts`):** exibe os pontos com coordenadas verificadas documentalmente — **INEA Santo Antônio de Pádua** (`213042120` / `ANA FLU 58774000` / `PLU 2141094`) e **INEA Ponte Paraoquena** (`ANA FLU 58789000` / `PLU 2142083`). A estação `RHN 58790002` permanece documentada e omitida da camada de pontos até resolução institucional da divergência de ~2,4 km entre os cadastros ANA e SGB.
+- **Monitoramento observado INEA (`observed`, coleta ao vivo desativada por padrão):** adaptador, parser XML determinístico, política stale (`45 min`), cache proporcional (`5 min`), TLS estrito com validação da cadeia Sectigo DV R36 e allowlist de host. A variável server-side `FLOODSIM_ENABLE_LIVE_INEA` permanece **desativada por padrão** até confirmação institucional dos termos de uso e homologação operacional (#6), exibindo mensagem objetiva com link para o monitoramento oficial do INEA. A leitura INEA permanece independente das manchas SGB (`crosswalkValidated: false`).
+- **Pipeline científico histórico em Python (`scripts/research/hydrology/`):** aquisição controlada, controle de qualidade, detecção de flatlines, manifestos SHA-256 e suíte determinística offline. O experimento [`EXP-2026-001`](docs/experiments/EXP-2026-001-historical-hydrological-datasets.md) permanece **exploratório** (reprodução em Cloud bloqueada sem os arquivos locais originais, `BLOCKED_LOCAL_DATA`) e [`EXP-2026-002`](docs/experiments/EXP-2026-002-forecast-protocol.md) está pré-registrado e **ainda não executado**.
 
-## Research Phase — desde 05/10/2026
+---
 
-A fase científica formal organiza o projeto em três pilares:
+## Research Phase — identidade científica
+
+A pesquisa organiza o projeto em três pilares desacoplados:
 
 ```text
 MONITORAR -> PREVER -> TRADUZIR EM IMPACTO ESPACIAL
 ```
 
-### 1. Monitorar
+1. **Monitorar:** exibir nível observado do Rio Pomba, tendência, chuva, horário da medição e proveniência com transparência de falhas e atrasos.
+2. **Prever (em pesquisa):** investigar modelos estatísticos de curto prazo (+1 h a +10 h) para Santo Antônio de Pádua usando histórico local, precipitação e estações de montante (como **UHE Barra do Braúna Jusante `58788600`** e **Cataguases `58770000`**), tratando benchmarks prévios do SAH-Pomba apenas como hipótese a ser reavaliada com protocolo próprio. Nenhuma previsão é exposta na interface pública.
+3. **Traduzir em impacto espacial:** somente após validar compatibilidade de réguas/datum (`crosswalk`) e limites municipais oficiais, traduzir níveis em cenários espaciais e métricas territoriais.
 
-Exibir nível observado do Rio Pomba, tendência, horário, fonte e precipitação relevante, com rastreabilidade.
+---
 
-A meta de utilidade pública é permitir que uma pessoa dentro ou fora de Pádua compreenda visualmente a condição do rio.
+## Fontes principais e classificação dos dados
 
-### 2. Prever
+O projeto distingue rigorosamente: `observed`, `processed`, `official_reference`, `derived`, `simulated`, `forecast` e `mock` (restrito a fixtures de teste, ausente da interface pública).
 
-Desenvolver e avaliar modelos estatísticos de curto prazo para estimar a evolução do nível em Santo Antônio de Pádua.
+- **SGB / CPRM (2024):** *Delimitação da mancha de inundação do rio Pomba na zona urbana de Santo Antônio de Pádua - RJ* ([RiGeo](https://rigeo.sgb.gov.br/handle/doc/25035) e Geoportal MapServer — `official_reference`).
+- **INEA-RJ (Alerta de Cheias):** estação Santo Antônio de Pádua (`213042120` / `ANA FLU 58774000`) e auditoria documental do acervo histórico ([`docs/research/INEA_HISTORICAL_ARCHIVE.md`](docs/research/INEA_HISTORICAL_ARCHIVE.md)).
+- **ANA / SGB (RHN / SAH-Pomba):** inventário de estações e séries históricas de pesquisa auditadas em [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md).
+- **OpenStreetMap:** base cartográfica de ruas e hidrografia.
 
-Horizontes candidatos do protocolo: +1 h a +10 h, em passos de uma hora.
-
-A pesquisa investigará dados locais, precipitação e informações de montante, incluindo a relação com **UHE Barra do Braúna Jusante (58788600)**.
-
-Nenhuma previsão deverá ser publicada como certeza ou alerta operacional.
-
-### 3. Traduzir em impacto espacial
-
-Após compatibilizar e validar as referências de nível, transformar observações/previsões em cenários espaciais e, futuramente, em métricas por bairro.
-
-## Evidências e como reproduzir
-
-- [Catálogo R01/R02-A](docs/research/RESEARCH_CATALOG_2026-11-25.md): estações, fontes, eventos, resultados exploratórios, hashes, lacunas e backlog.
-- [Changelog](CHANGELOG.md) e [notas da próxima pre-release](docs/releases/research-r01-unreleased.md): histórico e critérios de publicação; não são release publicada.
-- [EXP-2026-001](docs/experiments/EXP-2026-001-historical-hydrological-datasets.md): piloto exploratório; [EXP-2026-002](docs/experiments/EXP-2026-002-forecast-protocol.md): protocolo não executado.
-- `data/metadata/hydrology/`: inventário, QC e manifestos; dados volumosos não estão no Git.
-
-### Executar localmente (candidata R01)
-
-Node compatível com o lockfile/CI e Python 3.12 para o pipeline científico. A coleta INEA permanece desligada por padrão. Não habilite sem homologação e permissão.
-
-```sh
-npm ci
-npm run dev
-npm run typecheck
-npm run test:unit
-npm run build
-python -m unittest discover -s tests/research -v
-```
-
-Testes E2E: `npm run test:e2e` com navegador Playwright instalado. Para pesquisa, consulte `scripts/research/hydrology/README.md`; a verificação dos dados históricos exige os arquivos originais. CI offline não comprova acesso ao INEA nem validade de previsão. Não efetue coleta real para testes de rotina.
-
-## Documentos centrais
-
-- [Project Charter](docs/PROJECT_CHARTER.md) — missão, objetivos e escopo do produto/pesquisa;
-- [Metodologia acadêmica](docs/ACADEMIC_METHODOLOGY.md) — base científica;
-- [Contrato de observações](docs/OBSERVATION_CONTRACT.md) — contrato canônico e gates científicos (G1–G5);
-- [Modelo espacial de inundação](docs/FLOOD_MODEL.md) — referência SGB e modelo topográfico experimental;
-- [Modelo de previsão](docs/FORECAST_MODEL.md) — linha de pesquisa temporal;
-- [Fontes de dados](docs/DATA_SOURCES.md) — proveniência e compatibilidade;
-- [Arquitetura](docs/ARCHITECTURE.md) — separação entre aquisição, modelos e interface;
-- [Plano do artigo](docs/ARTICLE_PLAN_RBMET.md) — desenho científico em discussão;
-- [Protocolo de validação](docs/VALIDATION_PROTOCOL.md) — critérios temporais, espaciais e integrados;
-- [Registro de experimentos](docs/experiments/README.md) — convenção para experimentos reproduzíveis;
-- [Roadmap](docs/ROADMAP.md) — ordem de execução;
-- [Governança](docs/GOVERNANCE.md) — GitHub, Notion, Chat e Work;
-- [Diário de pesquisa](docs/RESEARCH_LOG.md) — marcos consolidados;
-- [Uso de IA](docs/AI_USAGE.md) — transparência sobre apoio de IA.
-
-## Autoria e citação
-
-O Pádua FloodSim é desenvolvido e mantido por **Sérgio Izaque Pinheiro Carrozino ([@krrozino](https://github.com/krrozino))**, ORCID **0009-0002-8421-2694**.
-
-Se utilizar o software em trabalho acadêmico, apresentação ou pesquisa, consulte o arquivo [`CITATION.cff`](CITATION.cff) e informe também a versão, tag ou commit utilizado.
-
-- [Aviso de autoria, citação e dados de terceiros](NOTICE.md)
-- [Política de autoria e proveniência](docs/AUTHORSHIP_AND_DATA_PROVENANCE.md)
-- [Trabalhos relacionados e delimitação da contribuição](docs/RELATED_WORK.md)
-
-### DOI
-
-- **v0.1.0-academic:** https://doi.org/10.5281/zenodo.22928810
-- **Todas as versões / conceito:** https://doi.org/10.5281/zenodo.22928809
-
-O projeto não reivindica originalidade sobre a ideia genérica de estudar ou mapear enchentes em Santo Antônio de Pádua. A contribuição pretendida está na integração reproduzível de monitoramento, previsão, processamento geoespacial, validação e visualização interativa.
-
-## Referência espacial oficial
-
-O SGB publicou em 2024 manchas vetoriais para Santo Antônio de Pádua correspondentes às cotas:
-
-```text
-300, 325, 350, 375, 400, 425, 450, 475, 500, 525 e 550 cm
-```
-
-Essas manchas são usadas como **referência oficial**, e não como resultado próprio do FloodSim.
-
-O estudo SGB utiliza a estação Santo Antônio de Pádua II (`58790002`) e documenta seu referencial vertical. Consulte [`docs/FLOOD_MODEL.md`](docs/FLOOD_MODEL.md).
-
-## Pesquisa de previsão
-
-Relatórios do SAH-Pomba já avaliaram previsões para Santo Antônio de Pádua utilizando dados de montante. Em relatório de 2021, o modelo preferencial usa **UHE Barra do Braúna Jusante (58788600)** com deslocamento de 8 horas.
-
-O FloodSim não herda automaticamente o desempenho desse modelo. Essa relação será tratada como **benchmark e hipótese a ser reavaliada** com dados e protocolo próprios.
-
-Consulte [`docs/FORECAST_MODEL.md`](docs/FORECAST_MODEL.md).
+---
 
 ## Arquitetura conceitual
 
@@ -142,64 +65,98 @@ fontes observadas / oficiais
 aquisição + catálogo de proveniência
           |
           v
-normalização temporal/geoespacial
+normalização temporal / geoespacial
           |
           +-------------------+
           |                   |
           v                   v
-modelo temporal        modelo espacial
-(previsão)             (cenários)
+modelo temporal        modelo espacial / área derivada
+(pesquisa)             (SGB oficial + área WGS84)
           |                   |
           +---------+---------+
                     |
                     v
           tradução espaço-temporal
+         (bloqueada até crosswalk)
                     |
                     v
-             API / aplicação
+             API / Next.js
                     |
                     v
-                MapLibre
+                MapLibre GL
 ```
 
-Modelos científicos não devem ser acoplados aos componentes visuais.
+Algoritmos científicos e geoespaciais permanecem desacoplados dos componentes visuais MapLibre.
 
-## Stack
+### Stack técnica
+- **Aplicação web:** Next.js 16, React 19, TypeScript 5.9, Tailwind CSS 4, MapLibre GL JS 6.7, `polygon-clipping`.
+- **Testes web:** `node --test` (unitários) e Playwright (E2E).
+- **Pipeline científico:** Python 3.12 (`unittest` offline determinístico; validação geoespacial independente executada com `pyproj` e `shapely`).
 
-### Aplicação
+---
 
-- Next.js;
-- TypeScript;
-- Tailwind CSS;
-- MapLibre GL JS.
+## Como executar e reproduzir localmente
 
-### Processamento geoespacial
+Requer Node.js (compatível com `package-lock.json` / CI Node 24) e Python 3.12 para a suíte científica. A coleta automática do INEA permanece desativada por padrão (`FLOODSIM_ENABLE_LIVE_INEA` não definida).
 
-- Python;
-- GeoPandas;
-- Rasterio;
-- GDAL.
+```sh
+npm ci --ignore-scripts --no-audit --no-fund
+npm run typecheck
+npm run test:unit
+npm run build
+python3 -m unittest discover -s tests/research -v
+```
 
-### Pesquisa estatística
+Para executar a aplicação em desenvolvimento (`predev` sincroniza o worker MapLibre):
 
-A stack será definida de acordo com o protocolo experimental. Bibliotecas e versões deverão ser registradas nas execuções reproduzíveis.
+```sh
+npm run dev
+```
 
-## Tipos de informação
+Para testes E2E em navegador (com Chromium/Chrome instalado para o Playwright):
 
-O projeto diferencia:
+```sh
+npm run test:e2e
+```
 
-- `observed`;
-- `processed`;
-- `official_reference`;
-- `derived`;
-- `simulated`;
-- `forecast`;
-- `mock`.
+Os testes offline não dependem de acesso ao INEA nem comprovam validade de previsão. A árvore versionada contém apenas fixtures sintéticas rotuladas e metadados/hashes (`data/metadata/hydrology/`); nenhum dataset bruto volumoso ou sem autorização de redistribuição está versionado no Git.
 
-A interface deve deixar claro ao usuário qual categoria está sendo apresentada.
+---
 
-## Responsabilidade
+## Documentação e evidências
 
-O objetivo social inclui melhorar a compreensão antecipada de cenários de cheia. Entretanto, o sistema não deve emitir ordens como evacuar, retirar móveis ou considerar uma residência segura.
+- [Notas da candidata `v0.2.0-academic`](docs/releases/v0.2.0-academic.md) e [Changelog](CHANGELOG.md)
+- [Catálogo consolidado de pesquisa (25/11/2026)](docs/research/RESEARCH_CATALOG_2026-11-25.md)
+- [Validação numérica independente das 11 áreas SGB](docs/research/SGB_AREA_VALIDATION_2026-11-25.md)
+- [Auditoria do acervo histórico INEA](docs/research/INEA_HISTORICAL_ARCHIVE.md)
+- [Project Charter](docs/PROJECT_CHARTER.md) · [Metodologia acadêmica](docs/ACADEMIC_METHODOLOGY.md) · [Contrato de observações](docs/OBSERVATION_CONTRACT.md)
+- [Modelo espacial](docs/FLOOD_MODEL.md) · [Modelo de previsão](docs/FORECAST_MODEL.md) · [Protocolo de validação](docs/VALIDATION_PROTOCOL.md)
+- [Fontes de dados](docs/DATA_SOURCES.md) · [Arquitetura](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md)
+- [Governança](docs/GOVERNANCE.md) · [Diário de pesquisa](docs/RESEARCH_LOG.md) · [Uso de IA](docs/AI_USAGE.md)
+- [EXP-2026-001 (exploratório)](docs/experiments/EXP-2026-001-historical-hydrological-datasets.md) · [EXP-2026-002 (protocolo não executado)](docs/experiments/EXP-2026-002-forecast-protocol.md)
 
-Resultados experimentais devem apresentar fonte, horário, versão, incerteza e direcionamento para autoridades oficiais quando houver decisões de emergência.
+---
+
+## Limitações conhecidas e responsabilidade
+
+- **Não é sistema oficial de alerta** e não deve ser utilizado para orientar evacuação, retirada de bens ou afirmar que um imóvel está seguro.
+- As manchas SGB representam **extensão horizontal estimada** para cotas estáticas de referência — não representam área atualmente inundada, profundidade, velocidade da correnteza ou risco individual.
+- Nenhum crosswalk entre a régua INEA e a régua SGB/RHN está validado; o zero da régua e o datum vertical do INEA permanecem não confirmados (#37).
+- Métricas por bairro ou rua permanecem indisponíveis até obtenção de polígonos municipais validados (#10, #20).
+- Nenhuma previsão temporal está autorizada para exposição pública (#46).
+
+---
+
+## Autoria e citação
+
+Desenvolvido e mantido por **Sérgio Izaque Pinheiro Carrozino ([@krrozino](https://github.com/krrozino))**, ORCID **0009-0002-8421-2694**.
+
+Consulte [`CITATION.cff`](CITATION.cff), [`NOTICE.md`](NOTICE.md), [`docs/AUTHORSHIP_AND_DATA_PROVENANCE.md`](docs/AUTHORSHIP_AND_DATA_PROVENANCE.md) e [`docs/RELATED_WORK.md`](docs/RELATED_WORK.md).
+
+### Referências DOI (Zenodo)
+
+- **DOI conceitual (todas as versões):** https://doi.org/10.5281/zenodo.22928809
+- **v0.1.0-academic (versão publicada anterior):** https://doi.org/10.5281/zenodo.22928810
+- **v0.2.0-academic (candidata):** DOI específico pendente de publicação autorizada e depósito no Zenodo.
+
+O projeto permanece sem licença open source explícita para o código-fonte; dados e materiais de terceiros permanecem sujeitos às condições de suas instituições de origem.

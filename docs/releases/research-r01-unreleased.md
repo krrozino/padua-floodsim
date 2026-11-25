@@ -1,20 +1,7 @@
-# Próxima pre-release acadêmica — candidata R01 (Unreleased)
+# Notas consolidadas migradas para v0.2.0-academic (Candidata)
 
-**Status:** notas preparadas, não publicada. Nome de trabalho R01; tag/versão/DOI novos ainda não definidos. Última release publicada: [v0.1.0-academic](https://github.com/krrozino/padua-floodsim/releases/tag/v0.1.0-academic), DOI 10.5281/zenodo.22928810 (conceito 10.5281/zenodo.22928809).
+**Status:** documento histórico da fase de integração R01, substituído pelas notas consolidadas da candidata **[`v0.2.0-academic`](v0.2.0-academic.md)** (Issue #47).
 
-## Escopo da candidata
-- Contrato, skills e integração de observações INEA com falha fechada, cache, fonte e timestamps; flag desativada por padrão.
-- Pipeline histórico Python e testes determinísticos, inventário/QC/manifestos; EXP-001 exploratório e protocolo EXP-002 sem execução.
-- PRs #41–#43 consolidados em #44, baseline a636be70d76c9a5549e3257b2f31aeffa7413253; auditoria adicional #45 pendente de integração; evolução de plataforma pública funcional R02-B (Issue #21, PR #48) em branch `feat/research-r02-public-platform` sobre #44 (remoção de mocks/protótipo, 4 módulos funcionais, camada de estações INEA verificadas e área derivada da mancha SGB com falha fechada e validação independente via `pyproj 3.8.0`/`shapely 2.2.0`: diferença máxima `0,003 m²` vs Karney WGS84).
-- 31 testes web unitários, 12 Python, 9 E2E, typecheck/build validados em R02-B (revalidar SHA final antes do merge).
-- Nenhuma previsão pública, nenhuma conversão automática INEA–SGB, nenhum cálculo de profundidade real.
+Os PRs #41, #42, #43, #44, #45 e #48 já foram integrados na `main`. A preparação da próxima release acadêmica, a correção do Quality Gate de segurança (#38) e o checklist de publicação autorizada passam a ser mantidos de forma canônica em [`docs/releases/v0.2.0-academic.md`](v0.2.0-academic.md).
 
-## Limitações
-Smoke cloud timeout; termos de uso pendentes; inputs locais ausentes; divergências de metadados e picos; sem validação científica final. Manchas SGB oficiais são cenários de referência, não extensão de cheia observada. Sem licença nova implícita para software ou dados.
-
-## Checklist de publicação (#47)
-- [ ] Merge autorizado; SHA final e checks.
-- [ ] Definir versão, atualizar CITATION.cff e release notes; revisar direitos de artefatos/fixture histórica, sem dados brutos não autorizados.
-- [ ] Publicar pre-release autorizada (não equivale a deploy).
-- [ ] Depositar versão efetiva em Zenodo quando autorizado; registrar DOI somente após emissão.
-- [ ] Homologação operacional separada: permissão, TLS e cache/CDN, estados e smoke; não ativar INEA até aprovação.
+Última release efetivamente publicada: [v0.1.0-academic](https://github.com/krrozino/padua-floodsim/releases/tag/v0.1.0-academic) (DOI `10.5281/zenodo.22928810`; DOI conceitual `10.5281/zenodo.22928809`).
