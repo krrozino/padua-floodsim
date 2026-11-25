@@ -5,8 +5,8 @@
 ## Escopo da candidata
 - Contrato, skills e integração de observações INEA com falha fechada, cache, fonte e timestamps; flag desativada por padrão.
 - Pipeline histórico Python e testes determinísticos, inventário/QC/manifestos; EXP-001 exploratório e protocolo EXP-002 sem execução.
-- PRs #41–#43 consolidados em #44, baseline a636be70d76c9a5549e3257b2f31aeffa7413253; auditoria adicional #45 pendente de integração; evolução de plataforma pública funcional R02-B (Issue #21) em branch `feat/research-r02-public-platform` sobre #44 (remoção de mocks/protótipo, 4 módulos funcionais, camada de estações INEA verificadas e área geodésica derivada da mancha SGB).
-- 27 testes web unitários, 12 Python, 9 E2E, typecheck/build validados em R02-B (revalidar SHA final antes do merge).
+- PRs #41–#43 consolidados em #44, baseline a636be70d76c9a5549e3257b2f31aeffa7413253; auditoria adicional #45 pendente de integração; evolução de plataforma pública funcional R02-B (Issue #21, PR #48) em branch `feat/research-r02-public-platform` sobre #44 (remoção de mocks/protótipo, 4 módulos funcionais, camada de estações INEA verificadas e área derivada da mancha SGB com falha fechada e validação independente via `pyproj 3.8.0`/`shapely 2.2.0`: diferença máxima `0,003 m²` vs Karney WGS84).
+- 31 testes web unitários, 12 Python, 9 E2E, typecheck/build validados em R02-B (revalidar SHA final antes do merge).
 - Nenhuma previsão pública, nenhuma conversão automática INEA–SGB, nenhum cálculo de profundidade real.
 
 ## Limitações

@@ -88,6 +88,14 @@ test("latest request wins, failures clear geometry, derived area updates/omits c
     if (mode === "failure") return route.abort("failed");
     const data = payload(mode === "mismatch" ? 300 : level);
     if (mode === "empty") data.geojson.features = [];
+    if (mode === "partial_invalid") {
+      // Valid outer polygon + invalid degenerate/short internal ring -> must fail closed and omit area card
+      data.geojson.features[0].geometry.coordinates.push([
+        [-42.189, -21.539],
+        [-42.188, -21.539],
+        [-42.189, -21.539],
+      ]);
+    }
     await route.fulfill({ json: data });
   });
   const errors: string[] = [];
@@ -133,6 +141,13 @@ test("latest request wins, failures clear geometry, derived area updates/omits c
   await expect(page.locator(".scenario-status-badge")).toContainText("5,50 m");
   const area550 = await areaCard.locator(".area-metric-primary").textContent();
   expect(area550).not.toBe(area425);
+
+  // Partially invalid geometry (valid outer ring + invalid hole) must omit derived area card
+  mode = "partial_invalid";
+  await page.getByRole("button", { name: "3,00 m", exact: true }).click();
+  await expect(page.locator(".scenario-status-badge")).toHaveClass(/official/);
+  await expect(page.locator(".scenario-status-badge")).toContainText("3,00 m");
+  await expect(areaCard).toHaveCount(0);
 
   // Failure clears geometry and omits derived area card
   mode = "failure";

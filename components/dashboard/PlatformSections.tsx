@@ -286,8 +286,9 @@ export function DataSourcesSection({
               <div>
                 <dt>Método</dt>
                 <dd>
-                  Área geodésica no elipsoide WGS84 (integral autálica de igual
-                  área) com união topológica prévia (<code>{SGB_AREA_METHOD_ID}</code>).
+                  Aproximação numérica de área geodésica em latitude autálica no
+                  elipsoide WGS84 com união topológica prévia (
+                  <code>{SGB_AREA_METHOD_ID}</code>).
                 </dd>
               </div>
               <div>

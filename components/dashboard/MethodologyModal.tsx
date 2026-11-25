@@ -187,9 +187,10 @@ export function MethodologyModal({
               </li>
               <li>
                 <strong>Área da mancha selecionada (dado derivado):</strong> Calculada sobre os
-                polígonos oficiais efetivamente carregados pelo método geodésico no elipsoide WGS84
-                com união topológica prévia (evitando dupla contagem de partes sobrepostas e
-                subtraindo ilhas/anéis internos). Representa apenas a área do cenário escolhido.
+                polígonos oficiais efetivamente carregados por aproximação numérica em latitude
+                autálica no elipsoide WGS84 com união topológica prévia (evitando dupla contagem de
+                partes sobrepostas, subtraindo ilhas/anéis internos e falhando fechado em caso de
+                geometria inválida). Representa apenas a área do cenário escolhido.
               </li>
               <li>
                 <strong>Régua INEA vs. Cota SGB:</strong> O monitoramento do INEA (estação
