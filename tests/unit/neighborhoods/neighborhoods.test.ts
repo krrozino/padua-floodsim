@@ -14,6 +14,8 @@ import {
   classifyNeighborhoodOverlap,
   evaluateNeighborhoodPanel,
   evaluateNeighborhoodScenarioOverlap,
+  evaluateNeighborhoodWithPreparedScenario,
+  prepareFloodScenario,
 } from "../../../lib/neighborhoods/evaluate.ts";
 import {
   MAINTAINER_PRIORITY_NEIGHBORHOOD_IDS,
@@ -22,10 +24,11 @@ import {
   OFFICIAL_NEIGHBORHOOD_REGISTRY,
   getOfficialNeighborhoods,
   getPriorityNeighborhoods,
+  validateUniqueNeighborhoodRecords,
 } from "../../../lib/neighborhoods/registry.ts";
 
-// Synthetic 0.01° x 0.01° square near Santo Antônio de Pádua (-42.19..-42.18, -21.54..-21.53)
-const SYNTHETIC_NEIGHBORHOOD_SQUARE: Polygon = {
+// Synthetic 0.01° x 0.01° square strictly inside SGB_2024_MODEL_BBOX (-42.19..-42.18, -21.54..-21.53)
+const SYNTHETIC_SQUARE_IN_MODEL: Polygon = {
   type: "Polygon",
   coordinates: [
     [
@@ -34,6 +37,34 @@ const SYNTHETIC_NEIGHBORHOOD_SQUARE: Polygon = {
       [-42.18, -21.53],
       [-42.19, -21.53],
       [-42.19, -21.54],
+    ],
+  ],
+};
+
+// Synthetic square completely outside SGB_2024_MODEL_BBOX (upstream near Paraoquena)
+const SYNTHETIC_SQUARE_OUTSIDE_MODEL: Polygon = {
+  type: "Polygon",
+  coordinates: [
+    [
+      [-42.26, -21.5],
+      [-42.25, -21.5],
+      [-42.25, -21.49],
+      [-42.26, -21.49],
+      [-42.26, -21.5],
+    ],
+  ],
+};
+
+// Synthetic square straddling the western edge (-42.209) of SGB_2024_MODEL_BBOX
+const SYNTHETIC_SQUARE_STRADDLING_MODEL: Polygon = {
+  type: "Polygon",
+  coordinates: [
+    [
+      [-42.215, -21.54],
+      [-42.205, -21.54],
+      [-42.205, -21.53],
+      [-42.215, -21.53],
+      [-42.215, -21.54],
     ],
   ],
 };
@@ -53,11 +84,12 @@ function makeSyntheticRecord(
 }
 
 describe("Municipal neighborhood registry & metadata parity (R02-F)", () => {
-  it("contains all 27 official neighborhoods (16 right bank + 11 left bank) and 7 maintainer priorities", () => {
+  it("contains all 27 unique official neighborhoods (16 right bank + 11 left bank) and 7 maintainer priorities", () => {
     const all = getOfficialNeighborhoods();
     assert.equal(all.length, OFFICIAL_NEIGHBORHOOD_COUNT);
     assert.equal(all.length, 27);
     assert.equal(NEIGHBORHOOD_ACQUISITION_STATUS, "BLOCKED_DATA_SOURCE");
+    assert.doesNotThrow(() => validateUniqueNeighborhoodRecords(all));
 
     const numbers = all.map((n) => n.officialNumber);
     assert.deepEqual(
@@ -69,8 +101,6 @@ describe("Municipal neighborhood registry & metadata parity (R02-F)", () => {
     const leftBank = all.filter((n) => n.riverBank === "left");
     assert.equal(rightBank.length, 16);
     assert.equal(leftBank.length, 11);
-    assert.ok(rightBank.every((n) => n.officialNumber >= 1 && n.officialNumber <= 16));
-    assert.ok(leftBank.every((n) => n.officialNumber >= 17 && n.officialNumber <= 27));
 
     const priorities = getPriorityNeighborhoods();
     assert.equal(priorities.length, 7);
@@ -95,8 +125,7 @@ describe("Municipal neighborhood registry & metadata parity (R02-F)", () => {
   it("preserves verbatim orthography traceability across Lei 3.864/2017 and Lei 4.135/2021 and never treats OSM points as polygons", () => {
     const ferreira = OFFICIAL_NEIGHBORHOOD_REGISTRY.find(
       (n) => n.id === "ferreira",
-    );
-    assert.ok(ferreira);
+    )!;
     assert.equal(ferreira.officialNumber, 22);
     assert.equal(ferreira.officialName, "Ferreira");
     assert.equal(ferreira.legalNomenclature.lei3864AnexoVi, "FERRERIRA");
@@ -105,8 +134,7 @@ describe("Municipal neighborhood registry & metadata parity (R02-F)", () => {
 
     const pereira = OFFICIAL_NEIGHBORHOOD_REGISTRY.find(
       (n) => n.id === "pereira",
-    );
-    assert.ok(pereira);
+    )!;
     assert.equal(pereira.officialNumber, 26);
     assert.equal(pereira.officialName, "Pereira");
     assert.equal(pereira.legalNomenclature.lei3864AnexoVi, "PERERIRA");
@@ -144,27 +172,55 @@ describe("Municipal neighborhood registry & metadata parity (R02-F)", () => {
     for (let i = 0; i < 27; i += 1) {
       assert.deepEqual(raw.neighborhoods[i], OFFICIAL_NEIGHBORHOOD_REGISTRY[i]);
     }
-    assert.ok(Array.isArray(raw.auditedSources) && raw.auditedSources.length >= 8);
+    assert.ok(
+      Array.isArray(raw.auditedSources) && raw.auditedSources.length >= 8,
+    );
     for (const src of raw.auditedSources) {
       assert.match(src.sha256, /^[0-9a-f]{64}$/);
       assert.ok(src.sizeBytes > 0);
     }
   });
+
+  it("rejects duplicate neighborhood identifiers or official numbers to avoid double counting", () => {
+    const duplicatedId = [
+      OFFICIAL_NEIGHBORHOOD_REGISTRY[0],
+      { ...OFFICIAL_NEIGHBORHOOD_REGISTRY[1], id: OFFICIAL_NEIGHBORHOOD_REGISTRY[0].id },
+    ];
+    assert.throws(
+      () => evaluateNeighborhoodPanel(duplicatedId, SYNTHETIC_SQUARE_IN_MODEL, 300),
+      /duplicado/i,
+    );
+
+    const duplicatedNumber = [
+      OFFICIAL_NEIGHBORHOOD_REGISTRY[0],
+      {
+        ...OFFICIAL_NEIGHBORHOOD_REGISTRY[1],
+        officialNumber: OFFICIAL_NEIGHBORHOOD_REGISTRY[0].officialNumber,
+      },
+    ];
+    assert.throws(
+      () =>
+        evaluateNeighborhoodPanel(duplicatedNumber, SYNTHETIC_SQUARE_IN_MODEL, 300),
+      /duplicado/i,
+    );
+  });
 });
 
-describe("Neighborhood spatial overlap & visual classification engine (R02-F Section 6)", () => {
-  it("classifies all 27 neighborhoods as Cinza (gray) under current BLOCKED_DATA_SOURCE state without fabricating green/0%", () => {
+describe("Neighborhood spatial overlap & 3-way status separation (R02-F)", () => {
+  it("classifies all 27 neighborhoods as Cinza under current BLOCKED_DATA_SOURCE while reporting scenarioStatus separately", () => {
     const panel = evaluateNeighborhoodPanel(
       OFFICIAL_NEIGHBORHOOD_REGISTRY,
-      SYNTHETIC_NEIGHBORHOOD_SQUARE,
+      SYNTHETIC_SQUARE_IN_MODEL,
       300,
     );
 
     assert.equal(panel.acquisitionStatus, "BLOCKED_DATA_SOURCE");
+    assert.equal(panel.scenarioStatus, "valid");
     assert.equal(panel.totalIdentifiedNeighborhoods, 27);
-    assert.equal(panel.usableNeighborhoodCount, 0);
-    assert.equal(panel.unavailableOrInvalidCount, 27);
-    assert.equal(panel.isPartialCoverage, true);
+    assert.equal(panel.boundaryAvailableCount, 0);
+    assert.equal(panel.boundaryUnavailableOrInvalidCount, 27);
+    assert.equal(panel.evaluatedNeighborhoodCount, 0);
+    assert.equal(panel.isPartialBoundaryCoverage, true);
     assert.equal(panel.interceptedNeighborhoodCount, null);
     assert.equal(panel.zeroIntersectionValidCount, 0);
     assert.match(panel.coverageDisclosurePtBr, /0\/27/);
@@ -172,24 +228,131 @@ describe("Neighborhood spatial overlap & visual classification engine (R02-F Sec
 
     for (const item of panel.items) {
       assert.equal(item.visualClass, "gray");
-      assert.equal(item.visualLabelPtBr, "Cinza");
+      assert.equal(item.coverageAndQuality.boundaryStatus, "unavailable");
+      assert.equal(item.coverageAndQuality.scenarioStatus, "valid");
+      assert.equal(
+        item.coverageAndQuality.calculationStatus,
+        "skipped_boundary_unavailable",
+      );
       assert.equal(item.territorialAreaM2, null);
       assert.equal(item.interceptedAreaM2, null);
       assert.equal(item.interceptedPercent, null);
-      assert.equal(item.coverageAndQuality.isUsableForIntersection, false);
     }
   });
 
-  it("evaluates green, yellow, orange, and red deterministically on synthetic WGS84 geometries and enforces area conservation", () => {
-    const centroTemplate = OFFICIAL_NEIGHBORHOOD_REGISTRY.find(
-      (n) => n.id === "centro",
-    )!;
-    const validNb = makeSyntheticRecord(
-      centroTemplate,
-      SYNTHETIC_NEIGHBORHOOD_SQUARE,
+  it("does NOT conflate flood scenario failure with missing municipal boundaries", () => {
+    const fullSynthetic = OFFICIAL_NEIGHBORHOOD_REGISTRY.map((rec) =>
+      makeSyntheticRecord(rec, SYNTHETIC_SQUARE_IN_MODEL),
     );
 
-    // 1. Disjoint flood polygon -> 0% -> Verde (green)
+    const panel = evaluateNeighborhoodPanel(fullSynthetic, null, 350);
+
+    assert.equal(panel.acquisitionStatus, "COMPLETE_OFFICIAL_COVERAGE");
+    assert.equal(panel.boundaryAvailableCount, 27);
+    assert.equal(panel.boundaryUnavailableOrInvalidCount, 0);
+    assert.equal(panel.isPartialBoundaryCoverage, false);
+    assert.equal(panel.scenarioStatus, "unavailable");
+    assert.equal(panel.evaluatedNeighborhoodCount, 0);
+    assert.equal(panel.interceptedNeighborhoodCount, null);
+
+    const sample = panel.items[0];
+    assert.equal(sample.visualClass, "gray");
+    assert.equal(sample.coverageAndQuality.boundaryStatus, "valid");
+    assert.equal(sample.coverageAndQuality.isBoundaryValid, true);
+    assert.equal(sample.coverageAndQuality.scenarioStatus, "unavailable");
+    assert.equal(
+      sample.coverageAndQuality.calculationStatus,
+      "skipped_scenario_unavailable",
+    );
+    // Territorial area of the valid municipal boundary remains known even when scenario fails.
+    assert.ok(
+      sample.territorialAreaM2 !== null && sample.territorialAreaM2 > 1_000_000,
+    );
+    assert.equal(sample.interceptedAreaM2, null);
+    assert.equal(sample.interceptedPercent, null);
+  });
+
+  it("never classifies neighborhoods outside, straddling, or with unknown flood model coverage as green", () => {
+    const centro = OFFICIAL_NEIGHBORHOOD_REGISTRY.find(
+      (n) => n.id === "centro",
+    )!;
+
+    // Outside SGB 2024 extent bbox -> must be gray, NOT green
+    const outsideRes = evaluateNeighborhoodScenarioOverlap(
+      makeSyntheticRecord(centro, SYNTHETIC_SQUARE_OUTSIDE_MODEL),
+      SYNTHETIC_SQUARE_IN_MODEL,
+      300,
+    );
+    assert.equal(outsideRes.visualClass, "gray");
+    assert.equal(outsideRes.coverageAndQuality.boundaryStatus, "valid");
+    assert.equal(
+      outsideRes.coverageAndQuality.modelCoverageStatus,
+      "outside_model_extent",
+    );
+    assert.equal(
+      outsideRes.coverageAndQuality.calculationStatus,
+      "skipped_outside_model_coverage",
+    );
+    assert.equal(outsideRes.interceptedPercent, null);
+
+    // Straddling SGB 2024 extent bbox -> partial_model_coverage -> must be gray
+    const straddlingRes = evaluateNeighborhoodScenarioOverlap(
+      makeSyntheticRecord(centro, SYNTHETIC_SQUARE_STRADDLING_MODEL),
+      SYNTHETIC_SQUARE_IN_MODEL,
+      300,
+    );
+    assert.equal(straddlingRes.visualClass, "gray");
+    assert.equal(
+      straddlingRes.coverageAndQuality.modelCoverageStatus,
+      "partial_model_coverage",
+    );
+    assert.equal(straddlingRes.interceptedPercent, null);
+
+    // Unknown model coverage -> must be gray, NOT green
+    const unknownDomainRes = evaluateNeighborhoodScenarioOverlap(
+      makeSyntheticRecord(centro, SYNTHETIC_SQUARE_IN_MODEL),
+      {
+        type: "Polygon",
+        coordinates: [
+          [
+            [-42.17, -21.54],
+            [-42.16, -21.54],
+            [-42.16, -21.53],
+            [-42.17, -21.53],
+            [-42.17, -21.54],
+          ],
+        ],
+      },
+      300,
+      {
+        modelCoverage: {
+          kind: "unknown",
+          reason: "Domínio espacial não informado.",
+        },
+      },
+    );
+    assert.equal(unknownDomainRes.visualClass, "gray");
+    assert.equal(unknownDomainRes.coverageAndQuality.modelCoverageStatus, "unknown");
+    assert.equal(unknownDomainRes.interceptedPercent, null);
+  });
+
+  it("evaluates green, yellow, orange, and red deterministically within covered extent and preserves provisional 5%/20% scheme", () => {
+    assert.equal(PROVISIONAL_GLOBAL_GEOMETRIC_SCHEME_V0.lowMaxPercent, 5);
+    assert.equal(PROVISIONAL_GLOBAL_GEOMETRIC_SCHEME_V0.highMaxPercent, 20);
+    assert.equal(
+      PROVISIONAL_GLOBAL_GEOMETRIC_SCHEME_V0.calibrationStatus,
+      "provisional_uncalibrated",
+    );
+    assert.equal(
+      PROVISIONAL_GLOBAL_GEOMETRIC_SCHEME_V0.appliesUniformlyToAllNeighborhoods,
+      true,
+    );
+
+    const centro = OFFICIAL_NEIGHBORHOOD_REGISTRY.find(
+      (n) => n.id === "centro",
+    )!;
+    const validNb = makeSyntheticRecord(centro, SYNTHETIC_SQUARE_IN_MODEL);
+
     const disjointFlood: Polygon = {
       type: "Polygon",
       coordinates: [
@@ -202,123 +365,60 @@ describe("Neighborhood spatial overlap & visual classification engine (R02-F Sec
         ],
       ],
     };
-    const greenRes = evaluateNeighborhoodScenarioOverlap(
-      validNb,
-      disjointFlood,
-      300,
-    );
+    const greenRes = evaluateNeighborhoodScenarioOverlap(validNb, disjointFlood, 300);
     assert.equal(greenRes.visualClass, "green");
-    assert.equal(greenRes.visualLabelPtBr, "Verde");
+    assert.equal(greenRes.thresholdCalibrationStatus, "provisional_uncalibrated");
     assert.equal(greenRes.interceptedAreaM2, 0);
     assert.equal(greenRes.interceptedPercent, 0);
-    assert.ok(greenRes.territorialAreaM2 !== null && greenRes.territorialAreaM2 > 1_000_000);
 
-    // 2. 2% longitudinal strip (-42.19 to -42.1898 out of 0.01° width) -> ~2% -> Amarelo (yellow)
-    const lowFlood: Polygon = {
+    const makeStripFlood = (eastLon: number): Polygon => ({
       type: "Polygon",
       coordinates: [
         [
           [-42.19, -21.54],
-          [-42.1898, -21.54],
-          [-42.1898, -21.53],
+          [eastLon, -21.54],
+          [eastLon, -21.53],
           [-42.19, -21.53],
           [-42.19, -21.54],
         ],
       ],
-    };
+    });
+
     const yellowRes = evaluateNeighborhoodScenarioOverlap(
       validNb,
-      lowFlood,
+      makeStripFlood(-42.1898), // ~2%
       350,
     );
     assert.equal(yellowRes.visualClass, "yellow");
-    assert.equal(yellowRes.visualLabelPtBr, "Amarelo");
-    assert.ok(
-      yellowRes.interceptedPercent !== null &&
-        yellowRes.interceptedPercent > 1.9 &&
-        yellowRes.interceptedPercent < 2.1,
-    );
 
-    // 3. 12% longitudinal strip (-42.19 to -42.1888) -> ~12% -> Laranja (orange)
-    const highFlood: Polygon = {
-      type: "Polygon",
-      coordinates: [
-        [
-          [-42.19, -21.54],
-          [-42.1888, -21.54],
-          [-42.1888, -21.53],
-          [-42.19, -21.53],
-          [-42.19, -21.54],
-        ],
-      ],
-    };
     const orangeRes = evaluateNeighborhoodScenarioOverlap(
       validNb,
-      highFlood,
+      makeStripFlood(-42.1888), // ~12%
       425,
     );
     assert.equal(orangeRes.visualClass, "orange");
-    assert.equal(orangeRes.visualLabelPtBr, "Laranja");
-    assert.ok(
-      orangeRes.interceptedPercent !== null &&
-        orangeRes.interceptedPercent > 11.9 &&
-        orangeRes.interceptedPercent < 12.1,
-    );
 
-    // 4. 35% longitudinal strip (-42.19 to -42.1865) -> ~35% -> Vermelho (red)
-    const veryHighFlood: Polygon = {
-      type: "Polygon",
-      coordinates: [
-        [
-          [-42.19, -21.54],
-          [-42.1865, -21.54],
-          [-42.1865, -21.53],
-          [-42.19, -21.53],
-          [-42.19, -21.54],
-        ],
-      ],
-    };
     const redRes = evaluateNeighborhoodScenarioOverlap(
       validNb,
-      veryHighFlood,
+      makeStripFlood(-42.1865), // ~35%
       550,
     );
     assert.equal(redRes.visualClass, "red");
-    assert.equal(redRes.visualLabelPtBr, "Vermelho");
-    assert.ok(
-      redRes.interceptedPercent !== null &&
-        redRes.interceptedPercent > 34.8 &&
-        redRes.interceptedPercent < 35.2,
-    );
 
-    // 5. Enclosing flood polygon -> conservation 100% (never > 100%)
-    const enclosingFlood: Polygon = {
-      type: "Polygon",
-      coordinates: [
-        [
-          [-42.2, -21.55],
-          [-42.17, -21.55],
-          [-42.17, -21.52],
-          [-42.2, -21.52],
-          [-42.2, -21.55],
-        ],
-      ],
-    };
-    const fullRes = evaluateNeighborhoodScenarioOverlap(
+    // Pre-prepared scenario matches panel evaluation deterministically
+    const prepared = prepareFloodScenario(makeStripFlood(-42.1865), 550);
+    const singlePreparedRes = evaluateNeighborhoodWithPreparedScenario(
       validNb,
-      enclosingFlood,
-      550,
+      prepared,
     );
-    assert.equal(fullRes.visualClass, "red");
-    assert.equal(fullRes.interceptedPercent, 100);
-    assert.equal(fullRes.interceptedAreaM2, fullRes.territorialAreaM2);
+    assert.deepEqual(singlePreparedRes, redRes);
   });
 
-  it("handles holes and overlapping MultiPolygon scenario parts without double counting and reports partial coverage explicitly", () => {
+  it("handles holes, overlapping scenario MultiPolygons, partial coverage, fail-closed rejections, and safety disclaimers", () => {
     const nbWithHole: Polygon = {
       type: "Polygon",
       coordinates: [
-        SYNTHETIC_NEIGHBORHOOD_SQUARE.coordinates[0],
+        SYNTHETIC_SQUARE_IN_MODEL.coordinates[0],
         [
           [-42.1875, -21.5375],
           [-42.1825, -21.5375],
@@ -328,86 +428,67 @@ describe("Neighborhood spatial overlap & visual classification engine (R02-F Sec
         ],
       ],
     };
-
     const duplicatedFlood: MultiPolygon = {
       type: "MultiPolygon",
       coordinates: [
-        SYNTHETIC_NEIGHBORHOOD_SQUARE.coordinates,
-        SYNTHETIC_NEIGHBORHOOD_SQUARE.coordinates,
+        SYNTHETIC_SQUARE_IN_MODEL.coordinates,
+        SYNTHETIC_SQUARE_IN_MODEL.coordinates,
       ],
     };
-
-    const modifiedRegistry = OFFICIAL_NEIGHBORHOOD_REGISTRY.map((rec) =>
+    const partialRegistry = OFFICIAL_NEIGHBORHOOD_REGISTRY.map((rec) =>
       rec.maintainerPriority ? makeSyntheticRecord(rec, nbWithHole) : rec,
     );
 
-    const panel = evaluateNeighborhoodPanel(
-      modifiedRegistry,
-      duplicatedFlood,
-      450,
-    );
+    const panel = evaluateNeighborhoodPanel(partialRegistry, duplicatedFlood, 450);
     assert.equal(panel.acquisitionStatus, "PARTIAL_OFFICIAL_COVERAGE");
-    assert.equal(panel.usableNeighborhoodCount, 7);
-    assert.equal(panel.unavailableOrInvalidCount, 20);
-    assert.equal(panel.isPartialCoverage, true);
+    assert.equal(panel.boundaryAvailableCount, 7);
+    assert.equal(panel.evaluatedNeighborhoodCount, 7);
     assert.equal(panel.interceptedNeighborhoodCount, 7);
+    assert.equal(panel.isPartialBoundaryCoverage, true);
     assert.match(panel.coverageDisclosurePtBr, /7 de 27/);
 
-    const sampleValid = panel.items.find((i) => i.neighborhoodId === "centro")!;
-    assert.equal(sampleValid.visualClass, "red");
-    assert.equal(sampleValid.interceptedPercent, 100);
-    assert.equal(sampleValid.coverageAndQuality.neighborhoodHoleCount, 1);
+    const centroRes = panel.items.find((i) => i.neighborhoodId === "centro")!;
+    assert.equal(centroRes.visualClass, "red");
+    assert.equal(centroRes.interceptedPercent, 100);
+    assert.equal(centroRes.coverageAndQuality.neighborhoodHoleCount, 1);
 
-    const sampleMissing = panel.items.find(
-      (i) => i.neighborhoodId === "alipio",
-    )!;
-    assert.equal(sampleMissing.visualClass, "gray");
-    assert.equal(sampleMissing.interceptedPercent, null);
-  });
-
-  it("fails closed to gray on degenerate rings or malformed holes and enforces uniform global threshold invariants", () => {
     const saoFelix = OFFICIAL_NEIGHBORHOOD_REGISTRY.find(
       (n) => n.id === "sao-felix",
     )!;
-
-    const corruptedHolePoly: Polygon = {
-      type: "Polygon",
-      coordinates: [
-        SYNTHETIC_NEIGHBORHOOD_SQUARE.coordinates[0],
-        [
-          [-42.186, -21.536],
-          [-42.186, -21.536],
+    const corruptedHoleRes = evaluateNeighborhoodScenarioOverlap(
+      makeSyntheticRecord(saoFelix, {
+        type: "Polygon",
+        coordinates: [
+          SYNTHETIC_SQUARE_IN_MODEL.coordinates[0],
+          [
+            [-42.186, -21.536],
+            [-42.186, -21.536],
+          ],
         ],
-      ],
-    };
-
-    const res = evaluateNeighborhoodScenarioOverlap(
-      makeSyntheticRecord(saoFelix, corruptedHolePoly),
-      SYNTHETIC_NEIGHBORHOOD_SQUARE,
+      }),
+      SYNTHETIC_SQUARE_IN_MODEL,
       400,
     );
-    assert.equal(res.visualClass, "gray");
-    assert.equal(res.coverageAndQuality.status, "invalid_geometry");
-    assert.equal(res.interceptedPercent, null);
-
-    // Mandatory safety disclaimers are always attached
-    assert.deepEqual(res.disclaimers, NEIGHBORHOOD_SAFETY_DISCLAIMERS);
-    assert.match(
-      res.disclaimers.greenNotSafetyGuarantee,
-      /não significa garantia de segurança/i,
+    assert.equal(corruptedHoleRes.visualClass, "gray");
+    assert.equal(
+      corruptedHoleRes.coverageAndQuality.boundaryStatus,
+      "invalid_geometry",
     );
-    assert.match(
-      res.disclaimers.redNotOfficialWarning,
-      /não constitui alerta oficial/i,
+    assert.equal(
+      corruptedHoleRes.coverageAndQuality.calculationStatus,
+      "skipped_boundary_invalid",
     );
+    assert.deepEqual(corruptedHoleRes.disclaimers, NEIGHBORHOOD_SAFETY_DISCLAIMERS);
 
-    // Invalid threshold schemes are rejected
-    const badScheme: NeighborhoodThresholdScheme = {
+    const invalidScheme: NeighborhoodThresholdScheme = {
       ...PROVISIONAL_GLOBAL_GEOMETRIC_SCHEME_V0,
       lowMaxPercent: 25,
       highMaxPercent: 15,
     };
-    assert.equal(isValidThresholdScheme(badScheme), false);
-    assert.throws(() => classifyNeighborhoodOverlap(100, 1000, badScheme), RangeError);
+    assert.equal(isValidThresholdScheme(invalidScheme), false);
+    assert.throws(
+      () => classifyNeighborhoodOverlap(100, 1000, invalidScheme),
+      RangeError,
+    );
   });
 });

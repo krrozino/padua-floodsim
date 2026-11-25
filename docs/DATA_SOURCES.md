@@ -233,6 +233,7 @@ O Anexo VI (`p. 34`) e o Anexo XIII (`p. 42`, Ata de `25/07/2017`) da Lei nº 3.
 
 - O Anexo VI da Lei nº 3.864/2017 remete a `* Vide Mapa em anexo` (`p. 34`), mas **o mapa anexo foi omitido na publicação oficial** e `73` das `137` páginas do PDF estão em branco (apenas cabeçalho).
 - A Lei nº 4.135/2021 publica `1.065` entradas de logradouros associados aos bairros, porém sem coordenadas ou pontos de seccionamento para vias que cruzam múltiplos bairros.
+- **Condições de uso:** a disponibilidade pública em portal municipal (LAI nº 12.527/2011) não equivale automaticamente a licença aberta irrestrita para redistribuição de arquivos brutos ou bases cartográficas derivadas; por isso, versionam-se apenas metadados e nomenclatura legal, com pedido de confirmação incluído na minuta à Prefeitura.
 - **Resultado (`0/27` polígonos utilizáveis):** registrado formalmente como **`BLOCKED_DATA_SOURCE`** em `docs/research/MUNICIPAL_NEIGHBORHOOD_BOUNDARIES.md`, `data/metadata/neighborhoods/neighborhood_registry.json` e `lib/neighborhoods/`. Minuta de solicitação institucional (LAI / Ofício Acadêmico) preparada para revisão do mantenedor, sem envio automático.
 - Não usar limites de bairros de fontes comerciais, setores censitários ou diagramas de Voronoi como referência oficial.
 
@@ -268,18 +269,18 @@ Achados `R02-F`:
 1. **Malha Municipal Digital 2024:** https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/15774-malhas.html — limite municipal (`3304706`) e distrital.
 2. **Malha Territorial de Bairros — Censo 2022 (`RJ_bairros_CD2022.zip`, `SHA-256: 8eb963e5...`):** contém `1.509` bairros em 31 municípios do RJ, mas **`0` registros para Santo Antônio de Pádua (`3304706`)**.
 3. **Malhas de Setores Censitários — Censos 2022 (`RJ_setores_CD2022.zip`, `154` setores, `SHA-256: 88dc4a6c...`) e 2010 (`71` setores, `SHA-256: 1a794c55...`):** `CD_BAIRRO` e `NM_BAIRRO` vazios em **100% dos setores**; descritivos de perímetro (`Descrição_RJ.xlsx`) demonstram incompatibilidade entre setores e bairros.
-4. **Base Cartográfica Contínua `BC25_RJ` 1:25.000 (IBGE / SEA-RJ / INEA, EDGV 3.0):** https://geoftp.ibge.gov.br/cartas_e_mapas/bases_cartograficas_continuas/bc25/rj/versao2018_edgv_3.0/ — `0` limites intramunicipais de bairros (`lml_outros_limites_oficiais_l`), porém fornece **`427` pontos cotados altimétricos (`rel_ponto_cotado_altimetrico_p`)** e **`48` ilhas fluviais (`hid_ilha_a`)** na AOI urbana, já empregados na validação espacial da `Ilha da Convivência` (`86,0 m`) e margens adjacentes à `Praça Monsenhor Diniz` (`84,0 m`) em `docs/research/MUNICIPAL_NEIGHBORHOOD_BOUNDARIES.md`.
+4. **Base Cartográfica Contínua `BC25_RJ` 1:25.000 (IBGE / SEA-RJ / INEA, EDGV 3.0):** https://geoftp.ibge.gov.br/cartas_e_mapas/bases_cartograficas_continuas/bc25/rj/versao2018_edgv_3.0/ — `0` limites intramunicipais de bairros (`lml_outros_limites_oficiais_l`), porém fornece **`427` pontos cotados altimétricos de terreno seco (`rel_ponto_cotado_altimetrico_p`)** e **`48` ilhas fluviais (`hid_ilha_a`)** na AOI urbana (`Ilha da Convivência` com ponto cotado de terreno de `86,0 m` e margens adjacentes à `Praça Monsenhor Diniz` de `84,0 m`, que não demonstram declividade da lâmina d'água), detalhados em `docs/research/MUNICIPAL_NEIGHBORHOOD_BOUNDARIES.md`.
 
 ---
 
 ## 6. OpenStreetMap — ruas, pontes e pontos de interesse
 
-**Classificação:** `official_reference` não; utilizar como **fonte cartográfica colaborativa complementar** (`ODbL 1.0`).
+**Classificação:** `official_reference` não; utilizar como **fonte cartográfica colaborativa complementar** sob licença **ODbL 1.0** (atribuição `© OpenStreetMap contributors` + obrigação *share-alike* para derivados).
 
 Auditoria na AOI urbana (`2026-11-25`, API v0.6 `bbox=-42.22,-21.56,-42.15,-21.51`, `9.516` elementos, `SHA-256: 16794b21...`):
 - **`0` polígonos de bairros** (apenas `admin_level=8` município e `admin_level=9` distritos);
 - **`13` nós pontuais `place=suburb`**, dos quais `11` correspondem a bairros da PGV e `2` são denominações populares sem correspondência na Lei nº 3.864/2017 (`Gerador` e `São José`), estando ausentes até mesmo como ponto `Centro`, `Farol` e `Mirante`;
-- eixos viários, praças e pontes apresentam incerteza planimétrica típica de `±2–8 m` e exigem validação manual em estruturas críticas (ex.: projeção 2D de manchas sobre tabuleiros elevados das pontes Raul Veiga e Alberíades Gabry).
+- eixos viários, praças e pontes apresentam incerteza planimétrica não aferida localmente (típica de digitalização sobre imagens orbitais `Bing/IBGE`), exigindo validação manual em estruturas críticas (ex.: projeção 2D de manchas sobre tabuleiros elevados das pontes Raul Veiga e Alberíades Gabry).
 
 ---
 
