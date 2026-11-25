@@ -82,12 +82,10 @@ export interface EvaluateNeighborhoodOptions {
 
 function closeRing(coords: readonly Position[]): ClipRing {
   const ring: [number, number][] = coords.map((pt) => [pt[0], pt[1]]);
-  if (ring.length > 0) {
-    const first = ring[0];
-    const last = ring[ring.length - 1];
-    if (first[0] !== last[0] || first[1] !== last[1]) {
-      ring.push([first[0], first[1]]);
-    }
+  const first = ring.at(0);
+  const last = ring.at(-1);
+  if (first && last && (first[0] !== last[0] || first[1] !== last[1])) {
+    ring.push([first[0], first[1]]);
   }
   return ring;
 }
@@ -118,20 +116,19 @@ function collectClipPolygonsFromValidatedInput(
 }
 
 function computeBoundingBox(multi: ClipMultiPolygon): BoundingBox2D | null {
+  const points = multi.flat(2);
+  if (points.length === 0) return null;
+
   let minLon = Infinity;
   let minLat = Infinity;
   let maxLon = -Infinity;
   let maxLat = -Infinity;
 
-  for (const poly of multi) {
-    for (const ring of poly) {
-      for (const [lon, lat] of ring) {
-        if (lon < minLon) minLon = lon;
-        if (lon > maxLon) maxLon = lon;
-        if (lat < minLat) minLat = lat;
-        if (lat > maxLat) maxLat = lat;
-      }
-    }
+  for (const [lon, lat] of points) {
+    minLon = Math.min(minLon, lon);
+    maxLon = Math.max(maxLon, lon);
+    minLat = Math.min(minLat, lat);
+    maxLat = Math.max(maxLat, lat);
   }
 
   return Number.isFinite(minLon) ? [minLon, minLat, maxLon, maxLat] : null;
@@ -169,7 +166,7 @@ function sumClipMultiPolygonAreaM2(multi: ClipMultiPolygon): number | null {
  * to `computeDerivedFloodArea` in `lib/sgb/area.ts` (avoiding duplicated ring sanitizers).
  *
  * NOTE: Once PR #54 (`extractAndDissolvePolygons` / `computeDissolvedAreaMetrics`) is
- * integrated into `main`, `toClip` dissolution can be collapsed into a single pass.
+ * integrated into `main`, `prepareValidatedGeometry` can be collapsed into a single pass.
  */
 function prepareValidatedGeometry(
   input: FloodAreaInput,
@@ -485,6 +482,82 @@ function buildResult(
   };
 }
 
+function measureIntersectionArea(
+  nbGeom: PreparedGeometry,
+  preparedScenario: PreparedFloodScenario,
+): { readonly areaM2: number | null; readonly errorReason: string | null } {
+  if (
+    !nbGeom.dissolved ||
+    !preparedScenario.dissolved ||
+    !nbGeom.bbox ||
+    !preparedScenario.bbox ||
+    !bboxesOverlap(nbGeom.bbox, preparedScenario.bbox)
+  ) {
+    return { areaM2: 0, errorReason: null };
+  }
+
+  let clipped: ClipMultiPolygon;
+  try {
+    clipped = polygonClipping.intersection(
+      nbGeom.dissolved,
+      preparedScenario.dissolved,
+    );
+  } catch {
+    return {
+      areaM2: null,
+      errorReason: "Falha topológica ao calcular interseção bairro × mancha.",
+    };
+  }
+
+  const measured = sumClipMultiPolygonAreaM2(clipped);
+  if (measured === null || measured < 0) {
+    return {
+      areaM2: null,
+      errorReason: "Área líquida inválida na geometria resultante da interseção.",
+    };
+  }
+
+  const territorialAreaM2 = nbGeom.areaM2 ?? 0;
+  const maxDriftM2 = territorialAreaM2 * 1e-6 + 0.01;
+  if (measured > territorialAreaM2 + maxDriftM2) {
+    return {
+      areaM2: null,
+      errorReason:
+        "Violação de conservação de área (interseção excedeu a área territorial do bairro).",
+    };
+  }
+
+  return { areaM2: Math.min(measured, territorialAreaM2), errorReason: null };
+}
+
+function buildMissingOrInvalidBoundaryEvaluation(
+  record: NeighborhoodBoundaryRecord,
+  preparedScenario: PreparedFloodScenario,
+  scheme: NeighborhoodThresholdScheme,
+  boundaryStatus: NeighborhoodBoundaryRecord["geometryStatus"],
+  reason: string,
+  nbPartCount = 0,
+  nbHoleCount = 0,
+): NeighborhoodScenarioEvaluation {
+  const calculationStatus: IntersectionCalculationStatus =
+    boundaryStatus === "unavailable"
+      ? "skipped_boundary_unavailable"
+      : "skipped_boundary_invalid";
+
+  return buildResult(record, preparedScenario, scheme, {
+    territorialAreaM2: null,
+    interceptedAreaM2: null,
+    interceptedPercent: null,
+    boundaryStatus,
+    modelCoverageStatus: "unknown",
+    calculationStatus,
+    visualClass: "gray",
+    nbPartCount,
+    nbHoleCount,
+    reason,
+  });
+}
+
 export function evaluateNeighborhoodWithPreparedScenario(
   record: NeighborhoodBoundaryRecord,
   preparedScenario: PreparedFloodScenario,
@@ -502,28 +575,17 @@ export function evaluateNeighborhoodWithPreparedScenario(
       record.geometry === null && record.geometryStatus === "valid"
         ? "unavailable"
         : record.geometryStatus;
-    const calculationStatus: IntersectionCalculationStatus =
-      boundaryStatus === "unavailable"
-        ? "skipped_boundary_unavailable"
-        : "skipped_boundary_invalid";
-    return buildResult(record, preparedScenario, scheme, {
-      territorialAreaM2: null,
-      interceptedAreaM2: null,
-      interceptedPercent: null,
+    const reason =
+      record.geometry === null
+        ? "Polígono oficial do bairro indisponível (BLOCKED_DATA_SOURCE)."
+        : `Geometria municipal marcada como '${record.geometryStatus}'.`;
+    return buildMissingOrInvalidBoundaryEvaluation(
+      record,
+      preparedScenario,
+      scheme,
       boundaryStatus,
-      modelCoverageStatus:
-        preparedScenario.modelCoverage.kind === "unknown"
-          ? "unknown"
-          : "unknown",
-      calculationStatus,
-      visualClass: "gray",
-      nbPartCount: 0,
-      nbHoleCount: 0,
-      reason:
-        record.geometry === null
-          ? "Polígono oficial do bairro indisponível (BLOCKED_DATA_SOURCE)."
-          : `Geometria municipal marcada como '${record.geometryStatus}'.`,
-    });
+      reason,
+    );
   }
 
   const nbGeom = prepareValidatedGeometry(
@@ -532,20 +594,16 @@ export function evaluateNeighborhoodWithPreparedScenario(
     MAX_PLAUSIBLE_NEIGHBORHOOD_AREA_M2,
   );
   if (nbGeom.status !== "valid" || !nbGeom.dissolved || nbGeom.areaM2 === null) {
-    return buildResult(record, preparedScenario, scheme, {
-      territorialAreaM2: null,
-      interceptedAreaM2: null,
-      interceptedPercent: null,
-      boundaryStatus: "invalid_geometry",
-      modelCoverageStatus: "unknown",
-      calculationStatus: "skipped_boundary_invalid",
-      visualClass: "gray",
-      nbPartCount: nbGeom.partCount,
-      nbHoleCount: nbGeom.holeCount,
-      reason:
-        nbGeom.reason ??
+    return buildMissingOrInvalidBoundaryEvaluation(
+      record,
+      preparedScenario,
+      scheme,
+      "invalid_geometry",
+      nbGeom.reason ??
         "Polígono do bairro inválido ou fora dos limites de plausibilidade.",
-    });
+      nbGeom.partCount,
+      nbGeom.holeCount,
+    );
   }
 
   const territorialAreaM2 = nbGeom.areaM2;
@@ -594,54 +652,9 @@ export function evaluateNeighborhoodWithPreparedScenario(
     });
   }
 
-  // 5. Compute topological intersection (fast-path when bounding boxes are disjoint).
-  let rawInterM2 = 0;
-  if (
-    nbGeom.bbox &&
-    preparedScenario.bbox &&
-    bboxesOverlap(nbGeom.bbox, preparedScenario.bbox)
-  ) {
-    let clipped: ClipMultiPolygon;
-    try {
-      clipped = polygonClipping.intersection(
-        nbGeom.dissolved,
-        preparedScenario.dissolved,
-      );
-    } catch {
-      return buildResult(record, preparedScenario, scheme, {
-        territorialAreaM2,
-        interceptedAreaM2: null,
-        interceptedPercent: null,
-        boundaryStatus: "valid",
-        modelCoverageStatus: "covered",
-        calculationStatus: "failed_intersection_topology",
-        visualClass: "gray",
-        nbPartCount: nbGeom.partCount,
-        nbHoleCount: nbGeom.holeCount,
-        reason: "Falha topológica ao calcular interseção bairro × mancha.",
-      });
-    }
-
-    const measured = sumClipMultiPolygonAreaM2(clipped);
-    if (measured === null || measured < 0) {
-      return buildResult(record, preparedScenario, scheme, {
-        territorialAreaM2,
-        interceptedAreaM2: null,
-        interceptedPercent: null,
-        boundaryStatus: "valid",
-        modelCoverageStatus: "covered",
-        calculationStatus: "failed_intersection_topology",
-        visualClass: "gray",
-        nbPartCount: nbGeom.partCount,
-        nbHoleCount: nbGeom.holeCount,
-        reason: "Área líquida inválida na geometria resultante da interseção.",
-      });
-    }
-    rawInterM2 = measured;
-  }
-
-  const maxDriftM2 = territorialAreaM2 * 1e-6 + 0.01;
-  if (rawInterM2 > territorialAreaM2 + maxDriftM2) {
+  // 5. Compute topological intersection and apply provisional uniform thresholds.
+  const intersection = measureIntersectionArea(nbGeom, preparedScenario);
+  if (intersection.areaM2 === null) {
     return buildResult(record, preparedScenario, scheme, {
       territorialAreaM2,
       interceptedAreaM2: null,
@@ -652,13 +665,12 @@ export function evaluateNeighborhoodWithPreparedScenario(
       visualClass: "gray",
       nbPartCount: nbGeom.partCount,
       nbHoleCount: nbGeom.holeCount,
-      reason:
-        "Violação de conservação de área (interseção excedeu a área territorial do bairro).",
+      reason: intersection.errorReason,
     });
   }
 
   const classified = classifyNeighborhoodOverlap(
-    Math.min(rawInterM2, territorialAreaM2),
+    intersection.areaM2,
     territorialAreaM2,
     scheme,
   );
@@ -695,6 +707,33 @@ export function evaluateNeighborhoodScenarioOverlap(
     preparedScenario,
     scheme,
   );
+}
+
+function formatCoverageDisclosure(params: {
+  readonly itemCount: number;
+  readonly boundaryAvailableCount: number;
+  readonly boundaryUnavailableOrInvalidCount: number;
+  readonly isPartialBoundaryCoverage: boolean;
+  readonly scenarioStatus: ScenarioGeometryStatus;
+  readonly outsideOrUnknownModelCoverageCount: number;
+}): string {
+  let baseCoverageText: string;
+  if (params.boundaryAvailableCount === 0) {
+    baseCoverageText = `Limites municipais 0/${OFFICIAL_NEIGHBORHOOD_COUNT} (BLOCKED_DATA_SOURCE): todos os ${params.itemCount} bairros permanecem em Cinza até a obtenção dos polígonos oficiais.`;
+  } else if (params.isPartialBoundaryCoverage) {
+    baseCoverageText = `Cobertura parcial de limites declarada: ${params.boundaryAvailableCount} de ${OFFICIAL_NEIGHBORHOOD_COUNT} bairros possuem polígono validado (${params.boundaryUnavailableOrInvalidCount} indisponíveis em Cinza).`;
+  } else {
+    baseCoverageText = `Limites municipais disponíveis: ${params.boundaryAvailableCount} de ${OFFICIAL_NEIGHBORHOOD_COUNT} bairros validados.`;
+  }
+
+  let scenarioSuffix = "";
+  if (params.scenarioStatus !== "valid") {
+    scenarioSuffix = ` Consulta da mancha do cenário falhou ou está vazia ('${params.scenarioStatus}'), mantendo os bairros em Cinza sem invalidar os limites municipais.`;
+  } else if (params.outsideOrUnknownModelCoverageCount > 0) {
+    scenarioSuffix = ` ${params.outsideOrUnknownModelCoverageCount} bairro(s) fora ou parcialmente fora da cobertura conhecida do modelo permanecem em Cinza.`;
+  }
+
+  return `${baseCoverageText}${scenarioSuffix}`;
 }
 
 /**
@@ -748,20 +787,6 @@ export function evaluateNeighborhoodPanel(
   const isPartialBoundaryCoverage =
     boundaryAvailableCount < OFFICIAL_NEIGHBORHOOD_COUNT;
 
-  const baseCoverageText =
-    boundaryAvailableCount === 0
-      ? `Limites municipais 0/${OFFICIAL_NEIGHBORHOOD_COUNT} (BLOCKED_DATA_SOURCE): todos os ${items.length} bairros permanecem em Cinza até a obtenção dos polígonos oficiais.`
-      : isPartialBoundaryCoverage
-        ? `Cobertura parcial de limites declarada: ${boundaryAvailableCount} de ${OFFICIAL_NEIGHBORHOOD_COUNT} bairros possuem polígono validado (${boundaryUnavailableOrInvalidCount} indisponíveis em Cinza).`
-        : `Limites municipais disponíveis: ${boundaryAvailableCount} de ${OFFICIAL_NEIGHBORHOOD_COUNT} bairros validados.`;
-
-  const scenarioSuffix =
-    preparedScenario.status !== "valid"
-      ? ` Consulta da mancha do cenário falhou ou está vazia ('${preparedScenario.status}'), mantendo os bairros em Cinza sem invalidar os limites municipais.`
-      : outsideOrUnknownModelCoverageCount > 0
-        ? ` ${outsideOrUnknownModelCoverageCount} bairro(s) fora ou parcialmente fora da cobertura conhecida do modelo permanecem em Cinza.`
-        : "";
-
   const interceptedNeighborhoodCount =
     evaluatedNeighborhoodCount === 0
       ? null
@@ -786,7 +811,14 @@ export function evaluateNeighborhoodPanel(
     evaluatedNeighborhoodCount,
     outsideOrUnknownModelCoverageCount,
     isPartialBoundaryCoverage,
-    coverageDisclosurePtBr: `${baseCoverageText}${scenarioSuffix}`,
+    coverageDisclosurePtBr: formatCoverageDisclosure({
+      itemCount: items.length,
+      boundaryAvailableCount,
+      boundaryUnavailableOrInvalidCount,
+      isPartialBoundaryCoverage,
+      scenarioStatus: preparedScenario.status,
+      outsideOrUnknownModelCoverageCount,
+    }),
     interceptedNeighborhoodCount,
     zeroIntersectionValidCount,
     thresholdScheme: scheme,
