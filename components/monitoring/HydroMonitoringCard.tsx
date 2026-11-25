@@ -226,8 +226,8 @@ export function HydroMonitoringCard({
 
       <p className="hydro-gauge-ref">
         Referência local INEA: atenção (80%) {formatMetersFromCm(attentionCm)} m ·
-        transbordo {formatMetersFromCm(overflowCm)} m (zero da régua e datum não
-        publicados).
+        transbordo {formatMetersFromCm(overflowCm)} m (zero da régua e datum
+        ainda não identificados).
       </p>
 
       <div className="hydro-actions">
@@ -253,8 +253,10 @@ export function HydroMonitoringCard({
       <small>
         <strong>Independência científica:</strong> Leitura observada na estação
         INEA {stationCode} (-21,5111°, -42,2075°). Não altera automaticamente a
-        mancha oficial SGB (estação RHN 58790002), pois as estações e
-        referências de régua são distintas e ainda sem crosswalk validado.
+        mancha oficial SGB (estação RHN 58790002): as estações possuem
+        localizações físicas distintas, o zero da régua e o datum do INEA ainda
+        não foram identificados e a equivalência entre as referências não foi
+        estabelecida (crosswalk não validado).
       </small>
     </article>
   );

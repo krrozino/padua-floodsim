@@ -2,15 +2,49 @@ import { X509Certificate } from "node:crypto";
 import tls from "node:tls";
 
 /**
- * Public Sectigo intermediate CA certificate (`Sectigo Public Server Authentication CA DV R36`,
- * SHA-256 8C:54:C3:34:B6:6B:A4:E4:26:77:2A:F4:A3:F9:13:6C:19:A1:AE:C7:29:FD:B2:8C:53:5C:07:A5:A4:EF:22:E0).
+ * Expected SHA-256 fingerprint of the official Sectigo intermediate CA:
+ * `Sectigo Public Server Authentication CA DV R36`
  *
- * `alertadecheias.inea.rj.gov.br` omits this intermediate certificate in its TLS handshake,
- * causing Node.js (without AIA chasing) to fail with `UNABLE_TO_VERIFY_LEAF_SIGNATURE`.
- * We NEVER trust this certificate as a root: `getVerifiedIneaCaBundle()` verifies its signature
- * against Node's built-in `tls.rootCertificates` (`Sectigo Public Server Authentication Root R46`)
- * before appending it to the strict `ca` bundle with `rejectUnauthorized: true`.
+ * Official Sectigo publication:
+ * - Download: http://crt.sectigo.com/SectigoPublicServerAuthenticationCADVR36.crt
+ * - crt.sh: https://crt.sh/?d=4267304690
+ * - Issuer: `Sectigo Public Server Authentication Root R46` (built into Node.js `tls.rootCertificates`)
+ * - Serial: `397A66CC2756362E0DAA87CA6EABE3B1`
+ * - Validity: `2021-03-22T00:00:00Z` to `2036-03-21T23:59:59Z`
+ *
+ * Why this intermediate is bundled:
+ * `alertadecheias.inea.rj.gov.br` omits this intermediate certificate during its TLS handshake,
+ * causing Node.js (which does not perform AIA chasing) to fail with `UNABLE_TO_VERIFY_LEAF_SIGNATURE`.
+ *
+ * Trust boundary:
+ * We NEVER trust this certificate as a root or disable TLS validation.
+ * `getVerifiedIneaCaBundle()` verifies:
+ * 1. `ca === true` (Basic Constraints CA flag);
+ * 2. exact SHA-256 fingerprint match;
+ * 3. certificate validity period (`validFrom <= now <= validTo`);
+ * 4. cryptographic signature against a currently valid built-in Node.js root CA.
+ *
+ * Renewal / maintenance procedure:
+ * - If INEA renews its leaf certificate under the same Sectigo DV R36 intermediate: no code change needed.
+ * - If INEA fixes its server to send the complete chain: `ineaTlsChain.ts` can be removed after confirming
+ *   `npm run smoke:hydro` passes using Node's default trust store.
+ * - If INEA migrates to a different CA/intermediate that is also omitted in the handshake:
+ *   obtain the public intermediate exclusively from the issuing CA's official repository, verify its
+ *   signature against `tls.rootCertificates`, update the PEM and expected fingerprint below, document the
+ *   rotation in `docs/DATA_SOURCES.md`, and re-run unit tests and `npm run smoke:hydro`.
  */
+export const SECTIGO_DV_R36_METADATA = {
+  subjectCn: "Sectigo Public Server Authentication CA DV R36",
+  issuerCn: "Sectigo Public Server Authentication Root R46",
+  serialNumber: "397A66CC2756362E0DAA87CA6EABE3B1",
+  validFromIso: "2021-03-22T00:00:00Z",
+  validToIso: "2036-03-21T23:59:59Z",
+  fingerprint256:
+    "8C:54:C3:34:B6:6B:A4:E4:26:77:2A:F4:A3:F9:13:6C:19:A1:AE:C7:29:FD:B2:8C:53:5C:07:A5:A4:EF:22:E0",
+  officialDownloadUrl:
+    "http://crt.sectigo.com/SectigoPublicServerAuthenticationCADVR36.crt",
+} as const;
+
 export const SECTIGO_DV_R36_INTERMEDIATE_PEM = [
   "-----BEGIN CERTIFICATE-----",
   "MIIGTDCCBDSgAwIBAgIQOXpmzCdWNi4NqofKbqvjsTANBgkqhkiG9w0BAQwFADBf",
@@ -50,18 +84,44 @@ export const SECTIGO_DV_R36_INTERMEDIATE_PEM = [
   "-----END CERTIFICATE-----",
 ].join("\n");
 
+function isWithinCertificateValidity(cert: X509Certificate, nowMs: number): boolean {
+  const fromMs = Date.parse(cert.validFrom);
+  const toMs = Date.parse(cert.validTo);
+  return Number.isFinite(fromMs) && Number.isFinite(toMs) && nowMs >= fromMs && nowMs <= toMs;
+}
+
 let cachedBundle: ReadonlyArray<string> | null = null;
+let cachedBundleValidUntilMs = 0;
 
 /**
- * Returns Node's built-in root CA list augmented with the Sectigo DV R36 intermediate CA
- * after verifying the intermediate's signature against a built-in Node root CA.
+ * Verifies the bundled Sectigo DV R36 intermediate certificate against Node's
+ * built-in root trust store, expected SHA-256 fingerprint, and validity window.
  */
-export function getVerifiedIneaCaBundle(): ReadonlyArray<string> {
-  if (cachedBundle) return cachedBundle;
-
+export function verifyIneaIntermediateCertificate(
+  referenceDate: Date = new Date(),
+): {
+  fingerprint256: string;
+  validFrom: string;
+  validTo: string;
+  issuer: string;
+} {
+  const nowMs = referenceDate.getTime();
   const intermediateCert = new X509Certificate(SECTIGO_DV_R36_INTERMEDIATE_PEM);
+
   if (!intermediateCert.ca) {
     throw new Error("Certificado intermediário Sectigo inválido (não é CA).");
+  }
+
+  if (intermediateCert.fingerprint256 !== SECTIGO_DV_R36_METADATA.fingerprint256) {
+    throw new Error(
+      "Fingerprint SHA-256 do certificado intermediário Sectigo não corresponde ao valor auditado.",
+    );
+  }
+
+  if (!isWithinCertificateValidity(intermediateCert, nowMs)) {
+    throw new Error(
+      `Certificado intermediário Sectigo fora da janela de validade (${intermediateCert.validFrom} — ${intermediateCert.validTo}).`,
+    );
   }
 
   const verifiedByBuiltInRoot = tls.rootCertificates.some((rootPem) => {
@@ -69,6 +129,7 @@ export function getVerifiedIneaCaBundle(): ReadonlyArray<string> {
       const rootCert = new X509Certificate(rootPem);
       return (
         rootCert.subject === intermediateCert.issuer &&
+        isWithinCertificateValidity(rootCert, nowMs) &&
         intermediateCert.verify(rootCert.publicKey)
       );
     } catch {
@@ -82,6 +143,35 @@ export function getVerifiedIneaCaBundle(): ReadonlyArray<string> {
     );
   }
 
-  cachedBundle = [...tls.rootCertificates, SECTIGO_DV_R36_INTERMEDIATE_PEM];
-  return cachedBundle;
+  return {
+    fingerprint256: intermediateCert.fingerprint256,
+    validFrom: intermediateCert.validFrom,
+    validTo: intermediateCert.validTo,
+    issuer: intermediateCert.issuer,
+  };
+}
+
+/**
+ * Returns Node's built-in root CA list augmented with the Sectigo DV R36 intermediate CA
+ * after verifying its fingerprint, validity window, and signature against a built-in Node root CA.
+ */
+export function getVerifiedIneaCaBundle(
+  referenceDate?: Date,
+): ReadonlyArray<string> {
+  const now = referenceDate ?? new Date();
+  const nowMs = now.getTime();
+
+  if (!referenceDate && cachedBundle && nowMs <= cachedBundleValidUntilMs) {
+    return cachedBundle;
+  }
+
+  const verified = verifyIneaIntermediateCertificate(now);
+  const bundle = [...tls.rootCertificates, SECTIGO_DV_R36_INTERMEDIATE_PEM];
+
+  if (!referenceDate) {
+    cachedBundle = bundle;
+    cachedBundleValidUntilMs = Date.parse(verified.validTo);
+  }
+
+  return bundle;
 }

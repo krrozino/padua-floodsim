@@ -13,10 +13,10 @@ import {
   parseRainMm,
 } from "../../../lib/hydro/normalize.ts";
 
-const REAL_FIXTURE_XML = readFileSync(
+const SYNTHETIC_FIXTURE_XML = readFileSync(
   path.resolve(
     process.cwd(),
-    "tests/fixtures/hydro/inea-213042120-sample.xml",
+    "tests/fixtures/hydro/inea-213042120-synthetic.xml",
   ),
   "utf8",
 );
@@ -145,43 +145,43 @@ describe("hydro normalization helpers", () => {
 });
 
 describe("INEA XML deterministic parser", () => {
-  it("parses the sanitized real INEA fixture with provenance, trend, and rainfall windows", () => {
-    const now = new Date("2026-11-25T02:57:00Z"); // 23:57 BRT (12 min after 23:45)
-    const parsed = parseIneaStationXml(REAL_FIXTURE_XML, { now });
+  it("parses the synthetic INEA fixture with provenance, trend, and rainfall windows", () => {
+    const now = new Date("2026-06-15T17:57:00Z"); // 14:57 BRT (12 min after 14:45)
+    const parsed = parseIneaStationXml(SYNTHETIC_FIXTURE_XML, { now });
 
     assert.equal(validateHydroMonitoringResponse(parsed), true);
     assert.equal(parsed.classification, "observed");
     assert.equal(parsed.status, "fresh");
     assert.equal(parsed.ageMinutes, 12);
-    assert.equal(parsed.measuredAt, "2026-11-24T23:45:00-03:00");
-    assert.equal(parsed.retrievedAt, "2026-11-25T02:57:00.000Z");
+    assert.equal(parsed.measuredAt, "2026-06-15T14:45:00-03:00");
+    assert.equal(parsed.retrievedAt, "2026-06-15T17:57:00.000Z");
     assert.equal(parsed.station.stationId, "213042120");
     assert.equal(parsed.station.gaugeReference.crosswalkValidated, false);
     assert.equal(parsed.station.gaugeReference.gaugeZeroMeters, null);
     assert.equal(parsed.station.gaugeReference.verticalDatum, null);
 
     assert.ok(parsed.latestStage);
-    assert.equal(parsed.latestStage.stageCm, 417);
+    assert.equal(parsed.latestStage.stageCm, 342);
     assert.equal(parsed.latestStage.unitOriginal, "m");
-    assert.equal(parsed.latestStage.rawValue, "4.17");
+    assert.equal(parsed.latestStage.rawValue, "3.42");
     assert.equal(parsed.latestStage.parserVersion, PARSER_VERSION);
     assert.match(parsed.latestStage.sourceHashSha256, /^[a-f0-9]{64}$/);
 
-    // 23:45 (417 cm) vs 22:45 (422 cm) -> -5 cm falling
+    // 14:45 (342 cm) vs 13:45 (348 cm) -> -6 cm falling
     assert.deepEqual(parsed.recentTrend, {
       direction: "falling",
-      deltaCm: -5,
+      deltaCm: -6,
       windowMinutes: 60,
-      referenceMeasuredAt: "2026-11-24T22:45:00-03:00",
+      referenceMeasuredAt: "2026-06-15T13:45:00-03:00",
     });
 
     assert.equal(parsed.rainfall.length, 6);
     assert.equal(parsed.rainfall[0].window, "15m");
     assert.equal(parsed.rainfall[0].rainMm, 0);
     assert.equal(parsed.rainfall[3].window, "24h");
-    assert.equal(parsed.rainfall[3].rainMm, 0.2);
+    assert.equal(parsed.rainfall[3].rainMm, 1.2);
     assert.equal(parsed.rainfall[4].window, "96h");
-    assert.equal(parsed.rainfall[4].rainMm, 4.6);
+    assert.equal(parsed.rainfall[4].rainMm, 5.8);
   });
 
   it("preserves legitimate zero stage and zero rainfall without treating zero as missing", () => {
@@ -205,8 +205,8 @@ describe("INEA XML deterministic parser", () => {
   });
 
   it("marks delayed readings as stale when injectable clock exceeds 45 minutes", () => {
-    const parsed = parseIneaStationXml(REAL_FIXTURE_XML, {
-      now: new Date("2026-11-25T03:40:00Z"), // 24/11 23:45 BRT + 55 min
+    const parsed = parseIneaStationXml(SYNTHETIC_FIXTURE_XML, {
+      now: new Date("2026-06-15T18:40:00Z"), // 15/06 14:45 BRT + 55 min
     });
 
     assert.equal(validateHydroMonitoringResponse(parsed), true);
@@ -258,7 +258,7 @@ describe("INEA XML deterministic parser", () => {
   it("fails closed on invalid unit, invalid timestamp, malformed HTML/XML, or wrong station", () => {
     const now = new Date("2026-11-25T02:50:00Z");
 
-    const badUnit = parseIneaStationXml(REAL_FIXTURE_XML, {
+    const badUnit = parseIneaStationXml(SYNTHETIC_FIXTURE_XML, {
       now,
       stageUnit: "ft",
     });

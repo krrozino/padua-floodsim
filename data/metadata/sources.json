@@ -127,14 +127,25 @@
         "overflow": 5.0
       },
       "status": "operational-observed-crosswalk-pending",
-      "warning": "Estação fisicamente distinta de SGB/ANA 58790002 (~5,9 km); não associar diretamente nível INEA às cotas SGB sem crosswalk validado.",
+      "warning": "Estação com localização física distinta de SGB/ANA 58790002 (~5,9 km); zero da régua e datum do INEA ainda não identificados; equivalência entre referências não estabelecida; comparação direta e associação automática às manchas SGB não validadas (crosswalkValidated: false).",
       "liveValidation": {
         "date": "2026-11-25",
+        "retrievedAtUtc": "2026-11-25T02:56:27Z",
         "script": "scripts/validate-hydro-live.mjs",
         "sampleMeasuredAt": "2026-11-24T23:45:00-03:00",
-        "sampleStageMeters": 4.17
+        "sampleStageMeters": 4.17,
+        "originalExcerptSha256": "073ed554f98a8fc181d81902eb710caffcd00beaca10e2bed1afa2cb384dc048",
+        "originalExcerptBytes": 4111
       },
-      "rightsStatus": "public institutional telemetry; accessed server-side with 5-minute proportional cache and ETag support; no bulk redistribution in Git"
+      "tlsIntermediateAudit": {
+        "subjectCn": "Sectigo Public Server Authentication CA DV R36",
+        "issuerCn": "Sectigo Public Server Authentication Root R46",
+        "serialNumber": "397A66CC2756362E0DAA87CA6EABE3B1",
+        "fingerprint256": "8C:54:C3:34:B6:6B:A4:E4:26:77:2A:F4:A3:F9:13:6C:19:A1:AE:C7:29:FD:B2:8C:53:5C:07:A5:A4:EF:22:E0",
+        "validFrom": "2021-03-22T00:00:00Z",
+        "validTo": "2036-03-21T23:59:59Z"
+      },
+      "rightsStatus": "public_endpoint_without_explicit_redistribution_license; automated_consumption_storage_and_redistribution_confirmation_pending_with_INEA (geseg@inea.rj.gov.br / alertadecheias@gmail.com); no real XML fixture redistributed in working tree"
     },
     {
       "id": "sgb-sace-sah-pomba-points",

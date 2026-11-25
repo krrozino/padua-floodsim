@@ -455,3 +455,36 @@ test("keeps INEA observations scientifically independent from SGB scenarios acro
     fullPage: true,
   });
 });
+
+test("rejects refresh=1 and arbitrary query params at API boundary and preserves scientific precision in UI", async ({
+  page,
+  request,
+}) => {
+  const refreshRes = await request.get("/api/hydro/observations?refresh=1");
+  expect(refreshRes.status()).toBe(400);
+  expect(refreshRes.headers()["cache-control"]).toBe("no-store");
+  const refreshBody = await refreshRes.json();
+  expect(refreshBody.error).toBe("unsupported_query_parameter");
+
+  const arbitraryRes = await request.get(
+    "/api/hydro/observations?provider=inea&nocache=123",
+  );
+  expect(arbitraryRes.status()).toBe(400);
+  expect(arbitraryRes.headers()["cache-control"]).toBe("no-store");
+
+  await page.clock.setFixedTime(new Date("2026-11-25T02:57:00Z"));
+  await stubBaseMapAndSgb(page);
+  await page.route("**/api/hydro/observations*", async (route) => {
+    await route.fulfill({
+      status: 200,
+      json: makeHydroObservation({ status: "fresh", stageCm: 342 }),
+    });
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  const card = page.locator("#realtime-card");
+  await expect(card).toContainText("zero da régua e datum ainda não identificados");
+  await expect(card).toContainText("equivalência entre as referências não foi estabelecida");
+  await expect(card).not.toContainText("não são equivalentes");
+});
+

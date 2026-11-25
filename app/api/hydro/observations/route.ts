@@ -1,39 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateHydroMonitoringResponse } from "@/lib/hydro/contract";
-import { INEA_PADUA_STATION_ID } from "@/lib/hydro/ineaParser";
+import {
+  buildHydroCacheControlHeader,
+  validateHydroQueryParams,
+} from "@/lib/hydro/httpPolicy";
 import { hydroMonitoringService } from "@/lib/hydro/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const providerParam = request.nextUrl.searchParams.get("provider");
-  const stationParam = request.nextUrl.searchParams.get("station");
-  const refreshParam = request.nextUrl.searchParams.get("refresh");
-
-  if (providerParam !== null && providerParam !== "inea") {
+  const queryCheck = validateHydroQueryParams(request.nextUrl.searchParams);
+  if (!queryCheck.ok) {
     return NextResponse.json(
       {
-        error: "unsupported_provider",
-        message: "Provedor hidrológico não suportado. Utilize provider=inea.",
+        error: queryCheck.error,
+        message: queryCheck.message,
       },
-      { status: 400 },
+      {
+        status: queryCheck.status,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
     );
   }
 
-  if (stationParam !== null && stationParam !== INEA_PADUA_STATION_ID) {
-    return NextResponse.json(
-      {
-        error: "unsupported_station",
-        message: `Estação hidrológica não suportada. Utilize station=${INEA_PADUA_STATION_ID}.`,
-      },
-      { status: 400 },
-    );
-  }
-
-  const observation = await hydroMonitoringService.getLatestObservation({
-    forceRefresh: refreshParam === "1",
-  });
+  const observation = await hydroMonitoringService.getLatestObservation();
 
   if (!validateHydroMonitoringResponse(observation)) {
     return NextResponse.json(
@@ -58,10 +51,14 @@ export async function GET(request: NextRequest) {
         ? 502
         : 200;
 
+  const cacheControl =
+    httpStatus === 200 ? buildHydroCacheControlHeader(observation) : "no-store";
+
   return NextResponse.json(observation, {
     status: httpStatus,
     headers: {
-      "Cache-Control": "no-store",
+      "Cache-Control": cacheControl,
+      Vary: "Accept-Encoding",
     },
   });
 }

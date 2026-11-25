@@ -198,21 +198,17 @@ export function createHydroMonitoringService(
   }
 
   return {
-    async getLatestObservation(options?: {
-      forceRefresh?: boolean;
-    }): Promise<HydroMonitoringResponse> {
+    async getLatestObservation(): Promise<HydroMonitoringResponse> {
       const now = clock.now();
       const nowMs = now.getTime();
 
-      if (!options?.forceRefresh) {
-        if (cachedPayload && nowMs - cachedPayload.fetchedAtMs < cacheTtlMs) {
-          const evaluated = evaluateCached(now);
-          if (evaluated) return evaluated;
-        }
+      if (cachedPayload && nowMs - cachedPayload.fetchedAtMs < cacheTtlMs) {
+        const evaluated = evaluateCached(now);
+        if (evaluated) return evaluated;
+      }
 
-        if (cachedFailure && nowMs < cachedFailure.expiresAtMs) {
-          return cachedFailure.response;
-        }
+      if (cachedFailure && nowMs < cachedFailure.expiresAtMs) {
+        return cachedFailure.response;
       }
 
       if (!inFlight) {

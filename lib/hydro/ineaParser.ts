@@ -47,7 +47,7 @@ export const INEA_FRESHNESS_POLICY = {
 } as const;
 
 export const INEA_SCIENTIFIC_DISCLAIMER =
-  "Medição observada na estação INEA 213042120 (-21,5111°, -42,2075°). Não altera automaticamente a mancha oficial SGB (estação RHN 58790002), pois as estações e referências de régua são distintas e ainda sem crosswalk validado. Não substitui avisos oficiais da Defesa Civil ou do INEA.";
+  "Medição observada na estação INEA 213042120 (-21,5111°, -42,2075°). Não altera automaticamente a mancha oficial SGB (estação RHN 58790002): as estações possuem localizações físicas distintas, o zero da régua e o datum do INEA ainda não foram identificados e a equivalência entre as referências (crosswalk) não foi estabelecida. Não substitui avisos oficiais da Defesa Civil ou do INEA.";
 
 const RAIN_FIELDS: ReadonlyArray<{
   tag: string;

@@ -3,9 +3,12 @@ import { INEA_PADUA_STATION_ID, INEA_PADUA_XML_URL } from "../ineaParser.ts";
 import { getVerifiedIneaCaBundle } from "./ineaTlsChain.ts";
 
 export const ALLOWED_INEA_HOSTS = new Set(["alertadecheias.inea.rj.gov.br"]);
-export const INEA_FETCH_TIMEOUT_MS = 12_000;
+export const INEA_FETCH_TIMEOUT_MS = 8_000;
+export const INEA_TOTAL_TIMEOUT_MS = 12_000;
 export const INEA_MAX_PAYLOAD_BYTES = 2 * 1024 * 1024; // 2 MiB safety cap
 export const INEA_RETRY_DELAY_MS = 400;
+export const INEA_MAX_RETRIES = 1;
+const MIN_RETRY_BUDGET_MS = 1_500;
 const MAX_REDIRECTS = 3;
 
 export type RawProviderFetchResult =
@@ -37,8 +40,10 @@ export interface IneaAdapterOptions {
   sourceUrl?: string;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
+  totalTimeoutMs?: number;
   maxBytes?: number;
   retryDelayMs?: number;
+  maxRetries?: number;
 }
 
 interface HttpPayloadResponse {
@@ -119,6 +124,24 @@ function isRetryableStatus(status: number): boolean {
   return status === 502 || status === 503 || status === 504;
 }
 
+function isTimeoutOrAbortError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return error.name === "TimeoutError" || error.name === "AbortError";
+}
+
+function isTlsError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const code = (error as NodeJS.ErrnoException).code ?? "";
+  return (
+    code.startsWith("ERR_TLS_") ||
+    code === "UNABLE_TO_VERIFY_LEAF_SIGNATURE" ||
+    code === "CERT_HAS_EXPIRED" ||
+    code === "DEPTH_ZERO_SELF_SIGNED_CERT" ||
+    code === "SELF_SIGNED_CERT_IN_CHAIN" ||
+    code === "HOSTNAME_MISMATCH"
+  );
+}
+
 function combineSignals(
   timeoutMs: number,
   externalSignal?: AbortSignal,
@@ -145,7 +168,7 @@ async function httpsGetIneaWithStrictTls(
   initialUrl: URL,
   options: {
     headers: Record<string, string>;
-    timeoutMs: number;
+    deadlineMs: number;
     maxBytes: number;
     signal?: AbortSignal;
   },
@@ -155,6 +178,11 @@ async function httpsGetIneaWithStrictTls(
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
     assertAllowedIneaUrl(currentUrl.toString());
+
+    const remainingMs = options.deadlineMs - Date.now();
+    if (remainingMs <= 0) {
+      throw new DOMException("The operation timed out.", "TimeoutError");
+    }
 
     const result = await new Promise<
       | { kind: "redirect"; location: string }
@@ -166,9 +194,19 @@ async function httpsGetIneaWithStrictTls(
       }
 
       let settled = false;
+      let totalTimer: ReturnType<typeof setTimeout> | null = null;
+      const cleanup = () => {
+        if (totalTimer) {
+          clearTimeout(totalTimer);
+          totalTimer = null;
+        }
+        options.signal?.removeEventListener("abort", onAbort);
+      };
+
       const fail = (err: unknown) => {
         if (settled) return;
         settled = true;
+        cleanup();
         reject(err);
       };
 
@@ -198,6 +236,7 @@ async function httpsGetIneaWithStrictTls(
               return;
             }
             settled = true;
+            cleanup();
             resolve({ kind: "redirect", location: nextUrl.toString() });
             return;
           }
@@ -236,6 +275,7 @@ async function httpsGetIneaWithStrictTls(
           res.on("end", () => {
             if (settled) return;
             settled = true;
+            cleanup();
             const combined = Buffer.concat(chunks, totalBytes);
             const etagHeader = res.headers.etag;
             const lastModifiedHeader = res.headers["last-modified"];
@@ -258,21 +298,26 @@ async function httpsGetIneaWithStrictTls(
         },
       );
 
-      req.setTimeout(options.timeoutMs, () => {
-        req.destroy(new DOMException("The operation timed out.", "TimeoutError"));
-      });
-
       const onAbort = () => {
         req.destroy(new DOMException("The operation was aborted.", "AbortError"));
       };
+
+      // Enforce both idle socket timeout and hard wall-clock deadline.
+      totalTimer = setTimeout(() => {
+        req.destroy(new DOMException("The operation timed out.", "TimeoutError"));
+      }, remainingMs);
+
+      req.setTimeout(remainingMs, () => {
+        req.destroy(new DOMException("The operation timed out.", "TimeoutError"));
+      });
+
       options.signal?.addEventListener("abort", onAbort, { once: true });
 
       req.on("error", (err) => {
-        options.signal?.removeEventListener("abort", onAbort);
         fail(err);
       });
       req.on("close", () => {
-        options.signal?.removeEventListener("abort", onAbort);
+        cleanup();
       });
 
       req.end();
@@ -335,6 +380,10 @@ async function fetchViaInjectedFetch(
   };
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function createIneaAdapter(
   options: IneaAdapterOptions = {},
 ): HydroProviderAdapter {
@@ -343,8 +392,16 @@ export function createIneaAdapter(
 
   const injectedFetch = options.fetchImpl;
   const timeoutMs = options.timeoutMs ?? INEA_FETCH_TIMEOUT_MS;
+  const totalTimeoutMs = Math.max(
+    timeoutMs,
+    options.totalTimeoutMs ?? INEA_TOTAL_TIMEOUT_MS,
+  );
   const maxBytes = options.maxBytes ?? INEA_MAX_PAYLOAD_BYTES;
   const retryDelayMs = options.retryDelayMs ?? INEA_RETRY_DELAY_MS;
+  const maxRetries = Math.min(
+    INEA_MAX_RETRIES,
+    Math.max(0, options.maxRetries ?? INEA_MAX_RETRIES),
+  );
 
   return {
     providerId: "inea",
@@ -365,20 +422,29 @@ export function createIneaAdapter(
         headers["If-Modified-Since"] = fetchOptions.ifModifiedSince;
       }
 
+      const deadlineMs = Date.now() + totalTimeoutMs;
       let lastError: unknown;
 
-      for (let attempt = 0; attempt < 2; attempt += 1) {
+      for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+        const remainingMs = deadlineMs - Date.now();
+        if (remainingMs <= 0) {
+          throw new DOMException("The operation timed out.", "TimeoutError");
+        }
+
+        const attemptTimeoutMs = Math.min(timeoutMs, remainingMs);
+        const attemptDeadlineMs = Math.min(deadlineMs, Date.now() + attemptTimeoutMs);
+
         try {
           const res = injectedFetch
             ? await fetchViaInjectedFetch(injectedFetch, targetUrl, {
                 headers,
-                timeoutMs,
+                timeoutMs: attemptTimeoutMs,
                 maxBytes,
                 signal: fetchOptions.signal,
               })
             : await httpsGetIneaWithStrictTls(targetUrl, {
                 headers,
-                timeoutMs,
+                deadlineMs: attemptDeadlineMs,
                 maxBytes,
                 signal: fetchOptions.signal,
               });
@@ -392,9 +458,15 @@ export function createIneaAdapter(
           }
 
           if (res.status < 200 || res.status >= 300) {
-            if (attempt === 0 && isRetryableStatus(res.status)) {
+            const budgetAfterWait = deadlineMs - Date.now() - retryDelayMs;
+            if (
+              attempt < maxRetries &&
+              isRetryableStatus(res.status) &&
+              budgetAfterWait >= MIN_RETRY_BUDGET_MS &&
+              !fetchOptions.signal?.aborted
+            ) {
               lastError = new Error(`INEA HTTP ${res.status}`);
-              await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+              await sleep(retryDelayMs);
               continue;
             }
             throw new Error(`INEA HTTP ${res.status}`);
@@ -412,13 +484,22 @@ export function createIneaAdapter(
           const message =
             error instanceof Error ? error.message : String(error);
           const nonRetryable =
+            isTimeoutOrAbortError(error) ||
+            isTlsError(error) ||
             message.includes("não permitido") ||
             message.includes("não autorizado") ||
             message.includes("excede limite") ||
+            message.includes("Excesso de redirecionamentos") ||
             message.startsWith("INEA HTTP 4");
 
-          if (attempt === 0 && !nonRetryable && !fetchOptions.signal?.aborted) {
-            await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+          const budgetAfterWait = deadlineMs - Date.now() - retryDelayMs;
+          if (
+            attempt < maxRetries &&
+            !nonRetryable &&
+            budgetAfterWait >= MIN_RETRY_BUDGET_MS &&
+            !fetchOptions.signal?.aborted
+          ) {
+            await sleep(retryDelayMs);
             continue;
           }
           throw error;

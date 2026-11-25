@@ -184,10 +184,11 @@ export function MethodologyModal({
               </li>
               <li>
                 <strong>Régua INEA vs. Cota SGB:</strong> O nível da estação de monitoramento do INEA
-                (exibido no painel de monitoramento observado, código INEA 213042120) não é traduzido
-                diretamente para as cotas SGB, pois as estações físicas (~5,9 km de distância) e as
-                referências de régua, zeros e datums não são equivalentes e ainda não possuem
-                crosswalk validado.
+                (exibido no painel de monitoramento observado, código INEA 213042120) não é comparado
+                diretamente nem associado automaticamente às manchas SGB (estação RHN 58790002): as
+                estações possuem localizações físicas distintas (~5,9 km), o zero da régua e o datum
+                do INEA ainda não foram identificados e a equivalência entre as referências não foi
+                estabelecida (crosswalk não validado).
               </li>
             </ul>
           </section>
