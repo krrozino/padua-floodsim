@@ -2,7 +2,7 @@
 
 Este documento registra as fontes escolhidas/candidatas e os requisitos de rastreabilidade dos dados usados pelo Pádua FloodSim.
 
-Última revisão: **2026-10-05**.
+Última revisão: **2026-11-25**.
 
 ## Regras
 
@@ -308,40 +308,86 @@ Requisitos:
 
 ## 7. INEA — Alerta de Cheias
 
-**Página utilizada localmente:**  
+**Página pública oficial:**  
 https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.html  
-**Classificação pretendida:** `observed`
+**Exportação estruturada oficial (XML):**  
+https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.xml  
+**Classificação:** `observed`  
+**Status de auditoria:** implementado e testado offline (evidência original coletada em **2026-11-24 / 2026-11-25 UTC**; smoke test em ambiente CLOUD bloqueado por indisponibilidade/egresso de rede; coletor ao vivo desativado por padrão via `FLOODSIM_ENABLE_LIVE_INEA=true` até homologação operacional e confirmação institucional de permissões de consumo)
 
-A página oferece, no mínimo:
+### Identidade e metadados auditados
 
-- leituras de nível do rio;
-- chuva acumulada em 15 min, 1 h, 4 h, 24 h e 96 h;
-- histórico recente em passos de aproximadamente 15 minutos;
-- exportação para Excel;
-- exportação para XML;
-- cota de transbordamento apresentada pela página: **5,00 m**.
+- **Instituição:** Instituto Estadual do Ambiente (INEA) — Sistema de Alerta de Cheias;
+- **Código da estação (XML `<estacao codigo="...">`):** `213042120` (`tipo="Plu/Flu"`);
+- **Nome oficial publicado:** Santo Antônio de Pádua (Rio Pomba, conforme `hidro213042120.html`);
+- **Coordenadas oficiais publicadas em `mapa.php`:** latitude `-21.511110305786`, longitude `-42.207527160645` (WGS84 / `EPSG:4326`);
+- **Frequência de medição:** 15 minutos (`data_hora` nos últimos 10 dias; ~961 registros por arquivo XML);
+- **Frequência de atualização da página/exportação:** meta-refresh de 300 s (5 min); servidor suporta `ETag` e `Last-Modified` (`HTTP 304`);
+- **Unidades originais:** nível do rio (`nivel_rio_ultimo`) em **metros (`m`)** com separador decimal `.`; chuva (`chuva_ultimo`, `chuva_1h`, `chuva_4h`, `chuva_24h`, `chuva_96h`, `chuva_30d`) em **milímetros (`mm`)**;
+- **Fuso horário original:** `America/Sao_Paulo` (`UTC-03:00`), exibido na página como `"Hora Local"` no formato `DD/MM/YYYY HH:mm`;
+- **Sentinela de dado ausente observada:** `"Dado Nulo"`;
+- **Limiares locais publicados pela estação:** Cota de 80% = **4,00 m** (`400 cm`); Cota de transbordamento = **5,00 m** (`500 cm`);
+- **Não confirmados (mantidos `null` no contrato):** código RHN equivalente (`rhnCode: null`), zero da régua (`gaugeZeroMeters: null`), datum vertical (`verticalDatum: null`).
+
+### Condições de acesso, termos de uso e proveniência
+
+- Acesso público HTTPS sem autenticação e sem bloqueio em `robots.txt` (`/robots.txt` retorna `404`).
+- **Termos de uso e redistribuição (PENDENTE):** a existência pública da página e do XML em `alertadecheias.inea.rj.gov.br` **não comprova autorização irrestrita** para consumo automatizado contínuo, armazenamento histórico ou redistribuição de registros. Não foi localizada licença aberta explícita publicada no portal Alerta de Cheias; além disso, o serviço estadual de séries históricas hidrometeorológicas do INEA (`https://www.rj.gov.br/servico/monitoramento-hidrometeorologico-dados-historicos39`) exige requerimento formal com justificativa (`geseg@inea.rj.gov.br` / `alertadecheias@gmail.com`).
+- **Política adotada enquanto a autorização formal estiver pendente:**
+  - não armazenar séries brutas nem redistribuir dumps ou trechos reais do XML no repositório Git;
+  - manter atribuição explícita ao INEA e link direto para a página oficial da estação;
+  - utilizar apenas fixture **sintética** explicitamente rotulada nos testes automatizados (`tests/fixtures/hydro/inea-213042120-synthetic.xml`);
+  - preservar metadados e hash SHA-256 da evidência original coletada na auditoria para rastreabilidade científica, sem redistribuir o conteúdo XML original.
+
+### Política de cache, proteção à fonte e segurança TLS
+
+- Consumo implementado exclusivamente **server-side** em `lib/hydro/providers/ineaAdapter.ts` com:
+  - HTTPS obrigatório (`rejectUnauthorized: true`), validação padrão de hostname e allowlist estrita de host (`alertadecheias.inea.rj.gov.br`);
+  - limite de 2 MiB por resposta, máximo de 3 redirecionamentos (cada salto revalidado na allowlist), timeout por tentativa de 8 s, orçamento total máximo de aquisição de **12 s** e no máximo **1 retry** (apenas para erros transitórios, nunca para timeout, 4xx ou erro TLS);
+  - ausência de bypass público de cache em `/api/hydro/observations` (parâmetros arbitrários como `refresh=1` são rejeitados com HTTP `400`);
+  - deduplicação de consultas concorrentes em voo (`inFlight`), cache em memória de **5 minutos (300 s)** com validação condicional (`If-None-Match` / `If-Modified-Since`) e falha fechada (`unavailable` / `invalid` sem fallback fictício).
+- **Cache HTTP/CDN compartilhado (Vercel serverless):** respostas `200` válidas recebem `Cache-Control: public, max-age=0, s-maxage=<N>` onde `<N>` é limitado tanto pelo TTL restante de 300 s quanto (quando `status: "fresh"`) pelo tempo restante até a janela de obsolescência (`measuredAt + 45 min`), sem `stale-while-revalidate`. Respostas de erro (`400`, `502`, `503`) usam sempre `Cache-Control: no-store`.
+- **Limitação do cache distribuído:** caches em memória em funções serverless são por instância e o cache HTTP/CDN (`s-maxage`) atua em regime *best-effort* por região/PoP. Essa arquitetura reduz carga proporcionalmente à cadência do INEA sem introduzir Redis ou serviços pagos, mas **não constitui limitação global de taxa nem proteção global contra abuso**.
+- **Auditoria e manutenção TLS (`lib/hydro/providers/ineaTlsChain.ts`):**
+  - o servidor `alertadecheias.inea.rj.gov.br` omite o certificado intermediário público `Sectigo Public Server Authentication CA DV R36` no handshake TLS;
+  - **origem oficial:** `http://crt.sectigo.com/SectigoPublicServerAuthenticationCADVR36.crt` (`crt.sh/?d=4267304690`), serial `397A66CC2756362E0DAA87CA6EABE3B1`;
+  - **fingerprint SHA-256:** `8C:54:C3:34:B6:6B:A4:E4:26:77:2A:F4:A3:F9:13:6C:19:A1:AE:C7:29:FD:B2:8C:53:5C:07:A5:A4:EF:22:E0`;
+  - **validade:** `2021-03-22T00:00:00Z` a `2036-03-21T23:59:59Z`;
+  - **cadeia de confiança:** o intermediário **nunca** é confiado como raiz; em tempo de execução, `verifyIneaIntermediateCertificate()` verifica a flag CA, o fingerprint SHA-256, a janela de validade e a assinatura criptográfica contra a raiz `Sectigo Public Server Authentication Root R46` embutida em `tls.rootCertificates` do Node.js;
+  - **manutenção em caso de renovação institucional:** se o INEA renovar o certificado sob o mesmo intermediário R36, nenhuma alteração é necessária; se o servidor passar a enviar a cadeia completa, o intermediário auxiliar pode ser removido após validar `npm run smoke:hydro`; se o INEA migrar para outro intermediário também omitido, obter o certificado exclusivamente no repositório oficial da AC emissora, validar sua assinatura contra `tls.rootCertificates`, atualizar o PEM e o fingerprint auditado em `ineaTlsChain.ts` e registrar a rotação neste documento.
+
+### Evidência auditada (metadados preservados sem redistribuição do XML)
+
+- **Data/hora da coleta original (UTC):** `2026-11-25T02:56:27Z` (`2026-11-24 23:56:27 -03:00`);
+- **URL consultada:** `https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.xml`;
+- **SHA-256 do recorte sanitizado originalmente auditado (`4111` bytes, substituído na árvore de trabalho por fixture sintética até confirmação de redistribuição):** `073ed554f98a8fc181d81902eb710caffcd00beaca10e2bed1afa2cb384dc048`;
+- **Estrutura XML verificada:** elemento raiz `<estacao codigo="213042120" tipo="Plu/Flu">`, `<nome_estacao>`, `<dados_ultimos_10_dias>` com blocos `<registro>` contendo `data_hora`, `chuva_ultimo`, `chuva_1h`, `chuva_4h`, `chuva_24h`, `chuva_96h`, `chuva_30d` e `nivel_rio_ultimo`;
+- **Amostra conferida simultaneamente na página HTML e no XML:** `24/11/2026 23:45` (BRT), nível `4.17 m` (`417 cm`), chuva `0.0 mm` (15 min/1 h/4 h), `0.2 mm` (24 h), `4.6 mm` (96 h), `17.0 mm` (30 d) e sentinela `"Dado Nulo"` observada em registro anterior (`14/11/2026 23:45`).
 
 ### Regra crítica: não converter diretamente INEA -> manchas SGB
 
-O produto SGB de 2024 trabalha com a estação `58790002`, cujo zero de régua e datum vertical são documentados, e aponta primeiro dano em 310 cm. A página do INEA apresenta uma cota de transbordamento de 5,00 m.
+Fatos sustentados pela auditoria atual:
 
-Esses números **não devem ser tratados como a mesma régua/referência** até que a estação do INEA, seu zero de régua e a relação com a estação SGB sejam identificados e validados.
-
-Portanto, é proibido no código fazer algo equivalente a:
+1. **Localizações físicas distintas:** INEA `213042120` está publicada em `(-21.511110, -42.207527)` e SGB/ANA `58790002` (Santo Antônio de Pádua II — Clube de pesca do município) está em `(-21.53786, -42.15778)`, separadas por cerca de **5,9 km** ao longo do Rio Pomba.
+2. **Zero da régua e datum do INEA não identificados:** não foi localizado documento institucional que informe o zero da régua e o datum vertical da estação INEA `213042120` (mantidos `null` no contrato).
+3. **Equivalência não estabelecida:** a equivalência entre as referências verticais das duas estações não foi estabelecida (como indício empírico da necessidade de crosswalk formal, em `24/11/2026 23:45 BRT` o INEA publicou `4,17 m`, enquanto o SACE/SGB indicou a estação `58790002` na classe qualitativa `"Cota de Atenção"`, sem que isso constitua prova geodésica dos zeros ou datums).
+4. **Comparação direta e associação automática não validadas:** é proibido no código (`crosswalkValidated: false`) comparar diretamente os níveis ou acionar manchas SGB a partir de leituras do INEA sem um crosswalk formalmente validado.
 
 ```text
-nivel_inea_5_00m -> COTA_500cm_SGB
+nivel_inea_4_17m -> COTA_425cm_SGB   [PROIBIDO SEM CROSSWALK VALIDADO]
 ```
 
-sem uma transformação documentada.
+### Pendências de pesquisa e governança (G3/G4)
 
-### Pendências técnicas
+- confirmação institucional junto ao INEA (`geseg@inea.rj.gov.br` / `alertadecheias@gmail.com`) sobre termos de consumo automatizado, frequência tolerada, armazenamento e redistribuição de amostras;
+- levantamento documental do zero da régua e datum vertical da estação INEA `213042120`;
+- análise histórica pareada INEA `213042120` × SGB/ANA `58790002` (escopo de séries históricas / issue #37).
 
-- identificar nome/código oficial da estação INEA `21304212020`;
-- verificar endpoint/XML estruturado;
-- registrar datum/referência da régua;
-- comparar séries simultâneas INEA x SGB/ANA para determinar se existe relação simples entre as leituras;
-- documentar política de atualização e indisponibilidade.
+### Achados de auditoria (2026-11-25 — `EXP-2026-001`)
+
+- O endpoint XML público `https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.xml` identifica `<estacao codigo="213042120" tipo="Plu/Flu">` e expõe janela móvel de ~10 dias (961 registros, passo de 15 min, `"Dado Nulo"` como sentinela ausente); acesso público HTTP 200 não comprova autorização irrestrita de armazenamento ou redistribuição.
+- Não há série histórica plurianual pública nem metadados de zero da régua/datum nesse endpoint.
+- Em 926 pares simultâneos de 15 min com `58790002` (`2026-11-15..2026-11-25`), com as estações em locais físicos distintos, a diferença `INEA − RHN` variou entre `+88,0 cm` e `+159,0 cm` (média `+111,02 cm`, desvio `13,95 cm`), o que não sustenta conversão direta (sem afirmar diferença de datum comprovada sem os metadados oficiais). **Decisão:** `NO-GO` para associação automática com manchas SGB; solicitação formal de histórico e zero da régua preparada em `docs/experiments/HIDROWEBSERVICE_ACCESS_REQUEST.md`.
 
 ---
 
@@ -354,6 +400,12 @@ Uso pretendido:
 - curva-chave e informações complementares da estação `58790002`, quando públicas.
 
 A ANA também é citada pelo estudo de 2024 como responsável por viabilizar a operação da estação hidrológica usada pelo SGB.
+
+### Achados de auditoria de acesso (2026-11-25 — `EXP-2026-001`)
+
+- **ANA SOAP (`https://telemetriaws1.ana.gov.br/ServiceANA.asmx`):** acessível publicamente via HTTPS para `HidroInventario`, `DadosHidrometeorologicos` (chunks sequenciais de 90 dias, `15 min` em `58790002` e `58770000`, `60 min` em `58788600`) e `HidroSerieHistorica` (`tipoDados=1` diário em `58790002`, consistências `1` e `2`).
+- **ANA / SNIRH HidroWebService REST (`https://www.snirh.gov.br/hidroweb/rest/api/*` e `https://www.ana.gov.br/hidrowebservice/`):** retornaram HTTP `401` (token ausente) e HTTP `503` durante a auditoria. O credenciamento oficial exige solicitação formal via `hidro@ana.gov.br` / `telemetria@ana.gov.br` (documentada em `docs/experiments/HIDROWEBSERVICE_ACCESS_REQUEST.md`).
+- **SGB / SACE (`https://sace.sgb.gov.br/bacia_pomba/`):** apresentou reset TLS no redirecionamento durante o teste e não expôs API histórica pública verificada.
 
 ---
 
@@ -425,6 +477,18 @@ Uso pretendido:
 - comparar resultados futuros;
 - não substituir validação própria.
 
+### Auditoria operacional SGB SACE / SAH-Pomba (2026-11-25)
+
+**Portal:** https://sace.sgb.gov.br/pomba/ (acessado via https://www.sgb.gov.br/sace/)  
+**Endpoint REST público auditado:** https://sace.sgb.gov.br/pomba/api/geojson/point
+
+A inspeção ao vivo em **2026-11-25 UTC** confirmou:
+
+- o endpoint GeoJSON retorna 7 pontos de monitoramento da bacia, incluindo **`58790002 - SANTO ANTÔNIO DE PÁDUA`** (`sigla: "PAD"`, `Rio Pomba`, `localizacao: "Clube de pesca do município"`, `latitude: -21.53786`, `longitude: -42.15778`, `altitude: 86.0`, `areaDrenagem: 8235.0`, `fusoHorario: "GMT-3"`, `observacao: "Estação Vaisala com sensor de pressão. Bateria 18 Ah. Estação 58790002 - Santo Antônio de Pádua II"`);
+- o endpoint GeoJSON expõe apenas metadados e classe qualitativa de alerta (`tipoAlerta`, `nomeFiltroAlerta`, ex.: `"Cota de Atenção"`), **sem valores numéricos de cota ou chuva**;
+- a leitura numérica na interface SACE utiliza chamadas DWR Java com estado de sessão (`GeradorGraficoService`, `ExportacaoDadosService`), menos adequada para monitoramento leve em tempo real do que o XML estruturado do INEA;
+- a estação a montante **`58788600` (UHE Barra do Braúna Jusante)** não consta entre os 7 pontos ativos publicados no GeoJSON público do SAH-Pomba.
+
 ### Pendências de dados temporais
 
 - obter série histórica de `58788600`;
@@ -437,6 +501,12 @@ Uso pretendido:
 - investigar relação com a estação/página INEA.
 
 Essa auditoria é candidata a **Work**, pois exige investigação multifuente e análise temporal.
+
+### Resultados iniciais da auditoria (`2026-11-25 — EXP-2026-001`)
+
+- Séries de `2020-01-01` a `2026-11-25` adquiridas via `telemetriaws1.ana.gov.br` para `58790002`, `58788600` e estação complementar a montante `58770000` (Cataguases, SGB-CPRM, `15 min`), além de inventário dos 5 pluviômetros em Santo Antônio de Pádua (`2142067`, `2141094`, `2142083`, `2142049`, `2142058`). Acesso público HTTP 200 não é tratado como licença irrestrita de armazenamento ou redistribuição.
+- `58788600` apresentou 78 episódios de valor constante (`suspect_flatline >= 24 h`, `6.276 h` no total — suspeita de qualidade que não comprova isoladamente defeito instrumental, sem descarte automático da estação) e pico anômalo em setembro/2025; em `58770000`, `r = 0,9302` em `16 h` ocorreu no limite da janela testada (`0..16 h`) e não define tempo de propagação nem prova ganho preditivo.
+- Detalhes, manifestos SHA-256 (com reprodução de inputs locais classificada como `BLOCKED_LOCAL_DATA` em Cloud), eventos candidatos, divergência pendente de jan/2023 (`428 cm` vs `431 cm` SGB), piloto exploratório `B0/B1` e protocolo seguinte registrados em `docs/experiments/EXP-2026-001-historical-hydrological-datasets.md`, `docs/experiments/EXP-2026-002-forecast-protocol.md` e `data/metadata/hydrology/`.
 
 ---
 

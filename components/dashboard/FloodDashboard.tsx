@@ -6,49 +6,101 @@ import {
   type FloodLayerStatus,
 } from "@/components/map/FloodMap";
 import { MethodologyModal } from "@/components/dashboard/MethodologyModal";
-import { REFERENCE_NEIGHBORHOODS } from "@/lib/map/neighborhoods";
-import { SGB_STAGE_ELEVATIONS, type SgbFloodLevelCm } from "@/lib/sgb/stages";
+import {
+  AboutMethodologySection,
+  DataSourcesSection,
+  MonitoringSection,
+} from "@/components/dashboard/PlatformSections";
+import { HydroMonitoringCard } from "@/components/monitoring/HydroMonitoringCard";
+import { useHydroMonitoring } from "@/lib/hydro/useHydroMonitoring";
+import {
+  formatFloodArea,
+  type DerivedFloodAreaResult,
+} from "@/lib/sgb/area";
+import {
+  SGB_FLOOD_LEVELS_CM,
+  SGB_STAGE_ELEVATIONS,
+  type SgbFloodLevelCm,
+} from "@/lib/sgb/stages";
+
+export type PlatformSection = "mapa" | "monitoramento" | "fontes" | "sobre";
 
 function formatMetersFromCm(levelCm: number) {
   return (levelCm / 100).toFixed(2).replace(".", ",");
 }
 
+const NAV_ITEMS: readonly { readonly id: PlatformSection; readonly label: string }[] = [
+  { id: "mapa", label: "Mapa e cenários" },
+  { id: "monitoramento", label: "Monitoramento" },
+  { id: "fontes", label: "Dados e fontes" },
+  { id: "sobre", label: "Sobre e metodologia" },
+];
+
 export function FloodDashboard() {
+  const [activeSection, setActiveSection] = useState<PlatformSection>("mapa");
   const [level, setLevel] = useState(4.25);
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
   const [layerStatus, setLayerStatus] = useState<FloodLayerStatus>({
     state: "loading",
     levelCm: 425,
   });
+  const [derivedArea, setDerivedArea] = useState<DerivedFloodAreaResult | null>(
+    null,
+  );
   const [retryToken, setRetryToken] = useState(0);
 
+  const monitoring = useHydroMonitoring();
+  const mapPanelRef = useRef<HTMLElement | null>(null);
   const realtimeCardRef = useRef<HTMLElement | null>(null);
 
   const levelCm = Math.round(level * 100);
   const ortometricElevation = SGB_STAGE_ELEVATIONS[levelCm as SgbFloodLevelCm];
+  const minLevel = SGB_FLOOD_LEVELS_CM[0] / 100;
+  const maxLevel = SGB_FLOOD_LEVELS_CM[SGB_FLOOD_LEVELS_CM.length - 1] / 100;
 
   const handleRetry = useCallback(() => {
     setRetryToken((prev) => prev + 1);
   }, []);
 
-  const mapPanelRef = useRef<HTMLElement | null>(null);
-  const handleScrollToMap = () => {
-    mapPanelRef.current?.scrollIntoView({ block: "start" });
-    mapPanelRef.current?.focus({ preventScroll: true });
-  };
-
-  const handleScrollToRealtime = useCallback(() => {
-    realtimeCardRef.current?.focus({ preventScroll: true });
-    realtimeCardRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+  const handleOpenMethodology = useCallback(() => {
+    setIsMethodologyOpen(true);
   }, []);
 
+  const handleCloseMethodology = useCallback(() => {
+    setIsMethodologyOpen(false);
+  }, []);
+
+  const handleGoToMap = useCallback(() => {
+    setActiveSection("mapa");
+  }, []);
+
+  const handleGoToSources = useCallback(() => {
+    setActiveSection("fontes");
+  }, []);
+
+  const handleSelectStageAndOpenMap = useCallback((nextLevel: number) => {
+    setLevel(nextLevel);
+    setActiveSection("mapa");
+  }, []);
+
+  const handleStepLevel = useCallback(
+    (deltaMeters: number) => {
+      setLevel((prev) => {
+        const next = Math.round((prev + deltaMeters) * 100) / 100;
+        if (next < minLevel) return minLevel;
+        if (next > maxLevel) return maxLevel;
+        return next;
+      });
+    },
+    [minLevel, maxLevel],
+  );
+
   const mapBadge = useMemo(() => {
-    if (layerStatus.levelCm !== levelCm) return "Carregando mancha oficial do SGB...";
+    if (layerStatus.levelCm !== levelCm) {
+      return "Carregando cenário oficial do SGB...";
+    }
     if (layerStatus.state === "official") {
-      return `Mancha oficial SGB · cota local ${formatMetersFromCm(layerStatus.levelCm)} m${
+      return `Cota ${formatMetersFromCm(layerStatus.levelCm)} m${
         ortometricElevation
           ? ` (${ortometricElevation.toFixed(2).replace(".", ",")} m ortométrica)`
           : ""
@@ -57,12 +109,26 @@ export function FloodDashboard() {
     if (layerStatus.state === "error") {
       return "Mancha SGB indisponível · nenhuma extensão exibida";
     }
-    if (layerStatus.state === "empty") return "SGB retornou uma camada vazia · nenhuma extensão exibida";
-    return "Carregando mancha oficial do SGB...";
+    if (layerStatus.state === "empty") {
+      return "SGB retornou camada vazia · nenhuma extensão exibida";
+    }
+    return "Carregando cenário oficial do SGB...";
   }, [layerStatus, ortometricElevation, levelCm]);
 
+  const validDerivedArea =
+    layerStatus.state === "official" &&
+    layerStatus.levelCm === levelCm &&
+    derivedArea?.status === "valid" &&
+    derivedArea.levelCm === levelCm
+      ? derivedArea
+      : null;
+
+  const formattedArea = validDerivedArea
+    ? formatFloodArea(validDerivedArea.areaSquareMeters)
+    : null;
+
   return (
-    <main className="shell">
+    <div className="platform-root">
       {/* Top Navigation Bar */}
       <header className="topbar">
         <div className="brand">
@@ -71,326 +137,304 @@ export function FloodDashboard() {
           </div>
           <div>
             <h1>Pádua FloodSim</h1>
-            <span>Santo Antônio de Pádua, RJ · Foco no Rio Pomba</span>
+            <span>Santo Antônio de Pádua, RJ · Rio Pomba</span>
           </div>
         </div>
 
         <nav className="topnav" aria-label="Navegação principal">
-          <button
-            type="button"
-            className="nav-btn active"
-            title="Ir para o mapa"
-            onClick={handleScrollToMap}
-          >
-            Mapa
-          </button>
-          <button
-            type="button"
-            className="nav-btn"
-            disabled
-            title="Módulo de simulação avançada e MDE (V4) — Em breve"
-          >
-            Simulação <span className="badge-soon">em breve</span>
-          </button>
-          <button
-            type="button"
-            className="nav-btn"
-            disabled
-            title="Módulo de alertas e avisos (V3) — Em breve"
-          >
-            Alertas <span className="badge-soon">em breve</span>
-          </button>
-          <button
-            type="button"
-            className="nav-btn"
-            disabled
-            title="Relatórios técnicos e exportação de dados GIS — Em breve"
-          >
-            Relatórios <span className="badge-soon">em breve</span>
-          </button>
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`nav-btn ${activeSection === item.id ? "active" : ""}`}
+              aria-current={activeSection === item.id ? "page" : undefined}
+              onClick={() => setActiveSection(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
         </nav>
-
-        <div
-          className="status-pill"
-          title="Versão 1.0 experimental · Dados oficiais de referência: SGB 2024"
-        >
-          <i /> V1 · SGB 2024
-        </div>
       </header>
 
-      {/* Left Sidebar */}
-      <aside className="sidebar" aria-label="Seções do sistema">
-        <button
-          type="button"
-          className="sidebar-btn active"
-          title="Ir para o mapa"
-          onClick={handleScrollToMap}
+      <main className="platform-main">
+        {/* View A: Interactive Map & Official SGB Scenarios */}
+        <div
+          className={`map-workspace ${activeSection === "mapa" ? "" : "is-hidden"}`}
+          aria-hidden={activeSection !== "mapa"}
         >
-          Mapa
-        </button>
-        <button
-          type="button"
-          className="sidebar-btn"
-          onClick={handleScrollToRealtime}
-          title="Visualizar painel de monitoramento do Rio Pomba"
-        >
-          Nível do rio
-        </button>
-        <button
-          type="button"
-          className="sidebar-btn"
-          disabled
-          title="Integração pluviométrica (V2) — Em breve"
-        >
-          Pluviometria <span className="badge-soon">em breve</span>
-        </button>
-        <button
-          type="button"
-          className="sidebar-btn"
-          disabled
-          title="Modelagem topográfica experimental com MDE (V3) — Em breve"
-        >
-          Simulações <span className="badge-soon">em breve</span>
-        </button>
-        <button
-          type="button"
-          className="sidebar-btn"
-          disabled
-          title="Sistema de alertas e contingência (V3) — Em breve"
-        >
-          Alertas <span className="badge-soon">em breve</span>
-        </button>
-        <button
-          type="button"
-          className="sidebar-btn"
-          disabled
-          title="Séries históricas e eventos passados (V3) — Em breve"
-        >
-          Histórico <span className="badge-soon">em breve</span>
-        </button>
-      </aside>
+          <section
+            className="map-panel"
+            ref={mapPanelRef}
+            tabIndex={-1}
+            aria-label="Mapa e cenários de inundação"
+          >
+            <FloodMap
+              level={level}
+              onStatusChange={setLayerStatus}
+              onDerivedAreaChange={setDerivedArea}
+              retryToken={retryToken}
+              isVisible={activeSection === "mapa"}
+            />
 
-      {/* Main Interactive Map Section */}
-      <section className="map-panel" ref={mapPanelRef} tabIndex={-1} aria-label="Mapa e cenários SGB">
-        <FloodMap
-          level={level}
-          onStatusChange={setLayerStatus}
-          retryToken={retryToken}
-        />
+            {/* Bottom Scenario Controls */}
+            <div className="slider-card">
+              <div className="slider-status-bar">
+                <div className={`scenario-status-badge ${layerStatus.state}`}>
+                  <span
+                    className="data-origin-badge official"
+                    data-classification="official_reference"
+                  >
+                    Cenário oficial SGB
+                  </span>
+                  <span role="status" aria-live="polite">
+                    {mapBadge}
+                  </span>
+                  {(layerStatus.state === "error" ||
+                    layerStatus.state === "empty") && (
+                    <button
+                      type="button"
+                      className="badge-retry-btn"
+                      onClick={handleRetry}
+                      title="Tentar carregar novamente a mancha do SGB"
+                    >
+                      Tentar novamente
+                    </button>
+                  )}
+                </div>
 
-        {/* Bottom Slider & Scenario Controls */}
-        <div className="slider-card">
-          {/* Integrated Scenario Status Bar */}
-          <div className="slider-status-bar">
-            <div className={`demo-badge ${layerStatus.state}`}>
-              <span className="classification-pill" title="Classificação de proveniência: dado oficial publicado">
-                official_reference
-              </span>
-              <span role="status" aria-live="polite">{mapBadge}</span>
-              {(layerStatus.state === "error" || layerStatus.state === "empty") && (
                 <button
                   type="button"
-                  className="badge-retry-btn"
-                  onClick={handleRetry}
-                  title="Tentar carregar novamente a mancha do SGB"
+                  className="methodology-trigger-btn"
+                  onClick={handleOpenMethodology}
+                  title="Ver detalhes de fonte, estação e metodologia do SGB (2024)"
                 >
-                  Tentar novamente
+                  Fonte e metodologia
                 </button>
-              )}
+              </div>
+
+              <div className="slider-title">
+                <div>
+                  <strong>Cota do cenário de referência</strong>
+                  <span>
+                    Estação SGB/ANA 58790002 · Cenário estático de referência
+                    (não indica a extensão atual do rio nem profundidade). Não
+                    equivale à régua do INEA.
+                  </span>
+                </div>
+                <div className="slider-value-group">
+                  <b>{level.toFixed(2).replace(".", ",")} m</b>
+                  {Number.isFinite(ortometricElevation) && (
+                    <span className="elev-label">
+                      Alt. ortométrica:{" "}
+                      {ortometricElevation.toFixed(2).replace(".", ",")} m
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="slider-control-row">
+                <button
+                  type="button"
+                  className="stage-step-btn"
+                  onClick={() => handleStepLevel(-0.25)}
+                  disabled={level <= minLevel}
+                  aria-label="Diminuir cota em 25 centímetros"
+                  title="Diminuir 0,25 m"
+                >
+                  −
+                </button>
+                <input
+                  aria-label="Cota da mancha oficial do SGB"
+                  type="range"
+                  min={minLevel}
+                  max={maxLevel}
+                  step="0.25"
+                  value={level}
+                  aria-valuetext={`${level.toFixed(2).replace(".", ",")} metros, cenário oficial SGB`}
+                  onChange={(event) => setLevel(Number(event.target.value))}
+                />
+                <button
+                  type="button"
+                  className="stage-step-btn"
+                  onClick={() => handleStepLevel(0.25)}
+                  disabled={level >= maxLevel}
+                  aria-label="Aumentar cota em 25 centímetros"
+                  title="Aumentar 0,25 m"
+                >
+                  +
+                </button>
+              </div>
+
+              <div className="slider-scale">
+                <span>3,00 m</span>
+                <span>4,25 m</span>
+                <span>5,50 m</span>
+              </div>
+
+              {/* Quick Stage Shortcuts */}
+              <div
+                className="quick-stages"
+                role="group"
+                aria-label="Atalhos de cotas SGB"
+              >
+                <span className="quick-stages-label">Atalhos:</span>
+                {[3.0, 4.25, 5.5].map((stage) => {
+                  const label = `${stage.toFixed(2).replace(".", ",")} m`;
+                  return (
+                    <button
+                      key={stage}
+                      type="button"
+                      className={`stage-chip ${level === stage ? "active" : ""}`}
+                      aria-pressed={level === stage}
+                      onClick={() => setLevel(stage)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+          </section>
 
-            <button
-              type="button"
-              className="methodology-trigger-btn"
-              onClick={() => setIsMethodologyOpen(true)}
-              title="Ver detalhes de fonte, estação e metodologia oficial SGB (2024)"
-            >
-              Fonte e metodologia ℹ
-            </button>
-          </div>
+          {/* Right Contextual Information Panel */}
+          <aside className="right-panel" aria-label="Informações hidrológicas e legenda">
+            <p className="official-notice-compact" role="note">
+              Esta plataforma não substitui os alertas e as orientações dos
+              órgãos oficiais.
+            </p>
 
-          <div className="slider-title">
-            <div>
-              <strong>Cota do cenário oficial SGB</strong>
-              <span>
-                Serviço Geológico do Brasil — SGB · Estação RHN 58790002 · Manchas oficiais de 25 em 25 cm.
-                Não equivale à régua do INEA.
-              </span>
-            </div>
-            <div className="slider-value-group">
-              <b>{level.toFixed(2).replace(".", ",")} m</b>
-              {Number.isFinite(ortometricElevation) && (
-                <span className="elev-label">
-                  Alt. ortométrica: {ortometricElevation.toFixed(2).replace(".", ",")} m
-                </span>
-              )}
-            </div>
-          </div>
+            {/* Derived Spatial Metric: Area of Selected SGB Scenario */}
+            {validDerivedArea && formattedArea && (
+              <article
+                className="card area-metric-card"
+                data-classification="derived"
+                aria-labelledby="selected-area-title"
+              >
+                <div className="card-heading">
+                  <strong id="selected-area-title">
+                    Área da mancha selecionada
+                  </strong>
+                  <span
+                    className="data-origin-badge derived"
+                    data-classification="derived"
+                  >
+                    Dado derivado
+                  </span>
+                </div>
+                <div className="area-metric-values">
+                  <b className="area-metric-primary">{formattedArea.primary}</b>
+                  <span className="area-metric-secondary">
+                    ({formattedArea.secondary})
+                  </span>
+                </div>
+                <p className="area-metric-meta">
+                  Cenário SGB {formatMetersFromCm(validDerivedArea.levelCm)} m (
+                  {validDerivedArea.levelCm} cm) · {validDerivedArea.source}.
+                </p>
+                <small className="area-metric-note">
+                  Cálculo geodésico (WGS84) sobre os polígonos oficiais
+                  carregados. Representa apenas a extensão do cenário escolhido,
+                  não a área inundada no momento.
+                </small>
+              </article>
+            )}
 
-          <input
-            aria-label="Cota da mancha oficial do SGB"
-            type="range"
-            min="3"
-            max="5.5"
-            step="0.25"
-            value={level}
-            aria-valuetext={`${level.toFixed(2).replace(".", ",")} metros, cenário SGB`}
-            onChange={(event) => setLevel(Number(event.target.value))}
-          />
+            {/* Real INEA Hydro Monitoring Card */}
+            <HydroMonitoringCard
+              cardRef={realtimeCardRef}
+              monitoring={monitoring}
+              id="realtime-card"
+            />
 
-          <div className="slider-scale">
-            <span>3,00 m — primeiro cenário SGB disponível</span>
-            <span>4,25 m</span>
-            <span>5,50 m</span>
-          </div>
+            {/* Map Legend & Sources Card */}
+            <article className="card">
+              <div className="card-heading">
+                <strong>Legenda do mapa</strong>
+              </div>
 
-          {/* Quick Stage Shortcuts */}
-          <div className="quick-stages" role="group" aria-label="Atalhos rápidos para cotas de teste">
-            <span className="quick-stages-label">Testar cotas:</span>
-            <button
-              type="button"
-              className={`stage-chip ${level === 3.0 ? "active" : ""}`}
-              aria-pressed={level === 3.0}
-              onClick={() => setLevel(3.0)}
-              title="3,00 m — primeiro cenário SGB disponível"
-            >
-              3,00 m
-            </button>
-            <button
-              type="button"
-              className={`stage-chip ${level === 4.25 ? "active" : ""}`}
-              aria-pressed={level === 4.25}
-              onClick={() => setLevel(4.25)}
-              title="4,25 m — cenário SGB disponível"
-            >
-              4,25 m
-            </button>
-            <button
-              type="button"
-              className={`stage-chip ${level === 5.5 ? "active" : ""}`}
-              aria-pressed={level === 5.5}
-              onClick={() => setLevel(5.5)}
-              title="5,50 m — maior cota disponível no MapServer"
-            >
-              5,50 m
-            </button>
-          </div>
+              <div className="legend-list">
+                <div className="official-layer-legend">
+                  <i className="legend-swatch-flood" aria-hidden="true" />
+                  <div>
+                    <strong>Cenário oficial SGB (2024)</strong>
+                    <small>
+                      Extensão horizontal estimada para a cota selecionada. Não
+                      indica profundidade, dano, probabilidade ou risco
+                      individual.
+                    </small>
+                  </div>
+                </div>
+
+                <div className="official-layer-legend">
+                  <i className="legend-swatch-station" aria-hidden="true" />
+                  <div>
+                    <strong>Estações hidrológicas (INEA)</strong>
+                    <small>
+                      Localização oficial de Santo Antônio de Pádua (213042120)
+                      e Ponte Paraoquena (58789000). Clique no marcador para ver
+                      detalhes.
+                    </small>
+                  </div>
+                </div>
+              </div>
+
+              <div className="source-links-group">
+                <button
+                  type="button"
+                  className="methodology-link-btn"
+                  onClick={handleOpenMethodology}
+                >
+                  Metodologia e parâmetros do SGB
+                </button>
+                <button
+                  type="button"
+                  className="methodology-link-btn"
+                  onClick={handleGoToSources}
+                >
+                  Consultar todas as fontes e cotas
+                </button>
+                <a
+                  className="source-link"
+                  href="https://rigeo.sgb.gov.br/handle/doc/25035"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Relatório técnico do SGB (2024) ↗
+                </a>
+              </div>
+            </article>
+          </aside>
         </div>
-      </section>
 
-      {/* Right Information & Monitoring Panel */}
-      <aside className="right-panel">
-        <p className="research-warning">Projeto acadêmico e experimental. Não é previsão nem alerta oficial; consulte INEA e Defesa Civil. O futuro modelo DEM permanece separado dos cenários SGB.</p>
-        {/* Real-time Monitoring Card (Explicitly MOCK) */}
-        <article ref={realtimeCardRef} id="realtime-card" tabIndex={-1} className="card realtime">
-          <div className="card-heading">
-            <strong>Monitoramento demonstrativo</strong>
-            <span className="live-mock">
-              <i /> MOCK / DEMO
-            </span>
-          </div>
-          <h2>Rio Pomba · Estação INEA</h2>
-          <div className="river-grid">
-            <div>
-              <span>Nível fictício</span>
-              <b>4,35 m</b>
-            </div>
-            <div>
-              <span>Tendência</span>
-              <strong className="warning">subindo ↗</strong>
-            </div>
-            <div>
-              <span>Transbordamento INEA</span>
-              <strong className="danger">5,00 m</strong>
-            </div>
-            <div>
-              <span>Chuva 24h</span>
-              <strong>62 mm</strong>
-            </div>
-          </div>
-          <small>
-            ⚠️ <strong>Aviso:</strong> Nível, tendência e chuva exibidos neste painel são
-            fictícios (mock demonstrativo). A régua do INEA não é convertida
-            automaticamente para as cotas SGB até que a equivalência entre os zeros de régua
-            seja tecnicamente validada.
-          </small>
-        </article>
+        {/* View B: Monitoramento do Rio Pomba */}
+        {activeSection === "monitoramento" && (
+          <MonitoringSection
+            monitoring={monitoring}
+            onGoToMap={handleGoToMap}
+          />
+        )}
 
-        {/* Official SGB Inundation Layer Card */}
-        <article className="card">
-          <div className="card-heading">
-            <strong>Camada de inundação</strong>
-          </div>
-          <div className="official-layer-legend">
-            <i />
-            <div>
-              <strong>Extensão da mancha oficial (SGB 2024)</strong>
-              <small>
-                Polígonos por cota publicados pelo Serviço Geológico do Brasil.
-                Representa <strong>extensão de inundação</strong>; profundidade d&apos;água
-                não é calculada nesta camada de referência oficial.
-              </small>
-            </div>
-          </div>
-          <div className="source-links-group">
-            <button
-              type="button"
-              className="methodology-link-btn"
-              onClick={() => setIsMethodologyOpen(true)}
-              title="Abrir detalhes completos de metodologia e parâmetros da modelagem SGB"
-            >
-              Metodologia e parâmetros completos ℹ
-            </button>
-            <a
-              className="source-link"
-              href="https://rigeo.sgb.gov.br/handle/doc/25035"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Ver relatório técnico do SGB (2024) ↗
-            </a>
-          </div>
-        </article>
+        {/* View C: Dados e fontes */}
+        {activeSection === "fontes" && (
+          <DataSourcesSection
+            onSelectStageAndOpenMap={handleSelectStageAndOpenMap}
+          />
+        )}
 
-        {/* Neighborhood Reference Disclaimer Card */}
-        <article className="card">
-          <div className="card-heading">
-            <strong>Bairros de referência</strong>
-          </div>
-          <p className="neighborhood-explainer">
-            Os 7 bairros exibidos pertencem à lista dos 27 bairros oficiais do município
-            (Lei Municipal nº 3.864/2017). As posições são referências aproximadas
-            (mock), não limites territoriais. Nenhum bairro possui risco calculado.
-            A classificação depende de limites validados e interseção GIS.
-          </p>
-          <p className="neighborhood-explainer">{REFERENCE_NEIGHBORHOODS.map((item) => item.name).join(", ")}</p>
-        </article>
+        {/* View D: Sobre e metodologia */}
+        {activeSection === "sobre" && (
+          <AboutMethodologySection
+            onGoToMap={handleGoToMap}
+            onGoToSources={handleGoToSources}
+          />
+        )}
+      </main>
 
-        {/* Estimated Metrics Card */}
-        <article className="metrics">
-          <div>
-            <span>Bairros potencialmente afetados</span>
-            <b>Indisponível</b>
-            <small>pendente: limites de bairros validados e interseção GIS</small>
-          </div>
-          <div>
-            <span>Ruas com trechos na mancha</span>
-            <b>Indisponível</b>
-            <small>pendente: malha viária integrada e interseção GIS</small>
-          </div>
-          <div>
-            <span>Área da mancha</span>
-            <b>Indisponível</b>
-            <small>pendente: cálculo GIS real em CRS métrico</small>
-          </div>
-        </article>
-      </aside>
-
-      {/* Official SGB Methodology and Scientific Attribution Modal */}
+      {/* Official SGB Methodology Modal */}
       <MethodologyModal
         isOpen={isMethodologyOpen}
-        onClose={() => setIsMethodologyOpen(false)}
+        onClose={handleCloseMethodology}
       />
-    </main>
+    </div>
   );
 }

@@ -2,6 +2,21 @@
 
 Todas as mudanças relevantes do Pádua FloodSim serão registradas neste arquivo.
 
+## [Unreleased] — R02-B (Plataforma pública funcional) — 2026-11-25
+
+- **Interface pública funcional (Issue #21):** removidos selos de protótipo (`V1`, `em breve`), menu `Alertas`, rótulos técnicos crus em inglês na apresentação pública e todos os dados/cartões fictícios (7 marcadores mock de bairros e métricas `Indisponível` sem cálculo GIS).
+- **Navegação real em quatro módulos:** *Mapa e cenários*, *Monitoramento*, *Dados e fontes* (com tabela interativa dos 11 cenários SGB) e *Sobre e metodologia*, responsivos em desktop e celular sem overflow horizontal.
+- **Primeira métrica espacial derivada (`derived`):** cálculo geodésico WGS84 com união topológica prévia (`lib/sgb/area.ts`, `polygon-clipping`, método `wgs84-ellipsoidal-geodesic-union-v1`) exibido como **Área da mancha selecionada** (com subtração de anéis internos e eliminação de dupla contagem), omitido automaticamente quando inválido ou vazio.
+- **Camada real de estações hidrológicas (`lib/hydro/stations.ts`):** incluídas INEA Santo Antônio de Pádua (`213042120` / `ANA FLU 58774000`) e INEA Ponte Paraoquena (`ANA FLU 58789000`) com popups institucionais; estação RHN `58790002` documentada e omitida do mapa até resolução da divergência de coordenadas (~2,4 km) entre ANA e SGB.
+- **Monitoramento INEA e estabilidade do modal:** linguagem simples em português com mensagem objetiva quando a coleta automática está desativada (`FLOODSIM_ENABLE_LIVE_INEA` preservada desligada); corrigido ciclo de vida do `MethodologyModal` para não fechar em re-renders assíncronos do mapa.
+
+## [Unreleased] — R01 / R02-A — 2026-11-25
+
+- Candidata #44 integra #41–#43: contrato, skills, monitoramento INEA (flag desligada), pipeline Python, CI e governança Research. #45 audita acervo INEA, ainda independente.
+- Manifestos históricos preservados; EXP-001 exploratório, EXP-002 não executado, reprodução BLOCKED_LOCAL_DATA.
+- Vínculo INEA 213042120 / RHN 58774000 identificado na auditoria #45; datum e crosswalk não confirmados. Sem previsão pública.
+- [Registro consolidado](docs/research/RESEARCH_CATALOG_2026-11-25.md) e [notas de pre-release](docs/releases/research-r01-unreleased.md); nenhuma tag/DOI/deploy novo.
+
 ## [Unreleased] — Research Phase — 2026-10-05
 
 ### Documentação e governança

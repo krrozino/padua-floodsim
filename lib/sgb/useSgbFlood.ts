@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
+import { computeDerivedFloodArea, type DerivedFloodAreaResult } from "@/lib/sgb/area";
 
 export type FloodGeometry = FeatureCollection<Polygon | MultiPolygon>;
 export const EMPTY_FLOOD: FloodGeometry = { type: "FeatureCollection", features: [] };
@@ -59,7 +60,15 @@ export function useSgbFlood(level: number, retryToken: number) {
   }, [levelCm, retryToken]);
 
   // Never expose the previous scenario in the render preceding effect cleanup.
-  return result.status.levelCm === levelCm && result.retryToken === retryToken
-    ? result
-    : { status: { state: "loading" as const, levelCm }, geojson: EMPTY_FLOOD, retryToken };
+  const current =
+    result.status.levelCm === levelCm && result.retryToken === retryToken
+      ? result
+      : { status: { state: "loading" as const, levelCm }, geojson: EMPTY_FLOOD, retryToken };
+
+  const derivedArea: DerivedFloodAreaResult | null = useMemo(() => {
+    if (current.status.state !== "official") return null;
+    return computeDerivedFloodArea(current.geojson, current.status.levelCm);
+  }, [current.status.state, current.status.levelCm, current.geojson]);
+
+  return { ...current, derivedArea };
 }

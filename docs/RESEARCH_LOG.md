@@ -49,3 +49,11 @@ Foi estabelecido:
 - levantar precipitação útil na bacia;
 - preparar protocolo de previsão;
 - manter modelo espacial e benchmark SGB como frente paralela.
+
+## 2026-11-17 a 25 — R01 e R02-A
+
+Contrato e skills (#41), observação INEA (#42), pipeline/QC/piloto (#43), candidata integrada (#44) e auditoria de acervo (#45). Ver [registro consolidado](research/RESEARCH_CATALOG_2026-11-25.md). Checks da candidata verdes no baseline; dados reais, permissões e reprodução continuam gates separados. Relatório Gemini de 59 páginas catalogado como apoio bibliográfico não validado integralmente. Estratégia proposta: manter INEA independente e investigar referência RHN para ligação espacial; comparar Braúna e Cataguases; nenhuma transformação automática. Próximas ações #6, #37, #38, #46, #47. Não houve merge/deploy nesta rodada.
+
+## 2026-11-25 — R02-B (Plataforma pública funcional, Issue #21)
+
+Interface pública consolidada na branch `feat/research-r02-public-platform` (baseada em `integration/research-r01` / #44): eliminados elementos de protótipo, botões "em breve" e todos os marcadores/métricas mockadas de bairros e ruas. Implementadas quatro seções funcionais (*Mapa e cenários*, *Monitoramento*, *Dados e fontes* e *Sobre e metodologia*), camada real de estações hidrológicas verificadas (INEA Santo Antônio de Pádua `213042120` / `58774000` e Ponte Paraoquena `58789000`, com RHN `58790002` omitida do mapa por divergência cadastral de ~2,4 km) e cálculo derivado da **Área da mancha selecionada** (aproximação numérica em latitude autálica WGS84 com união topológica prévia via `polygon-clipping`, com falha fechada estrita em coleções/anéis inválidos ou degenerados). Validação numérica independente com `pyproj 3.8.0` / `shapely 2.2.0` nas 11 camadas reais SGB (`300`–`550` cm, ver [SGB_AREA_VALIDATION_2026-11-25.md](research/SGB_AREA_VALIDATION_2026-11-25.md)) confirmou diferença máxima de `0,003 m²` (`< 0,000001%`) contra Karney WGS84 e `-0,131%` contra `EPSG:31983` (UTM 23S, explicada pelo fator de escala). Monitoramento INEA preservado independente e desativado por padrão; bug de ciclo de vida do modal de metodologia corrigido e coberto por teste E2E. Sem merge ou deploy.

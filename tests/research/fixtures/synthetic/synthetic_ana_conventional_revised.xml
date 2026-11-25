@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SYNTHETIC TEST FIXTURE (NOT REAL OBSERVATIONS) -->
+<DataTable xmlns="http://MRCS/">
+  <diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">
+    <NewDataSet xmlns="">
+      <!-- Raw row (NivelConsistencia=1) -->
+      <SerieHistorica diffgr:id="1" msdata:rowOrder="0">
+        <EstacaoCodigo>58790002</EstacaoCodigo>
+        <NivelConsistencia>1</NivelConsistencia>
+        <DataHora>2023-01-01 00:00:00</DataHora>
+        <Cota01>250</Cota01>
+        <Cota01Status>1</Cota01Status>
+        <Cota02>260</Cota02>
+        <Cota02Status>1</Cota02Status>
+      </SerieHistorica>
+      <!-- Consisted/revised row (NivelConsistencia=2) overriding Cota01 to 254 -->
+      <SerieHistorica diffgr:id="2" msdata:rowOrder="1">
+        <EstacaoCodigo>58790002</EstacaoCodigo>
+        <NivelConsistencia>2</NivelConsistencia>
+        <DataHora>2023-01-01 00:00:00</DataHora>
+        <Cota01>254</Cota01>
+        <Cota01Status>1</Cota01Status>
+        <Cota02>260</Cota02>
+        <Cota02Status>1</Cota02Status>
+      </SerieHistorica>
+    </NewDataSet>
+  </diffgr:diffgram>
+</DataTable>
