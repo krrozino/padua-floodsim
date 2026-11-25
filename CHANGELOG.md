@@ -2,20 +2,28 @@
 
 Todas as mudanças relevantes do Pádua FloodSim serão registradas neste arquivo.
 
-## [Unreleased] — R02-B (Plataforma pública funcional) — 2026-11-25
+## [Unreleased] — v0.2.0-academic (candidata — não publicada) — 2026-11-25
 
-- **Interface pública funcional (Issue #21):** removidos selos de protótipo (`V1`, `em breve`), menu `Alertas`, rótulos técnicos crus em inglês na apresentação pública e todos os dados/cartões fictícios (7 marcadores mock de bairros e métricas `Indisponível` sem cálculo GIS).
+Consolidação na `main` dos PRs #41, #42, #43, #44, #45 e #48, correção do Quality Gate de segurança (#38) e preparação da candidata `v0.2.0-academic` (#47). Nenhuma tag, release publicada, depósito Zenodo ou deploy em produção foi executado nesta etapa.
+
+### Segurança e Quality Gate (#38)
+
+- **CI supply chain (`.github/workflows/ci.yml`):** instalação de dependências travada em `npm ci --ignore-scripts --no-audit --no-fund` e `permissions: contents: read`, resolvendo `githubactions:S6505` e `githubactions:S8543`.
+- **Secret scan (`.github/workflows/security.yml`):** `gitleaks/gitleaks-action` fixado no commit SHA completo `ff98106e4c7b2bc287b24eaf42907196329070c7` (`v2.3.9`), resolvendo `githubactions:S7637`.
+
+### Plataforma pública funcional e cartografia (R02-B — #21 / #48)
+
+- **Interface pública funcional:** removidos selos de protótipo (`V1`, `em breve`), menu `Alertas`, rótulos técnicos crus em inglês na apresentação pública e todos os dados/cartões fictícios (7 marcadores mock de bairros e métricas `Indisponível` sem cálculo GIS).
 - **Navegação real em quatro módulos:** *Mapa e cenários*, *Monitoramento*, *Dados e fontes* (com tabela interativa dos 11 cenários SGB) e *Sobre e metodologia*, responsivos em desktop e celular sem overflow horizontal.
-- **Primeira métrica espacial derivada (`derived`):** cálculo geodésico WGS84 com união topológica prévia (`lib/sgb/area.ts`, `polygon-clipping`, método `wgs84-ellipsoidal-geodesic-union-v1`) exibido como **Área da mancha selecionada** (com subtração de anéis internos e eliminação de dupla contagem), omitido automaticamente quando inválido ou vazio.
-- **Camada real de estações hidrológicas (`lib/hydro/stations.ts`):** incluídas INEA Santo Antônio de Pádua (`213042120` / `ANA FLU 58774000`) e INEA Ponte Paraoquena (`ANA FLU 58789000`) com popups institucionais; estação RHN `58790002` documentada e omitida do mapa até resolução da divergência de coordenadas (~2,4 km) entre ANA e SGB.
+- **Primeira métrica espacial derivada (`derived`):** aproximação numérica em latitude autálica no elipsoide WGS84 com união topológica prévia (`lib/sgb/area.ts`, `polygon-clipping@0.15.7`, método `wgs84-ellipsoidal-geodesic-union-v1`) exibida como **Área da mancha selecionada**, com falha fechada estrita em coleções/anéis inválidos ou degenerados e validação numérica independente via `pyproj 3.8.0`/`shapely 2.2.0` nas 11 camadas reais SGB (diferença máxima `0,003 m²` vs. Karney WGS84; [`docs/research/SGB_AREA_VALIDATION_2026-11-25.md`](docs/research/SGB_AREA_VALIDATION_2026-11-25.md)).
+- **Camada real de estações hidrológicas (`lib/hydro/stations.ts`):** incluídas INEA Santo Antônio de Pádua (`213042120` / `ANA FLU 58774000`) e INEA Ponte Paraoquena (`ANA FLU 58789000`) com popups institucionais; estação `RHN 58790002` documentada e omitida do mapa até resolução da divergência de coordenadas (~2,4 km) entre ANA e SGB.
 - **Monitoramento INEA e estabilidade do modal:** linguagem simples em português com mensagem objetiva quando a coleta automática está desativada (`FLOODSIM_ENABLE_LIVE_INEA` preservada desligada); corrigido ciclo de vida do `MethodologyModal` para não fechar em re-renders assíncronos do mapa.
 
-## [Unreleased] — R01 / R02-A — 2026-11-25
+### Pesquisa hidrológica, observações e governança (R01 / R02-A — #41–#45)
 
-- Candidata #44 integra #41–#43: contrato, skills, monitoramento INEA (flag desligada), pipeline Python, CI e governança Research. #45 audita acervo INEA, ainda independente.
-- Manifestos históricos preservados; EXP-001 exploratório, EXP-002 não executado, reprodução BLOCKED_LOCAL_DATA.
-- Vínculo INEA 213042120 / RHN 58774000 identificado na auditoria #45; datum e crosswalk não confirmados. Sem previsão pública.
-- [Registro consolidado](docs/research/RESEARCH_CATALOG_2026-11-25.md) e [notas de pre-release](docs/releases/research-r01-unreleased.md); nenhuma tag/DOI/deploy novo.
+- Integrados contrato de observações (`docs/OBSERVATION_CONTRACT.md`), skills (`audit-hydro-source`, `verify-hydro-observations`), adaptador/API INEA (`/api/hydro/observations`, flag desligada por padrão), pipeline científico Python (`scripts/research/hydrology/`) com CI determinístico offline e auditoria documental do acervo histórico INEA (`docs/research/INEA_HISTORICAL_ARCHIVE.md`).
+- Manifestos históricos preservados; `EXP-2026-001` exploratório (`BLOCKED_LOCAL_DATA` em Cloud), `EXP-2026-002` pré-registrado e não executado; vínculo `INEA 213042120` / `ANA FLU 58774000` documentado sem confirmação de datum ou crosswalk; sem previsão pública.
+- Preparadas notas consolidadas em [`docs/releases/v0.2.0-academic.md`](docs/releases/v0.2.0-academic.md) e atualização de `package.json`, `package-lock.json` e `CITATION.cff` (preservando o DOI `10.5281/zenodo.22928810` exclusivamente para `v0.1.0-academic` e o DOI conceitual `10.5281/zenodo.22928809`).
 
 ## [Unreleased] — Research Phase — 2026-10-05
 

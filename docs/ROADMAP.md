@@ -33,24 +33,25 @@ MONITORAR -> PREVER -> TRADUZIR EM IMPACTO ESPACIAL
 
 A partir deste marco, previsão deixa de ser "feature avançada eventual" e passa a ser uma das frentes centrais de pesquisa, sem antecipar afirmações operacionais.
 
-## Estado da candidata — Sprint R01 (25/11/2026)
+## Estado consolidado na `main` — candidata `v0.2.0-academic` (25/11/2026)
 
-PR #44 em draft, ainda não integrado à main. R02-A #45 é documentação independente. [Catálogo de pesquisa](research/RESEARCH_CATALOG_2026-11-25.md).
+PRs #41, #42, #43, #44, #45 e #48 já integrados na `main` (`ced6c02`). Correção do Quality Gate de segurança (#38) e preparação da candidata **`v0.2.0-academic`** (#47) em PR dedicado, antes de qualquer tag, depósito Zenodo ou deploy em produção. Ver [Catálogo de pesquisa](research/RESEARCH_CATALOG_2026-11-25.md) e [notas da candidata `v0.2.0-academic`](releases/v0.2.0-academic.md).
 
-- **Contrato e skills (`docs/OBSERVATION_CONTRACT.md`, `audit-hydro-source`, `verify-hydro-observations`):** integrados na candidata #44.
-- **Monitoramento observado INEA (`213042120`):** implementado e testado offline; coleta ao vivo desativada por padrão no servidor (`FLOODSIM_ENABLE_LIVE_INEA=true`) até homologação operacional (smoke CLOUD bloqueado por indisponibilidade de rede) e confirmação institucional das permissões de consumo/armazenamento/redistribuição.
-- **Pipeline histórico em Python (`scripts/research/hydrology/`):** implementado com CI determinístico offline; [`EXP-2026-001`](experiments/EXP-2026-001-historical-hydrological-datasets.md) permanece **exploratório** (reprodução com inputs locais originais em `BLOCKED_LOCAL_DATA`); [`EXP-2026-002`](experiments/EXP-2026-002-forecast-protocol.md) pré-registrado e **ainda não executado**.
-- **Plataforma pública funcional (R02-B / #21):** navegação real em 4 módulos (*Mapa e cenários*, *Monitoramento*, *Dados e fontes*, *Sobre e metodologia*), remoção de elementos de protótipo e dados mockados, camada real de estações INEA verificadas (com RHN `58790002` omitida do mapa por divergência de coordenadas) e primeira métrica espacial derivada (**Área da mancha selecionada**, método geodésico WGS84 com união topológica).
+- **Contrato e skills (`docs/OBSERVATION_CONTRACT.md`, `audit-hydro-source`, `verify-hydro-observations`):** integrados na `main`.
+- **Monitoramento observado INEA (`213042120`):** integrado e testado offline; coleta ao vivo desativada por padrão no servidor (`FLOODSIM_ENABLE_LIVE_INEA=true` para ativação deliberada) até homologação operacional e confirmação institucional das permissões de consumo/armazenamento/redistribuição (#6).
+- **Pipeline histórico em Python (`scripts/research/hydrology/`) e auditoria do acervo INEA (`docs/research/INEA_HISTORICAL_ARCHIVE.md`):** integrados na `main` com CI determinístico offline; [`EXP-2026-001`](experiments/EXP-2026-001-historical-hydrological-datasets.md) permanece **exploratório** (`BLOCKED_LOCAL_DATA` em Cloud); [`EXP-2026-002`](experiments/EXP-2026-002-forecast-protocol.md) pré-registrado e **ainda não executado**.
+- **Plataforma pública funcional (R02-B / #21):** integrada na `main` — navegação real em 4 módulos (*Mapa e cenários*, *Monitoramento*, *Dados e fontes*, *Sobre e metodologia*), remoção de elementos de protótipo e dados mockados, camada real de estações INEA verificadas (com RHN `58790002` omitida do mapa por divergência de coordenadas) e primeira métrica espacial derivada (**Área da mancha selecionada**, aproximação numérica em latitude autálica WGS84 com união topológica, falha fechada estrita e validação independente nas 11 cotas reais SGB em [`SGB_AREA_VALIDATION_2026-11-25.md`](research/SGB_AREA_VALIDATION_2026-11-25.md)).
+- **Hardening de CI / Quality Gate (#38):** `gitleaks/gitleaks-action` fixado em SHA completo e CI Web em `npm ci --ignore-scripts --no-audit --no-fund` (gate final depende da reanálise pós-merge da `main`).
 - **Limites científicos ativos:** nenhum crosswalk validado (`crosswalkValidated: false`); nenhuma previsão temporal autorizada para exposição pública; sem métricas por bairro/rua antes de polígonos municipais validados (#10, #20).
 
 ---
 
 ## Próxima ordem de execução
 
-1. Integrar #44 e #45 mediante autorização; pre-release #47 separada de deploy.
+1. Integrar PR de correção do Quality Gate (#38) e preparação da candidata `v0.2.0-academic` (#47); confirmar Quality Gate verde na `main` pós-merge antes de criar tag/pre-release (separada de deploy).
 2. Permissões, metadados e homologação da fonte (#6, #37); recuperar dados locais e reproduzir EXP-001 (#46).
 3. Congelar protocolo, executar EXP-002 (#46) e avaliar resultados e incerteza; prever 1–10h somente em pesquisa até validação.
-4. Terreno, bairros, crosswalk e validação espacial (#9, #10, #5, #7, #20), UX (#21) e artigo com orientação.
+4. Terreno, bairros, crosswalk e validação espacial (#9, #10, #5, #7, #20) e artigo com orientação.
 
 As listas abaixo são critérios de conclusão científica/operacional, não marcações de merge; evidências parciais constam no catálogo. R02-A identificou a estação INEA/RHN 58774000, sem validar datum ou crosswalk.
 
