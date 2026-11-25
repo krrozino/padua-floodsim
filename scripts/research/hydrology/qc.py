@@ -246,9 +246,8 @@ def compute_pairwise_overlap(
             if v is None:
                 continue
             ts = r["timestamp_utc_iso"]
-            if hourly_truncate:
-                if not ts.endswith(":00:00Z"):
-                    continue
+            if hourly_truncate and not ts.endswith(":00:00Z"):
+                continue
             out[ts] = float(v)
         return out
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import platform
 import subprocess
@@ -45,6 +46,56 @@ def _git_commit(repo_root: Path) -> str:
         return res.stdout.strip()
     except Exception:
         return "unknown"
+
+
+def _git_is_dirty(repo_root: Path) -> bool | None:
+    try:
+        res = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return bool(res.stdout.strip())
+    except Exception:
+        return None
+
+
+def compute_code_identity(
+    repo_root: Path,
+    *,
+    pipeline_dir: Path | None = None,
+) -> dict[str, Any]:
+    """Compute verifiable, non-circular code identity for future pipeline executions.
+
+    The pipeline fingerprint hashes only the sorted Python source files under
+    `scripts/research/hydrology/`, never `run_manifest.json` or git commit metadata,
+    eliminating circular dependencies between the manifest and commits.
+    """
+    pkg_dir = pipeline_dir or (repo_root / "scripts" / "research" / "hydrology")
+    py_files = sorted(p for p in pkg_dir.rglob("*.py") if p.is_file())
+    combined = hashlib.sha256()
+    file_entries: list[dict[str, str]] = []
+    for path in py_files:
+        try:
+            rel = path.relative_to(repo_root).as_posix()
+        except ValueError:
+            rel = path.relative_to(pkg_dir).as_posix()
+        file_sha = sha256_file(path)
+        file_entries.append({"relative_path": rel, "sha256": file_sha})
+        combined.update(f"{rel}:{file_sha}\n".encode("utf-8"))
+
+    return {
+        "git_base_commit": _git_commit(repo_root),
+        "git_working_tree_dirty": _git_is_dirty(repo_root),
+        "pipeline_fingerprint_sha256": combined.hexdigest(),
+        "pipeline_file_count": len(file_entries),
+        "pipeline_files": file_entries,
+        "pipeline_version": PIPELINE_VERSION,
+        "parser_version": PARSER_VERSION,
+        "python_version": platform.python_version(),
+    }
 
 
 def _build_station_inventory(raw_root: Path) -> dict[str, Any]:
@@ -364,13 +415,15 @@ def run_pipeline(
             }
         )
 
+    code_identity = compute_code_identity(repo_root)
     manifest = {
-        "schema_version": 1,
+        "schema_version": 2,
         "pipeline_version": PIPELINE_VERSION,
         "parser_version": PARSER_VERSION,
         "mode": mode,
         "generated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "git_commit": _git_commit(repo_root),
+        "git_commit": code_identity["git_base_commit"],
+        "code_identity": code_identity,
         "environment": {
             "python_version": platform.python_version(),
             "platform": platform.platform(),
@@ -401,12 +454,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--force-download", action="store_true")
     parser.add_argument("--verify-manifest", action="store_true")
     parser.add_argument(
+        "--verify-only",
+        action="store_true",
+        help="Verify SHA-256 and byte sizes in existing run_manifest.json without re-running or overwriting it",
+    )
+    parser.add_argument(
         "--repo-root",
         default=str(Path(__file__).resolve().parents[3]),
         help="Repository root directory",
     )
     args = parser.parse_args(argv)
     repo_root = Path(args.repo_root).resolve()
+
+    if args.verify_only:
+        return 0 if verify_manifest(repo_root) else 1
 
     if args.verify_manifest and args.mode == "offline":
         run_pipeline(

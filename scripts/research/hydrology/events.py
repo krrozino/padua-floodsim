@@ -120,7 +120,7 @@ def extract_candidate_events(
     for idx, ep in enumerate(episodes, start=1):
         start_dt = ep[0][0]
         end_dt = ep[-1][0]
-        peak_dt, peak_val, peak_iso = max(ep, key=lambda x: x[1])
+        _, peak_val, peak_iso = max(ep, key=lambda x: x[1])
         dur_h = round((end_dt - start_dt).total_seconds() / 3600.0, 2)
 
         if peak_val >= 310.0:

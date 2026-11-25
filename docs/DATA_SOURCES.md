@@ -345,9 +345,9 @@ sem uma transformação documentada.
 
 ### Achados de auditoria (2026-11-25 — `EXP-2026-001`)
 
-- O endpoint XML público `https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.xml` identifica `<estacao codigo="213042120" tipo="Plu/Flu">` e expõe janela móvel de ~10 dias (961 registros, passo de 15 min, `"Dado Nulo"` como sentinela ausente).
+- O endpoint XML público `https://alertadecheias.inea.rj.gov.br/alertadecheias/21304212020.xml` identifica `<estacao codigo="213042120" tipo="Plu/Flu">` e expõe janela móvel de ~10 dias (961 registros, passo de 15 min, `"Dado Nulo"` como sentinela ausente); acesso público HTTP 200 não comprova autorização irrestrita de armazenamento ou redistribuição.
 - Não há série histórica plurianual pública nem metadados de zero da régua/datum nesse endpoint.
-- Em 926 pares simultâneos de 15 min com `58790002` (`2026-11-15..2026-11-25`), a diferença `INEA − RHN` variou entre `+88,0 cm` e `+159,0 cm` (média `+111,02 cm`, desvio `13,95 cm`). **Decisão:** `NO-GO` para associação automática com manchas SGB; solicitação formal de histórico e zero da régua preparada em `docs/experiments/HIDROWEBSERVICE_ACCESS_REQUEST.md`.
+- Em 926 pares simultâneos de 15 min com `58790002` (`2026-11-15..2026-11-25`), com as estações em locais físicos distintos, a diferença `INEA − RHN` variou entre `+88,0 cm` e `+159,0 cm` (média `+111,02 cm`, desvio `13,95 cm`), o que não sustenta conversão direta (sem afirmar diferença de datum comprovada sem os metadados oficiais). **Decisão:** `NO-GO` para associação automática com manchas SGB; solicitação formal de histórico e zero da régua preparada em `docs/experiments/HIDROWEBSERVICE_ACCESS_REQUEST.md`.
 
 ---
 
@@ -452,9 +452,9 @@ Essa auditoria é candidata a **Work**, pois exige investigação multifuente e 
 
 ### Resultados iniciais da auditoria (`2026-11-25 — EXP-2026-001`)
 
-- Séries de `2020-01-01` a `2026-11-25` adquiridas via `telemetriaws1.ana.gov.br` para `58790002`, `58788600` e estação complementar a montante `58770000` (Cataguases, SGB-CPRM, `15 min`), além de inventário dos 5 pluviômetros em Santo Antônio de Pádua (`2142067`, `2141094`, `2142083`, `2142049`, `2142058`).
-- `58788600` apresentou 78 episódios de valor travado (*flatline* >= 24 h, `6.276 h` no total), incluindo janeiro/2023 (quando Pádua II atingiu `428 cm` e `337 cm`) e setembro/2025 (pico anômalo `1.012 cm` durante estiagem em Cataguases e Pádua). A defasagem de máxima correlação não é fixa em 8 h (variou de `4 h` a `6 h` entre cheias válidas `>= 310 cm`, com máximo global em `7 h`).
-- Detalhes, manifestos SHA-256, eventos candidatos e piloto exploratório `B0/B1` registrados em `docs/experiments/EXP-2026-001-historical-hydrological-datasets.md` e `data/metadata/hydrology/`.
+- Séries de `2020-01-01` a `2026-11-25` adquiridas via `telemetriaws1.ana.gov.br` para `58790002`, `58788600` e estação complementar a montante `58770000` (Cataguases, SGB-CPRM, `15 min`), além de inventário dos 5 pluviômetros em Santo Antônio de Pádua (`2142067`, `2141094`, `2142083`, `2142049`, `2142058`). Acesso público HTTP 200 não é tratado como licença irrestrita de armazenamento ou redistribuição.
+- `58788600` apresentou 78 episódios de valor constante (`suspect_flatline >= 24 h`, `6.276 h` no total — suspeita de qualidade que não comprova isoladamente defeito instrumental, sem descarte automático da estação) e pico anômalo em setembro/2025; em `58770000`, `r = 0,9302` em `16 h` ocorreu no limite da janela testada (`0..16 h`) e não define tempo de propagação nem prova ganho preditivo.
+- Detalhes, manifestos SHA-256 (com reprodução de inputs locais classificada como `BLOCKED_LOCAL_DATA` em Cloud), eventos candidatos, divergência pendente de jan/2023 (`428 cm` vs `431 cm` SGB), piloto exploratório `B0/B1` e protocolo seguinte registrados em `docs/experiments/EXP-2026-001-historical-hydrological-datasets.md`, `docs/experiments/EXP-2026-002-forecast-protocol.md` e `data/metadata/hydrology/`.
 
 ---
 

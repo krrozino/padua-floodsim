@@ -9,7 +9,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.research.hydrology.acquire import safe_download, sha256_file, validate_url
+from scripts.research.hydrology.acquire import (
+    safe_download,
+    sha256_file,
+    validate_url,
+    verify_reusable_artifact,
+)
 from scripts.research.hydrology.config import STATIONS, parse_local_timestamp
 from scripts.research.hydrology.normalize import (
     deduplicate_and_sort,
@@ -23,7 +28,11 @@ from scripts.research.hydrology.parse import (
 )
 from scripts.research.hydrology.events import extract_candidate_events
 from scripts.research.hydrology.pilot import build_aligned_hourly_rows, run_exploratory_pilot
-from scripts.research.hydrology.pipeline import verify_manifest
+from scripts.research.hydrology.pipeline import (
+    compute_code_identity,
+    run_pipeline,
+    verify_manifest,
+)
 from scripts.research.hydrology.qc import analyze_variable_series, detect_stage_flatlines
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "synthetic"
@@ -35,12 +44,28 @@ class _FakeHeaders(dict):
 
 
 class _FakeResponse:
-    def __init__(self, body: bytes, status: int = 200, content_length: str | None = None):
+    def __init__(
+        self,
+        body: bytes,
+        status: int = 200,
+        content_length: str | None = None,
+        location: str | None = None,
+        url: str | None = None,
+    ):
         self._buf = io.BytesIO(body)
         self.status = status
+        self._url = url
         self.headers = _FakeHeaders()
         if content_length is not None:
             self.headers["Content-Length"] = content_length
+        if location is not None:
+            self.headers["Location"] = location
+
+    def geturl(self) -> str | None:
+        return self._url
+
+    def close(self) -> None:
+        return None
 
     def read(self, n: int = -1) -> bytes:
         return self._buf.read(n)
@@ -347,6 +372,178 @@ class HydrologyPipelineTests(unittest.TestCase):
         self.assertEqual(ev["sustained_event_count"], 1)
         self.assertEqual(ev["events"][0]["hydrological_classification"], "suspected_telemetry_spike_artifact")
         self.assertEqual(ev["events"][1]["hydrological_classification"], "sustained_hydrological_event")
+
+    def test_15_redirect_validation_downgrade_allowlist_and_hop_limit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = Path(tmp) / "out.xml"
+
+            # Valid HTTPS redirect within ALLOWED_HOSTS succeeds
+            seen_urls: list[str] = []
+
+            def valid_redirect_opener(req: object, timeout: int = 10) -> _FakeResponse:
+                full_url = getattr(req, "full_url")
+                seen_urls.append(full_url)
+                if len(seen_urls) == 1:
+                    return _FakeResponse(
+                        b"",
+                        status=302,
+                        location="https://telemetriaws1.ana.gov.br/ServiceANA.asmx/redirected",
+                    )
+                return _FakeResponse(
+                    b"<ok/>",
+                    status=200,
+                    url="https://telemetriaws1.ana.gov.br/ServiceANA.asmx/redirected",
+                )
+
+            meta = safe_download(
+                "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/initial",
+                dest,
+                max_retries=1,
+                max_redirects=3,
+                opener=valid_redirect_opener,
+            )
+            self.assertEqual(len(seen_urls), 2)
+            self.assertEqual(
+                meta["url"],
+                "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/redirected",
+            )
+            self.assertEqual(dest.read_bytes(), b"<ok/>")
+
+            # HTTP downgrade redirect MUST be rejected before following
+            with self.assertRaisesRegex(ValueError, "non-HTTPS"):
+                safe_download(
+                    "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/start",
+                    dest,
+                    max_retries=1,
+                    opener=lambda req, timeout=10: _FakeResponse(
+                        b"",
+                        status=301,
+                        location="http://telemetriaws1.ana.gov.br/ServiceANA.asmx/downgraded",
+                    ),
+                )
+
+            # Redirect to non-allowlisted host MUST be rejected before following
+            with self.assertRaisesRegex(ValueError, "non-allowlisted"):
+                safe_download(
+                    "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/start",
+                    dest,
+                    max_retries=1,
+                    opener=lambda req, timeout=10: _FakeResponse(
+                        b"",
+                        status=302,
+                        location="https://evil.example.org/payload.xml",
+                    ),
+                )
+
+            # Redirect loop exceeding max_redirects MUST fail closed
+            with self.assertRaisesRegex(ValueError, "Exceeded maximum redirects"):
+                safe_download(
+                    "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/loop",
+                    dest,
+                    max_retries=1,
+                    max_redirects=2,
+                    opener=lambda req, timeout=10: _FakeResponse(
+                        b"",
+                        status=302,
+                        location="https://telemetriaws1.ana.gov.br/ServiceANA.asmx/loop",
+                    ),
+                )
+
+            # Bounded retry on transient OSError
+            attempts = {"n": 0}
+
+            def flaky_opener(req: object, timeout: int = 10) -> _FakeResponse:
+                attempts["n"] += 1
+                if attempts["n"] < 2:
+                    raise TimeoutError("transient timeout")
+                return _FakeResponse(b"<recovered/>", status=200)
+
+            meta_retry = safe_download(
+                "https://telemetriaws1.ana.gov.br/ServiceANA.asmx/flaky",
+                dest,
+                max_retries=2,
+                opener=flaky_opener,
+            )
+            self.assertEqual(attempts["n"], 2)
+            self.assertEqual(meta_retry["bytes_received"], len(b"<recovered/>"))
+
+    def test_16_reuse_existing_artifact_verifies_recorded_checksum(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / "chunk.xml"
+            artifact.write_bytes(b"<xml>original</xml>")
+            good_sha = sha256_file(artifact)
+            good_meta = {"sha256": good_sha, "bytes_received": artifact.stat().st_size}
+
+            sha, size = verify_reusable_artifact(artifact, "ana/chunk.xml", good_meta)
+            self.assertEqual(sha, good_sha)
+            self.assertEqual(size, artifact.stat().st_size)
+
+            # Corrupted file on disk MUST fail closed (never silently recompute checksum)
+            artifact.write_bytes(b"<xml>corrupted!</xml>")
+            with self.assertRaisesRegex(ValueError, "Checksum mismatch"):
+                verify_reusable_artifact(artifact, "ana/chunk.xml", good_meta)
+
+            # Existing file without prior recorded checksum MUST fail closed
+            with self.assertRaisesRegex(ValueError, "without recorded SHA-256"):
+                verify_reusable_artifact(artifact, "ana/chunk.xml", None)
+
+    def test_17_code_identity_fingerprint_is_deterministic_and_non_circular(self) -> None:
+        id1 = compute_code_identity(REPO_ROOT)
+        id2 = compute_code_identity(REPO_ROOT)
+        self.assertEqual(id1["pipeline_fingerprint_sha256"], id2["pipeline_fingerprint_sha256"])
+        self.assertEqual(len(id1["pipeline_fingerprint_sha256"]), 64)
+        self.assertGreaterEqual(id1["pipeline_file_count"], 8)
+        self.assertIn("git_base_commit", id1)
+        self.assertIn("git_working_tree_dirty", id1)
+
+        # Synthetic offline run_pipeline produces schema v2 manifest with non-circular code_identity
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pkg = root / "scripts" / "research" / "hydrology"
+            pkg.mkdir(parents=True)
+            (pkg / "dummy.py").write_text("VALUE = 1\n", encoding="utf-8")
+
+            raw_dir = root / "data" / "raw" / "hydrology" / "ana" / "telemetric" / "58790002"
+            raw_dir.mkdir(parents=True)
+            raw_xml = raw_dir / "synthetic.xml"
+            raw_xml.write_bytes((FIXTURES / "synthetic_ana_telemetric.xml").read_bytes())
+            raw_sha = sha256_file(raw_xml)
+            acq_index = {
+                "schema_version": 1,
+                "start_date": "2023-01-08",
+                "end_date": "2023-01-08",
+                "artifacts": [
+                    {
+                        "relative_path": "ana/telemetric/58790002/synthetic.xml",
+                        "provider": "ANA_RHN_SOAP",
+                        "station_id": "58790002",
+                        "dataset_kind": "telemetric_series",
+                        "source_url": "https://telemetriaws1.ana.gov.br/synthetic",
+                        "retrieved_at": "2026-11-25T03:00:00Z",
+                        "bytes_received": raw_xml.stat().st_size,
+                        "sha256": raw_sha,
+                    }
+                ],
+            }
+            (root / "data" / "raw" / "hydrology" / "acquisition_index.json").write_text(
+                json.dumps(acq_index), encoding="utf-8"
+            )
+
+            fp_before = compute_code_identity(root)["pipeline_fingerprint_sha256"]
+            manifest = run_pipeline(root, mode="offline", start_date="2023-01-08", end_date="2023-01-08")
+            fp_after = compute_code_identity(root)["pipeline_fingerprint_sha256"]
+
+            # Writing run_manifest.json must NOT alter the pipeline fingerprint (zero circularity)
+            self.assertEqual(fp_before, fp_after)
+            self.assertEqual(manifest["code_identity"]["pipeline_fingerprint_sha256"], fp_before)
+            self.assertEqual(manifest["schema_version"], 2)
+            self.assertTrue(verify_manifest(root))
+
+            # Modifying a pipeline .py file MUST change the fingerprint
+            (pkg / "dummy.py").write_text("VALUE = 2\n", encoding="utf-8")
+            self.assertNotEqual(
+                compute_code_identity(root)["pipeline_fingerprint_sha256"], fp_before
+            )
 
 
 if __name__ == "__main__":

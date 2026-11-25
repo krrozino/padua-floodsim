@@ -1,0 +1,37 @@
+name: Research Hydrology CI
+
+on:
+  pull_request:
+    paths:
+      - "scripts/research/**"
+      - "tests/research/**"
+      - "data/metadata/hydrology/**"
+      - ".github/workflows/research-hydrology-ci.yml"
+  push:
+    branches:
+      - main
+      - "research/**"
+    paths:
+      - "scripts/research/**"
+      - "tests/research/**"
+      - "data/metadata/hydrology/**"
+      - ".github/workflows/research-hydrology-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  python-research-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run offline deterministic research hydrology tests
+        run: python -m unittest discover -s tests/research -v

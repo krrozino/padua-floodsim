@@ -11,6 +11,9 @@ from typing import Any
 
 from .config import CALIBRATION_END_UTC, EVALUATION_START_UTC, PILOT_HORIZONS_HOURS
 
+HOUR_SUFFIX_UTC = ":00:00Z"
+HORIZON_RANGE_LABEL = "+1h..+10h"
+
 ALIGNED_FIELDS: tuple[str, ...] = (
     "timestamp_utc_iso",
     "padua_stage_cm",
@@ -40,6 +43,12 @@ def _floor_to_causal_hour_bucket(dt: datetime) -> datetime:
     return dt.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
 
 
+def _flatline_indicator(stage_entry: tuple[float, bool] | None) -> int | None:
+    if stage_entry is None:
+        return None
+    return 1 if stage_entry[1] else 0
+
+
 def build_aligned_hourly_rows(
     station_records: dict[str, list[dict[str, Any]]],
 ) -> list[dict[str, Any]]:
@@ -59,11 +68,11 @@ def build_aligned_hourly_rows(
             if val is None or not ts:
                 continue
             var = rec["variable"]
-            if var == "stage_cm" and ts.endswith(":00:00Z"):
+            if var == "stage_cm" and ts.endswith(HOUR_SUFFIX_UTC):
                 is_flat = "suspect_flatline" in rec.get("quality_flags", [])
                 stage_maps[st_id][ts] = (float(val), is_flat)
                 exact_hours.add(ts)
-            elif var == "discharge_m3s" and ts.endswith(":00:00Z"):
+            elif var == "discharge_m3s" and ts.endswith(HOUR_SUFFIX_UTC):
                 discharge_maps[st_id][ts] = float(val)
                 exact_hours.add(ts)
             elif var == "rainfall_mm":
@@ -91,7 +100,7 @@ def build_aligned_hourly_rows(
                 "padua_discharge_m3s": discharge_maps["58790002"].get(ts),
                 "padua_rain_1h_mm": rain_1h_maps["58790002"].get(ts),
                 "brauna_stage_cm": None if b_st is None else b_st[0],
-                "brauna_stage_flatline": None if b_st is None else (1 if b_st[1] else 0),
+                "brauna_stage_flatline": _flatline_indicator(b_st),
                 "brauna_discharge_m3s": discharge_maps["58788600"].get(ts),
                 "brauna_rain_1h_mm": rain_1h_maps["58788600"].get(ts),
                 "cataguases_stage_cm": None if c_st is None else c_st[0],
@@ -124,7 +133,7 @@ def _pearson(xs: list[float], ys: list[float]) -> float | None:
     num = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
     dx = math.sqrt(sum((x - mx) ** 2 for x in xs))
     dy = math.sqrt(sum((y - my) ** 2 for y in ys))
-    if dx == 0.0 or dy == 0.0:
+    if dx <= 0.0 or dy <= 0.0:
         return None
     return num / (dx * dy)
 
@@ -143,7 +152,7 @@ def _forecast_metrics(obs: list[float], pred: list[float]) -> dict[str, Any]:
     std_o = statistics.pstdev(obs) if n > 1 else 0.0
     std_p = statistics.pstdev(pred) if n > 1 else 0.0
     kge = None
-    if r is not None and mean_o != 0.0 and std_o > 0.0:
+    if r is not None and not math.isclose(mean_o, 0.0, abs_tol=1e-12) and std_o > 0.0:
         alpha = std_p / std_o
         beta = mean_p / mean_o
         kge = 1.0 - math.sqrt((r - 1.0) ** 2 + (alpha - 1.0) ** 2 + (beta - 1.0) ** 2)
@@ -192,8 +201,8 @@ def compute_lag_diagnostics(
     for ev in events:
         if ev["peak_stage_cm"] < 310.0:
             continue
-        start_ts = ev["start_utc"][:13] + ":00:00Z"
-        end_ts = ev["end_utc"][:13] + ":00:00Z"
+        start_ts = ev["start_utc"][:13] + HOUR_SUFFIX_UTC
+        end_ts = ev["end_utc"][:13] + HOUR_SUFFIX_UTC
         i0 = max(0, ts_to_idx.get(start_ts, 0) - 24)
         i1 = min(n, ts_to_idx.get(end_ts, n - 1) + 12)
         b_lags = scan_lags("brauna_stage_cm", "brauna_stage_flatline", i0, i1)
@@ -342,21 +351,21 @@ def evaluate_feasibility(
             ),
         },
         "model_family_feasibility": {
-            "persistence_B0": {"feasible": True, "horizons": "+1h..+10h", "status": "GO (pilot executed)"},
-            "recent_trend_B1": {"feasible": True, "horizons": "+1h..+10h", "status": "GO (pilot executed)"},
+            "persistence_B0": {"feasible": True, "horizons": HORIZON_RANGE_LABEL, "status": "GO (pilot executed)"},
+            "recent_trend_B1": {"feasible": True, "horizons": HORIZON_RANGE_LABEL, "status": "GO (pilot executed)"},
             "padua_autoregressive_M1": {
                 "feasible": True,
-                "horizons": "+1h..+10h",
+                "horizons": HORIZON_RANGE_LABEL,
                 "status": "GO for future experiment (6+ years 15-min series, multiple flood events)",
             },
             "barra_do_brauna_upstream_M2": {
                 "feasible": True,
-                "horizons": "+1h..+10h",
+                "horizons": HORIZON_RANGE_LABEL,
                 "status": "CONDITIONAL_GO (must exclude flatlined intervals such as Jan 2023; pair with 58770000 Cataguases)",
             },
             "precipitation_M3": {
                 "feasible": True,
-                "horizons": "+1h..+10h",
+                "horizons": HORIZON_RANGE_LABEL,
                 "status": "CONDITIONAL_GO (telemetric station rainfall available at 58790002/58788600/58770000; dedicated pluviometer 2142067 also audited in ANA inventory)",
             },
         },
