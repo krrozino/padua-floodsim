@@ -8,18 +8,21 @@ Plataforma acadêmica e experimental de **monitoramento, previsão de curto praz
 
 ## Estado atual — 25/11/2026
 
-**Produção / última release:** V1 cartográfica e pre-release `v0.1.0-academic` (tag não alterada). **Candidata em revisão:** [PR #44](https://github.com/krrozino/padua-floodsim/pull/44), que consolida #41–#43. A auditoria do acervo INEA [#45](https://github.com/krrozino/padua-floodsim/pull/45) é independente. Nenhum deles está integrado à main nesta data.
+**Produção / última release:** V1 cartográfica e pre-release `v0.1.0-academic` (tag não alterada). **Candidata em revisão:** [PR #44](https://github.com/krrozino/padua-floodsim/pull/44) (consolida #41–#43), com evolução de interface pública funcional em R02-B (Issue #21, branch `feat/research-r02-public-platform`). A auditoria do acervo INEA [#45](https://github.com/krrozino/padua-floodsim/pull/45) permanece independente. Nenhum deles está integrado à main nesta data.
 
-### Funcionalidades e estado da candidata R01
+### Funcionalidades e estado da candidata R01 / R02-B
 
 A V1 cartográfica usa como referência as **11 manchas oficiais do SGB entre 3,00 m e 5,50 m**, em intervalos de 25 cm.
 
-Na candidata R01:
+Na candidata R01 / R02-B:
 
-- a mancha exibida é `official_reference`, não uma previsão FloodSim;
+- **plataforma pública funcional (R02-B / #21):** navegação real em quatro módulos (*Mapa e cenários*, *Monitoramento*, *Dados e fontes* e *Sobre e metodologia*), sem botões desabilitados "em breve", sem selos de protótipo e sem marcadores/métricas fictícias de bairros ou ruas no fluxo público;
+- **primeira métrica espacial derivada (`derived`):** cálculo geodésico (elipsoide WGS84 com união topológica prévia via `polygon-clipping`, método `wgs84-ellipsoidal-geodesic-union-v1`) da **Área da mancha selecionada** sobre os polígonos oficiais efetivamente carregados, omitida automaticamente se inválida ou vazia;
+- **camada real de estações hidrológicas:** pontos verificados documentalmente (INEA Santo Antônio de Pádua `213042120` / `ANA FLU 58774000` e INEA Ponte Paraoquena `ANA FLU 58789000`), com omissão explícita da estação RHN `58790002` no mapa até resolução da divergência de coordenadas (~2,4 km) entre ANA e SGB;
+- a mancha exibida é `official_reference` (apresentada ao cidadão como *Cenário oficial SGB*), não uma previsão FloodSim nem extensão atual do rio;
 - não há profundidade real calculada a partir das manchas SGB;
 - os bairros ainda não possuem polígonos oficiais integrados;
-- o **monitoramento observado INEA (`213042120`)** substituiu o antigo painel mock e está implementado e testado offline; porém, a coleta ao vivo permanece **desativada por padrão** no servidor (`FLOODSIM_ENABLE_LIVE_INEA=true` para ativação deliberada), exibindo estado honesto de indisponibilidade/homologação até validação operacional em ambiente com egresso (smoke CLOUD bloqueado por rede) e confirmação institucional das condições de consumo;
+- o **monitoramento observado INEA (`213042120`)** substituiu o antigo painel mock e está implementado e testado offline; porém, a coleta ao vivo permanece **desativada por padrão** no servidor (`FLOODSIM_ENABLE_LIVE_INEA=true` para ativação deliberada), exibindo mensagem objetiva de indisponibilidade com link oficial do INEA até validação operacional e confirmação institucional das condições de consumo;
 - o **pipeline histórico em Python** (`scripts/research/hydrology/`) está implementado com CI determinístico offline; o experimento [`EXP-2026-001`](docs/experiments/EXP-2026-001-historical-hydrological-datasets.md) permanece **exploratório** (reprodução com os inputs locais originais classificada como `BLOCKED_LOCAL_DATA` em Cloud) e o protocolo [`EXP-2026-002`](docs/experiments/EXP-2026-002-forecast-protocol.md) ainda **não foi executado**;
 - **nenhum crosswalk** entre a estação INEA (`213042120`) e a referência SGB/RHN (`58790002`) está validado (`crosswalkValidated: false`);
 - **nenhuma previsão temporal** está validada ou autorizada para exposição pública.

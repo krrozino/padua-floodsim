@@ -267,13 +267,12 @@ test("replaces mock panel, displays observed states including zero stage, and ha
   await expect(page.locator("body")).not.toContainText("4,35 m");
   await expect(page.locator("body")).not.toContainText("62 mm");
 
-  await expect(card).toContainText("Carregando...");
   await expect(card).toContainText("Consultando...");
 
   mode = "fresh";
   releaseHold?.();
 
-  await expect(card).toContainText("observed");
+  await expect(card).toContainText("Dado observado · INEA");
   await expect(card).toContainText("Atualizado");
   await expect(card).toContainText("4,17 m");
   await expect(card).toContainText("417 cm na régua INEA");
@@ -284,7 +283,7 @@ test("replaces mock panel, displays observed states including zero stage, and ha
   await expect(card).toContainText("0,2 mm");
 
   const sourceLink = card.getByRole("link", {
-    name: /Fonte oficial INEA \(213042120\)/,
+    name: /Monitoramento oficial INEA \(213042120\)/,
   });
   await expect(sourceLink).toHaveAttribute(
     "href",
@@ -297,7 +296,7 @@ test("replaces mock panel, displays observed states including zero stage, and ha
   await expect(card).toContainText("0,00 m");
   await expect(card).toContainText("0 cm na régua INEA");
   await expect(card).toContainText("Não calculável");
-  await expect(card).not.toContainText("Chuva observada");
+  await expect(card).not.toContainText("Chuva acumulada");
 
   // Stale reading state
   mode = "stale";
@@ -305,11 +304,13 @@ test("replaces mock panel, displays observed states including zero stage, and ha
   await expect(card).toContainText("Desatualizado");
   await expect(card).toContainText("4,17 m");
 
-  // Unavailable upstream state -> no numbers shown
+  // Unavailable upstream state -> objective citizen message & no invented numbers
   mode = "unavailable";
   await card.getByRole("button", { name: "Atualizar leitura" }).click();
-  await expect(card).toContainText("Fonte indisponível");
   await expect(card).toContainText("Indisponível");
+  await expect(card).toContainText(
+    "Consulta automática indisponível no momento. Consulte o monitoramento oficial do INEA.",
+  );
   await expect(card).not.toContainText("4,17 m");
 
   // Invalid payload state -> no numbers shown
@@ -429,15 +430,15 @@ test("keeps INEA observations scientifically independent from SGB scenarios acro
   // INEA reads 5,20 m, but SGB slider MUST remain at its default 4,25 m scenario.
   await expect(card).toContainText("5,20 m");
   await expect(sliderCard).toContainText("4,25 m");
-  await expect(page.locator(".demo-badge")).toContainText("4,25 m");
+  await expect(page.locator(".scenario-status-badge")).toContainText("4,25 m");
 
   // Changing SGB scenario must never mutate observed INEA reading.
   await page.getByRole("button", { name: "3,00 m", exact: true }).click();
-  await expect(page.locator(".demo-badge")).toContainText("3,00 m");
+  await expect(page.locator(".scenario-status-badge")).toContainText("3,00 m");
   await expect(card).toContainText("5,20 m");
 
   await page.getByRole("button", { name: "5,50 m", exact: true }).click();
-  await expect(page.locator(".demo-badge")).toContainText("5,50 m");
+  await expect(page.locator(".scenario-status-badge")).toContainText("5,50 m");
   await expect(card).toContainText("5,20 m");
 
   await page.screenshot({ path: "test-results/hydro-desktop.png" });
@@ -494,7 +495,7 @@ test("rejects refresh=1 and arbitrary query params at API boundary and preserves
 
   await page.goto("/", { waitUntil: "domcontentloaded" });
   const card = page.locator("#realtime-card");
-  await expect(card).toContainText("zero da régua e datum ainda não identificados");
+  await expect(card).toContainText("zero da régua e o datum do INEA ainda não foram identificados");
   await expect(card).toContainText("equivalência entre as referências não foi estabelecida");
   await expect(card).not.toContainText("não são equivalentes");
 });
