@@ -241,6 +241,22 @@ export function normalizeStageReadingToCm(
  * `m` with cm parenthetical for INEA), returning `"Não disponível"` when absent.
  * Never substitutes `0` for missing data.
  */
+export function formatTrimmedDecimalPtBr(
+  value: number,
+  maxDecimals: number,
+): string {
+  let trimmed = value.toFixed(maxDecimals);
+  if (maxDecimals > 0 && trimmed.includes(".")) {
+    while (trimmed.endsWith("0")) {
+      trimmed = trimmed.slice(0, -1);
+    }
+    if (trimmed.endsWith(".")) {
+      trimmed = trimmed.slice(0, -1);
+    }
+  }
+  return trimmed.replace(".", ",");
+}
+
 export function formatHistoricalStage(
   peakStageCm: number | null,
   rawPeakValue: number | null,
@@ -261,15 +277,11 @@ export function formatHistoricalStage(
         ? 3
         : 2;
     const formattedMeters = rawPeakValue.toFixed(decimals).replace(".", ",");
-    const formattedCm = Number.isInteger(peakStageCm)
-      ? `${peakStageCm}`
-      : peakStageCm.toFixed(1).replace(".", ",");
+    const formattedCm = formatTrimmedDecimalPtBr(peakStageCm, 1);
     return `${formattedMeters} m (${formattedCm} cm na régua INEA)`;
   }
 
-  const formattedCm = Number.isInteger(peakStageCm)
-    ? `${peakStageCm}`
-    : peakStageCm.toFixed(2).replace(/,?0+$/, "").replace(".", ",");
+  const formattedCm = formatTrimmedDecimalPtBr(peakStageCm, 2);
   const formattedMeters = (peakStageCm / 100).toFixed(2).replace(".", ",");
   return `${formattedCm} cm (${formattedMeters} m)`;
 }
@@ -300,10 +312,7 @@ export function formatDurationHours(hours: number | null): string {
   if (hours === null || !Number.isFinite(hours)) {
     return "Não disponível";
   }
-  const formatted = Number.isInteger(hours)
-    ? `${hours}`
-    : hours.toFixed(2).replace(/0$/, "").replace(".", ",");
-  return `${formatted} h`;
+  return `${formatTrimmedDecimalPtBr(hours, 2)} h`;
 }
 
 export function formatCoveragePct(coveragePct: number | null): string {

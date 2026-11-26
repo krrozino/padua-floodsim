@@ -43,7 +43,7 @@ export function hasVerifiedStationMeasurement(
   stationId: HistoricalStationId,
 ): boolean {
   const obs = findStationObservation(event, stationId);
-  if (!obs || obs.peakStageCm === null || !Number.isFinite(obs.peakStageCm)) {
+  if (typeof obs?.peakStageCm !== "number" || !Number.isFinite(obs.peakStageCm)) {
     return false;
   }
   return (
@@ -420,7 +420,7 @@ export function resolveHistoricalMapAssociation(
   }
 
   const minSgb = SGB_FLOOD_LEVELS_CM[0];
-  const maxSgb = SGB_FLOOD_LEVELS_CM[SGB_FLOOD_LEVELS_CM.length - 1];
+  const maxSgb = SGB_FLOOD_LEVELS_CM.at(-1) ?? 550;
 
   if (sgbObs.peakStageCm < minSgb || sgbObs.peakStageCm > maxSgb) {
     return {

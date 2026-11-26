@@ -478,8 +478,8 @@ export function EventDetailPanel({
         ) : (
           <div className="history-hydrograph-blocked-box">
             <strong>
-              Séries contínuas e replay interativo indisponíveis neste ambiente (
-              <code>BLOCKED_LOCAL_DATA</code> / autorização pendente)
+              Séries contínuas e replay interativo indisponíveis neste ambiente{" "}
+              (<code>BLOCKED_LOCAL_DATA</code> / autorização pendente)
             </strong>
             <p>
               O motor de hidrogramas e replay temporal (preservação explícita de

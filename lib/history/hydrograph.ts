@@ -284,7 +284,7 @@ export function prepareHistoricalHydrograph(input: {
     ...summary,
     stationThresholds: station.thresholds,
     startEpochMs: validPoints[0].epochMs,
-    endEpochMs: validPoints[validPoints.length - 1].epochMs,
+    endEpochMs: (validPoints.at(-1) ?? validPoints[0]).epochMs,
   };
 }
 

@@ -87,7 +87,7 @@ function TimelineEventCard({
         </span>
 
         <div className="history-card-peaks">
-          {sgbObs && sgbObs.peakStageCm !== null && (
+          {typeof sgbObs?.peakStageCm === "number" && (
             <span className="peak-chip sgb">
               RHN 58790002:{" "}
               <b>
@@ -100,7 +100,7 @@ function TimelineEventCard({
             </span>
           )}
 
-          {ineaObs && ineaObs.peakStageCm !== null && (
+          {typeof ineaObs?.peakStageCm === "number" && (
             <span className="peak-chip inea">
               INEA 213042120:{" "}
               <b>
@@ -351,10 +351,10 @@ export function FloodHistorySection({
           </div>
 
           <div className="history-filters-status">
-            <span role="status" aria-live="polite">
+            <output aria-live="polite">
               Exibindo <strong>{filteredEvents.length}</strong> de{" "}
               {HISTORICAL_FLOOD_EVENTS.length} eventos catalogados.
-            </span>
+            </output>
             {hasActiveFilters && (
               <button
                 type="button"
@@ -369,7 +369,7 @@ export function FloodHistorySection({
 
         {/* Master-Detail: Chronological Timeline + Selected Event Details */}
         {filteredEvents.length === 0 ? (
-          <div className="card history-empty-state" role="status">
+          <output className="card history-empty-state" aria-live="polite">
             <strong>
               Nenhum evento encontrado para os filtros selecionados.
             </strong>
@@ -377,7 +377,7 @@ export function FloodHistorySection({
               Ajuste o ano, a estação hidrológica ou a classe documental para
               visualizar os registros catalogados.
             </p>
-          </div>
+          </output>
         ) : (
           <div className="history-master-detail">
             <div

@@ -12,6 +12,7 @@ import {
   formatHistoricalDischarge,
   formatHistoricalRain,
   formatHistoricalStage,
+  formatTrimmedDecimalPtBr,
 } from "@/lib/history/normalize";
 
 const COMPARABLE_STATIONS = HISTORICAL_STATION_REGISTRY.filter(
@@ -25,10 +26,10 @@ function formatSignedDeltaStage(
 ): string {
   const sign = deltaPeakCm > 0 ? "+" : "";
   if (rawUnit === "m") {
-    const rawStr = `${sign}${deltaRawPeak.toFixed(3).replace(/0+$/, "").replace(/,$/, "").replace(".", ",")} m`;
-    return `${rawStr} (${sign}${deltaPeakCm.toFixed(1).replace(".0", "").replace(".", ",")} cm)`;
+    const rawStr = `${sign}${formatTrimmedDecimalPtBr(deltaRawPeak, 3)} m`;
+    return `${rawStr} (${sign}${formatTrimmedDecimalPtBr(deltaPeakCm, 1)} cm)`;
   }
-  return `${sign}${deltaPeakCm.toFixed(2).replace(/\.?0+$/, "").replace(".", ",")} cm`;
+  return `${sign}${formatTrimmedDecimalPtBr(deltaPeakCm, 2)} cm`;
 }
 
 function formatSignedNumber(value: number | null, unit: string, decimals = 1): string {

@@ -42,8 +42,7 @@ export function HistoricalHydrographViewer({
   const activeHydrograph: ReadyHydrograph = useMemo(() => {
     const startPt = hydrograph.points[rangeStartIdx] ?? hydrograph.points[0];
     const endPt =
-      hydrograph.points[rangeEndIdx] ??
-      hydrograph.points[hydrograph.points.length - 1];
+      hydrograph.points[rangeEndIdx] ?? hydrograph.points.at(-1);
     if (!startPt || !endPt || endPt.epochMs <= startPt.epochMs) {
       return hydrograph;
     }
@@ -250,7 +249,8 @@ export function HistoricalHydrographViewer({
             {replay.isPlaying ? "Pausar" : "Reproduzir evolução"}
           </button>
 
-          <div className="replay-speed-group" role="group" aria-label="Velocidade do replay">
+          <fieldset className="replay-speed-group">
+            <legend className="sr-only">Velocidade do replay</legend>
             {ALLOWED_REPLAY_SPEEDS.map((spd: ReplaySpeedMultiplier) => (
               <button
                 key={spd}
@@ -262,7 +262,7 @@ export function HistoricalHydrographViewer({
                 {spd}×
               </button>
             ))}
-          </div>
+          </fieldset>
         </div>
 
         <input

@@ -413,10 +413,10 @@ export function DataSourcesSection({
               <div>
                 <dt>Séries contínuas e direitos de terceiros</dt>
                 <dd>
-                  Arquivos brutos permanecem fora do Git (
-                  <code>BLOCKED_LOCAL_DATA</code> / autorizações #6, #37 e #46);
-                  fotografias de terceiros são referenciadas apenas por link
-                  externo com autoria, data e localização verificadas.
+                  Arquivos brutos permanecem fora do Git (<code>BLOCKED_LOCAL_DATA</code>{" "}
+                  / autorizações #6, #37 e #46); fotografias de terceiros são
+                  referenciadas apenas por link externo com autoria, data e
+                  localização verificadas.
                 </dd>
               </div>
             </dl>
