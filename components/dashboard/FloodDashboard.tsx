@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, useRef, useCallback } from "react";
+import { useMemo, useState, useRef, useCallback, useEffect } from "react";
+import { CompactScenarioControls } from "@/components/dashboard/CompactScenarioControls";
 import {
   FloodMap,
   type FloodLayerStatus,
@@ -17,6 +18,8 @@ import {
 } from "@/components/dashboard/PlatformSections";
 import { ScenarioAreaChart } from "@/components/dashboard/ScenarioAreaChart";
 import { ScenarioComparisonCard } from "@/components/dashboard/ScenarioComparisonCard";
+import type { HistoricalMapAssociationSelection } from "@/components/history/EventDetailPanel";
+import { FloodHistorySection } from "@/components/history/FloodHistorySection";
 import { HydroMonitoringCard } from "@/components/monitoring/HydroMonitoringCard";
 import { useHydroMonitoring } from "@/lib/hydro/useHydroMonitoring";
 import {
@@ -46,7 +49,12 @@ import {
 import { useCrossStagePointQuery } from "@/lib/sgb/useCrossStagePointQuery";
 import type { FloodGeometry } from "@/lib/sgb/useSgbFlood";
 
-export type PlatformSection = "mapa" | "monitoramento" | "fontes" | "sobre";
+export type PlatformSection =
+  | "mapa"
+  | "historico"
+  | "monitoramento"
+  | "fontes"
+  | "sobre";
 export type MapScenarioMode = "single" | "compare";
 
 function formatMetersFromCm(levelCm: number) {
@@ -145,6 +153,7 @@ function resolveMapBadgeText(
 
 const NAV_ITEMS: readonly { readonly id: PlatformSection; readonly label: string }[] = [
   { id: "mapa", label: "Mapa e cenários" },
+  { id: "historico", label: "Histórico" },
   { id: "monitoramento", label: "Monitoramento" },
   { id: "fontes", label: "Dados e fontes" },
   { id: "sobre", label: "Sobre e metodologia" },
@@ -156,6 +165,26 @@ export function FloodDashboard() {
   const [level, setLevel] = useState(4.25);
   const [compareLevelB, setCompareLevelB] = useState(5.5);
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
+  const [historicalMapContext, setHistoricalMapContext] =
+    useState<HistoricalMapAssociationSelection | null>(null);
+  const [isScenarioCollapsed, setIsScenarioCollapsed] = useState(false);
+  const [isMapFocus, setIsMapFocus] = useState(false);
+
+  const handleToggleMapFocus = useCallback(() => {
+    if (!isMapFocus) setIsScenarioCollapsed(true);
+    setIsMapFocus(!isMapFocus);
+  }, [isMapFocus]);
+
+  useEffect(() => {
+    if (!isMapFocus || isMethodologyOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        setIsMapFocus(false);
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isMapFocus, isMethodologyOpen]);
 
   const [layerStatus, setLayerStatus] = useState<FloodLayerStatus>({
     state: "loading",
@@ -347,10 +376,46 @@ export function FloodDashboard() {
   }, []);
 
   const handleSelectStageAndOpenMap = useCallback((nextLevel: number) => {
+    setHistoricalMapContext(null);
     setLevel(nextLevel);
     setMapMode("single");
     setActiveSection("mapa");
   }, []);
+
+  const handleSelectHistoricalMapScenario = useCallback(
+    (selection: HistoricalMapAssociationSelection) => {
+      setHistoricalMapContext(selection);
+      setLevel(selection.stageACm / 100);
+      if (selection.mode === "compare" && selection.stageBCm !== null) {
+        setCompareLevelB(selection.stageBCm / 100);
+        setMapMode("compare");
+      } else {
+        setMapMode("single");
+      }
+      setActiveSection("mapa");
+    },
+    [],
+  );
+
+  const handleInspectCoordinateFromHistory = useCallback((point: GeoPoint) => {
+    setSelectedPoint(point);
+    setPointOrigin("coordinates");
+    setActiveSection("mapa");
+    setFlyToPointToken((prev) => prev + 1);
+  }, []);
+
+  const activeHistoricalContext = useMemo(() => {
+    if (!historicalMapContext) return null;
+    if (historicalMapContext.mode !== mapMode) return null;
+    if (historicalMapContext.stageACm !== levelCm) return null;
+    if (
+      mapMode === "compare" &&
+      historicalMapContext.stageBCm !== levelBCm
+    ) {
+      return null;
+    }
+    return historicalMapContext;
+  }, [historicalMapContext, mapMode, levelCm, levelBCm]);
 
   const handleStepLevel = useCallback(
     (deltaMeters: number) => {
@@ -467,7 +532,7 @@ export function FloodDashboard() {
   }, [validDerivedArea, validDerivedAreaB]);
 
   return (
-    <div className="platform-root">
+    <div className={`platform-root ${isMapFocus && activeSection === "mapa" ? "is-map-focused" : ""}`}>
       {/* Top Navigation Bar */}
       <header className="topbar">
         <div className="brand">
@@ -525,10 +590,40 @@ export function FloodDashboard() {
               retryToken={retryToken}
               retryTokenB={retryTokenB}
               isVisible={activeSection === "mapa"}
+              isMapFocus={isMapFocus}
+              onToggleMapFocus={handleToggleMapFocus}
             />
 
             {/* Bottom Scenario Controls */}
-            <div className={`slider-card ${mapMode === "compare" ? "is-compare" : ""}`}>
+            <div className={`slider-card ${mapMode === "compare" ? "is-compare" : ""} ${isScenarioCollapsed ? "is-collapsed" : ""}`}>
+              <div className="scenario-panel-heading">
+                <strong>Controles de cota SGB</strong>
+                <button
+                  type="button"
+                  className="scenario-collapse-btn"
+                  aria-expanded={!isScenarioCollapsed}
+                  aria-controls="scenario-expanded-controls"
+                  onClick={() => setIsScenarioCollapsed((value) => !value)}
+                >
+                  {isScenarioCollapsed ? "Expandir controles" : "Recolher controles"}
+                </button>
+              </div>
+              {isScenarioCollapsed && (
+                <CompactScenarioControls
+                  mode={mapMode}
+                  levelCm={levelCm}
+                  levelBCm={levelBCm}
+                  onChangeLevel={setLevel}
+                  onChangeLevelB={setCompareLevelB}
+                  onStepLevel={handleStepLevel}
+                  onModeChange={setMapMode}
+                  onSwapLevels={handleSwapLevels}
+                  mapBadge={mapBadge}
+                  badgeState={badgeVisualState}
+                  onRetry={handleRetryActive}
+                />
+              )}
+              <div id="scenario-expanded-controls" hidden={isScenarioCollapsed}>
               <div className="slider-status-bar">
                 <div className={`scenario-status-badge ${badgeVisualState}`}>
                   <span
@@ -828,15 +923,106 @@ export function FloodDashboard() {
                   </div>
                 </div>
               )}
+              </div>
+              {isMapFocus && activeHistoricalContext?.historicalEquivalenceConfirmed === false && (
+                <p className="map-focus-exploration-note">
+                  Exploração independente de cenário SGB (2024), sem
+                  equivalência histórica confirmada. A mancha estática modelada
+                  não representa inundação observada.
+                </p>
+              )}
+              {isMapFocus && (
+                <p className="map-focus-notice">
+                  Esta plataforma não substitui os alertas e as orientações dos órgãos oficiais.
+                </p>
+              )}
             </div>
           </section>
 
           {/* Right Contextual Information Panel */}
-          <aside className="right-panel" aria-label="Informações hidrológicas e legenda">
+          <aside
+            id="map-information-panel"
+            className="right-panel"
+            hidden={isMapFocus}
+            aria-label="Informações hidrológicas e legenda"
+          >
             <p className="official-notice-compact" role="note">
               Esta plataforma não substitui os alertas e as orientações dos
               órgãos oficiais.
             </p>
+
+            {activeHistoricalContext && (
+              <article
+                className="card historical-map-context-banner"
+                aria-labelledby="historical-map-context-title"
+              >
+                <div className="card-heading">
+                  <strong id="historical-map-context-title">
+                    {activeHistoricalContext.historicalEquivalenceConfirmed
+                      ? `Associação com registro histórico (${activeHistoricalContext.eventId})`
+                      : `Exploração independente de cenário SGB (${activeHistoricalContext.eventId})`}
+                  </strong>
+                  <span
+                    className="data-origin-badge derived"
+                    data-classification="derived"
+                  >
+                    {activeHistoricalContext.historicalEquivalenceConfirmed
+                      ? "Referência aproximada"
+                      : "Sem equivalência confirmada"}
+                  </span>
+                </div>
+                <p className="historical-context-event">
+                  <strong>{activeHistoricalContext.eventTitle}</strong> (
+                  {activeHistoricalContext.eventPeriodLabel} · pico observado:{" "}
+                  {activeHistoricalContext.observedPeakCm
+                    .toString()
+                    .replace(".", ",")}{" "}
+                  cm em RHN 58790002).
+                </p>
+                <p className="historical-context-rep">
+                  <strong>Classificação espacial exibida:</strong>{" "}
+                  {activeHistoricalContext.representationLabel}.
+                </p>
+                <p className="historical-context-disclaimer">
+                  {activeHistoricalContext.historicalEquivalenceConfirmed ? (
+                    <>
+                      Mancha estática modelada pelo SGB (2024):{" "}
+                      <strong>não representa inundação observada</strong> nem
+                      registro exato da extensão atingida na enchente histórica.
+                    </>
+                  ) : (
+                    <>
+                      <strong>
+                        Equivalência altimétrica histórica NÃO confirmada:
+                      </strong>{" "}
+                      a continuidade do zero da régua em RHN 58790002 para este
+                      período não possui registro oficial de nivelamento
+                      verificado. Camada SGB (2024) exibida apenas para
+                      exploração independente (
+                      <strong>não representa inundação observada</strong>).
+                    </>
+                  )}
+                </p>
+                <div className="historical-context-actions">
+                  <button
+                    type="button"
+                    className="location-inline-btn"
+                    onClick={() => setActiveSection("historico")}
+                  >
+                    Voltar ao Histórico
+                  </button>
+                  <button
+                    type="button"
+                    className="location-inline-btn danger"
+                    onClick={() => setHistoricalMapContext(null)}
+                  >
+                    {activeHistoricalContext.historicalEquivalenceConfirmed
+                      ? "Desvincular evento"
+                      : "Limpar contexto de exploração"}
+                  </button>
+                </div>
+              </article>
+            )}
 
             {/* Derived Spatial Metric: Single Scenario OR Topological Comparison */}
             {mapMode === "compare" ? (
@@ -1036,6 +1222,15 @@ export function FloodDashboard() {
             </article>
           </aside>
         </div>
+
+        {/* View Histórico: Histórico hidrológico e acervo de enchentes */}
+        {activeSection === "historico" && (
+          <FloodHistorySection
+            onGoToMap={handleGoToMap}
+            onSelectHistoricalMapScenario={handleSelectHistoricalMapScenario}
+            onInspectCoordinateOnMap={handleInspectCoordinateFromHistory}
+          />
+        )}
 
         {/* View B: Monitoramento do Rio Pomba */}
         {activeSection === "monitoramento" && (

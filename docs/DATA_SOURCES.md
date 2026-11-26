@@ -494,6 +494,20 @@ Essa auditoria é candidata a **Work**, pois exige investigação multifuente e 
 - `58788600` apresentou 78 episódios de valor constante (`suspect_flatline >= 24 h`, `6.276 h` no total — suspeita de qualidade que não comprova isoladamente defeito instrumental, sem descarte automático da estação) e pico anômalo em setembro/2025; em `58770000`, `r = 0,9302` em `16 h` ocorreu no limite da janela testada (`0..16 h`) e não define tempo de propagação nem prova ganho preditivo.
 - Detalhes, manifestos SHA-256 (com reprodução de inputs locais classificada como `BLOCKED_LOCAL_DATA` em Cloud), eventos candidatos, divergência pendente de jan/2023 (`428 cm` vs `431 cm` SGB), piloto exploratório `B0/B1` e protocolo seguinte registrados em `docs/experiments/EXP-2026-001-historical-hydrological-datasets.md`, `docs/experiments/EXP-2026-002-forecast-protocol.md` e `data/metadata/hydrology/`.
 
+### Acervo documental e normativo de enchentes históricas (`2026-11-26 — R02-E / #52`)
+
+Consolidado em [`docs/research/HISTORICAL_FLOOD_CATALOG.md`](research/HISTORICAL_FLOOD_CATALOG.md) e [`lib/history/catalog.ts`](../lib/history/catalog.ts), sem modificar os manifestos de `data/metadata/hydrology/`:
+
+- **Relatórios Anuais SAH-Pomba (SGB/CPRM, RIGeo — `official_reference`, reprodução permitida com citação):**
+  - *Relatório Anual SAH-Pomba 2024* (`doc/24903`, `2.012.533` B, `SHA-256: ccf4b2f01af2b3e9b6f60d66435ea9e8b320933b21d97002633d77981f5ba593`) — Tabela 5 das 10 maiores cheias em `58790002` desde 2001 (`450 cm` em `04/01/2012`, `428 cm` em `08/01/2023`, `425 cm` em `11/01/2022`, `407 cm` em `15/02/2020`);
+  - *Relatório Anual SAH-Pomba 2023* (`doc/23915`, `2.670.914` B, `SHA-256: 74cb8ea42dc33e2539acddbc62320e3e22c193d58e7d8e5bbfc15338ff651561`) — `188 horas` acima de `310 cm` em 2022/2023;
+  - *Relatório Anual SAH-Pomba 2022* (`doc/22818`, `2.717.091` B, `SHA-256: 8318866fa7bcd3d768aab18d69075302e74f31ff727f169d79918f8414b37b21`) — `246 horas` acima de `310 cm` nos eventos de jan–fev/2022.
+- **Decretos Municipais de Situação de Emergência / Gabinete de Crise (Prefeitura de Santo Antônio de Pádua — `official_reference`):**
+  - Decreto nº `004`, de `11/01/2022` (`281.302` B, `SHA-256: 0e0941a932ec64ec5305a658179820b10338888a8f7b27d373128b16676bb28d`);
+  - Decreto nº `002/2023`, de `08/01/2023` (`532.145` B, `SHA-256: 40a2d47cfce62de18db4e87acfb973fce83461d2cd79667ff5fec75e5f8033ac`);
+  - Decreto nº `025`, de `04/03/2026` (`205.352` B, `SHA-256: 78ee72e5dc9bef04bd4e2664f59d6d3fcc311f294a45f9b4431c6220b3bba005`, protocolo federal S2ID `RJ-F-3304706-12100-20260226`, confirmando `6,31 m` às `14:15 BRT` de `28/02/2026` = `17:15 GMT` na planilha INEA).
+- **Registros jornalísticos e fotográficos de terceiros:** referenciados exclusivamente via URL externa com crédito de autoria, data e localização verificada, sem redistribuição de mídia protegida por direitos autorais.
+
 ---
 
 ## Área de interesse inicial (AOI)
