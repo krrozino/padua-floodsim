@@ -84,15 +84,35 @@ export type SecondaryPeakReport = {
   readonly sourceTitle: string;
   readonly informationClass: HistoricalInformationClass;
   readonly isSecondaryPressOrBulletin: boolean;
+  readonly isPeriodAggregate?: boolean;
   readonly note: string;
 };
 
+export type ThresholdDurationAggregationScope =
+  | "single_event"
+  | "multi_event_or_annual_aggregate";
+
+/**
+ * Decomposes threshold-exceedance metrics so that:
+ * 1. `mergedWindowSpanHours` (`end_utc - start_utc` with `merge_gap_hours <= 72 h` in `candidate_events.json`)
+ *    is never conflated with continuous proven exceedance;
+ * 2. `readingsAboveCount` and `nominalSampleSupportHours` (`n * cadenceHours`) are shown explicitly;
+ * 3. `unaccountedSlotsInWindow` (`expectedSlotsInSpan - readingsAboveCount`) exposes sub-threshold recessions or gaps;
+ * 4. `provenContinuousHours` is populated ONLY when continuous exceedance without internal gaps/recessions is proven;
+ * 5. `multi_event_or_annual_aggregate` sums (e.g. annual hours >= 310 cm) are never compared as individual event durations.
+ */
 export type StationThresholdDuration = {
   readonly thresholdLabel: string;
   readonly thresholdNativeValue: string;
-  readonly hoursAbove: number;
+  readonly aggregationScope: ThresholdDurationAggregationScope;
+  readonly mergedWindowSpanHours: number | null;
+  readonly readingsAboveCount: number | null;
+  readonly nominalSampleSupportHours: number | null;
+  readonly unaccountedSlotsInWindow: number | null;
+  readonly provenContinuousHours: number | null;
+  readonly aggregateHoursReported: number | null;
+  readonly includesMergedGapsOrRecessions: boolean;
   readonly sourceLabel: string;
-  readonly includesMergedGaps: boolean;
   readonly note: string | null;
 };
 
@@ -110,12 +130,21 @@ export type StationEventAvailability =
   | "partial_coverage_unusable"
   | "not_audited_for_period";
 
+export type DatumContinuityStatus =
+  | "verified_leveling_record"
+  | "unverified_internal_consistency_only"
+  | "unverified_no_leveling_record"
+  | "not_applicable_independent_station";
+
 export type StationEventObservation = {
   readonly stationId: HistoricalStationId;
   readonly informationClass: HistoricalInformationClass;
   readonly availability: StationEventAvailability;
   readonly usableForComparison: boolean;
   readonly datumContinuityVerified: boolean;
+  readonly datumContinuityStatus: DatumContinuityStatus;
+  readonly datumContinuityEvidence: string | null;
+  readonly datumContinuityNote: string;
   readonly peakStageCm: number | null;
   readonly rawPeakValue: number | null;
   readonly rawPeakUnit: StageDisplayUnit;
@@ -127,7 +156,10 @@ export type StationEventObservation = {
   readonly rainStationLabel: string | null;
   readonly rainWindowNote: string | null;
   readonly thresholdDurations: readonly StationThresholdDuration[];
+  /** Event-window coverage percentage ONLY (`null` when only monthly/annual aggregates exist). */
   readonly coveragePct: number | null;
+  /** Explicit monthly/annual context statistics kept strictly separate from event-window metrics. */
+  readonly periodAggregateNote: string | null;
   readonly qualitySummary: string;
   readonly gapsAndInconsistencies: readonly string[];
   readonly verticalReferenceLabel: string;
@@ -167,7 +199,8 @@ export type DocumentaryEvidenceKind =
   | "civil_defense_record"
   | "academic_study"
   | "press_report"
-  | "external_photograph";
+  | "external_photograph"
+  | "project_audit";
 
 export type DocumentaryFloodEvidence = {
   readonly id: string;
@@ -191,12 +224,18 @@ export type HistoricalEventClassification =
   | "documented_urban_flood"
   | "elevated_hydrological_event";
 
+export type DocumentaryBasisLevel =
+  | "primary_official_act_and_report"
+  | "secondary_press_citing_civil_defense"
+  | "hydrological_telemetry_only";
+
 /**
  * Spatial representation categories mandated by Section 7 (Mapa Histórico):
  * - `observed_flood_extent`: inundação observada (georreferenciada em campo/sensoriamento)
  * - `official_modeled_extent`: extensão oficial modelada (cota exata publicada pelo SGB)
  * - `derived_representation`: representação derivada (ex.: comparação topológica A×B entre cotas SGB adjacentes, sem interpolar mancha)
  * - `approximate_reference_scenario`: cenário aproximado (cota discreta SGB mais próxima em estação/datum compatíveis)
+ * - `independent_unconfirmed_exploration`: exploração independente de cenário SGB sem equivalência altimétrica histórica confirmada
  * - `blocked_incompatible_reference`: associação espacial bloqueada por incompatibilidade de estação, datum ou faixa de cotas
  */
 export type HistoricalSpatialRepresentationKind =
@@ -204,6 +243,7 @@ export type HistoricalSpatialRepresentationKind =
   | "official_modeled_extent"
   | "derived_representation"
   | "approximate_reference_scenario"
+  | "independent_unconfirmed_exploration"
   | "blocked_incompatible_reference";
 
 export type HistoricalFloodEvent = {
@@ -216,6 +256,7 @@ export type HistoricalFloodEvent = {
   readonly endDateIso: string;
   readonly windowTimestampNote: string;
   readonly classification: HistoricalEventClassification;
+  readonly documentaryBasisLevel: DocumentaryBasisLevel;
   readonly classificationRationale: string;
   readonly primaryStationId: HistoricalStationId;
   readonly summary: string;
@@ -227,14 +268,31 @@ export type HistoricalFloodEvent = {
   readonly controlPointIds: readonly string[];
 };
 
+export type HistoricalMapBlockCode =
+  | "missing_sgb_station_observation"
+  | "unverified_datum_continuity"
+  | "outside_sgb_modeled_range";
+
+export type IndependentSgbExplorationOption = {
+  readonly nominalObservedPeakCm: number;
+  readonly nominalSingleStageCm: SgbFloodLevelCm;
+  readonly nominalBracketingStagesCm: readonly [
+    SgbFloodLevelCm,
+    SgbFloodLevelCm,
+  ] | null;
+  readonly disclaimer: string;
+};
+
 export type HistoricalMapAssociation =
   | {
       readonly status: "compatible";
+      readonly historicalEquivalenceConfirmed: true;
       readonly eventId: string;
       readonly eventTitle: string;
       readonly eventPeriodLabel: string;
       readonly stationId: "RHN-58790002";
       readonly verticalDatum: "hgeoHNOR_IMBITUBA";
+      readonly datumContinuityEvidence: string;
       readonly observedPeakCm: number;
       readonly isExactSgbStage: boolean;
       readonly primaryRepresentationKind:
@@ -257,10 +315,13 @@ export type HistoricalMapAssociation =
     }
   | {
       readonly status: "blocked";
+      readonly historicalEquivalenceConfirmed: false;
+      readonly blockCode: HistoricalMapBlockCode;
       readonly eventId: string;
       readonly representationKind: "blocked_incompatible_reference";
       readonly observedExtentAvailable: false;
       readonly reason: string;
+      readonly independentScenarioExploration: IndependentSgbExplorationOption | null;
       readonly taxonomyNotes: {
         readonly observedFloodExtent: string;
         readonly officialModeledExtent: string;

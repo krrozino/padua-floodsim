@@ -215,17 +215,44 @@ export function EventComparisonPanel({
                 <tr>
                   <td>
                     <strong>
-                      Duração acima do limiar
+                      Duração contínua comprovada
                       {comparison.sharedThresholdLabel
                         ? ` (${comparison.sharedThresholdLabel})`
                         : ""}
                     </strong>
                   </td>
-                  <td>{formatDurationHours(comparison.durationAHours)}</td>
-                  <td>{formatDurationHours(comparison.durationBHours)}</td>
                   <td>
-                    {formatSignedNumber(comparison.deltaDurationHours, "h", 2)}
+                    {formatDurationHours(comparison.provenDurationAHours)}
                   </td>
+                  <td>
+                    {formatDurationHours(comparison.provenDurationBHours)}
+                  </td>
+                  <td>
+                    {formatSignedNumber(
+                      comparison.deltaProvenDurationHours,
+                      "h",
+                      2,
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <strong>
+                      Suporte amostral nominal / janela mesclada
+                      {comparison.sharedThresholdLabel
+                        ? ` (${comparison.sharedThresholdLabel})`
+                        : ""}
+                    </strong>
+                  </td>
+                  <td>
+                    {formatDurationHours(comparison.nominalSupportAHours)} (janela:{" "}
+                    {formatDurationHours(comparison.mergedWindowSpanAHours)})
+                  </td>
+                  <td>
+                    {formatDurationHours(comparison.nominalSupportBHours)} (janela:{" "}
+                    {formatDurationHours(comparison.mergedWindowSpanBHours)})
+                  </td>
+                  <td>Sem Δ (janelas mescladas &lt;= 72 h)</td>
                 </tr>
               </tbody>
             </table>

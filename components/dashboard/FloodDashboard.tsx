@@ -891,13 +891,17 @@ export function FloodDashboard() {
               >
                 <div className="card-heading">
                   <strong id="historical-map-context-title">
-                    Associação com registro histórico ({activeHistoricalContext.eventId})
+                    {activeHistoricalContext.historicalEquivalenceConfirmed
+                      ? `Associação com registro histórico (${activeHistoricalContext.eventId})`
+                      : `Exploração independente de cenário SGB (${activeHistoricalContext.eventId})`}
                   </strong>
                   <span
                     className="data-origin-badge derived"
                     data-classification="derived"
                   >
-                    Referência aproximada
+                    {activeHistoricalContext.historicalEquivalenceConfirmed
+                      ? "Referência aproximada"
+                      : "Sem equivalência confirmada"}
                   </span>
                 </div>
                 <p className="historical-context-event">
@@ -913,9 +917,24 @@ export function FloodDashboard() {
                   {activeHistoricalContext.representationLabel}.
                 </p>
                 <p className="historical-context-disclaimer">
-                  Mancha estática modelada pelo SGB (2024):{" "}
-                  <strong>não representa inundação observada</strong> nem
-                  registro exato da extensão atingida na enchente histórica.
+                  {activeHistoricalContext.historicalEquivalenceConfirmed ? (
+                    <>
+                      Mancha estática modelada pelo SGB (2024):{" "}
+                      <strong>não representa inundação observada</strong> nem
+                      registro exato da extensão atingida na enchente histórica.
+                    </>
+                  ) : (
+                    <>
+                      <strong>
+                        Equivalência altimétrica histórica NÃO confirmada:
+                      </strong>{" "}
+                      a continuidade do zero da régua em RHN 58790002 para este
+                      período não possui registro oficial de nivelamento
+                      verificado. Camada SGB (2024) exibida apenas para
+                      exploração independente (
+                      <strong>não representa inundação observada</strong>).
+                    </>
+                  )}
                 </p>
                 <div className="historical-context-actions">
                   <button

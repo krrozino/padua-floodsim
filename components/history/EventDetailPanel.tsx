@@ -9,12 +9,14 @@ import {
   getStationReferenceById,
 } from "@/lib/history/catalog";
 import type {
+  DocumentaryBasisLevel,
   DocumentaryEvidenceKind,
   HistoricalControlPoint,
   HistoricalFloodEvent,
   HistoricalStationId,
   StationEventAvailability,
   StationEventObservation,
+  StationThresholdDuration,
 } from "@/lib/history/contract";
 import {
   prepareHistoricalHydrograph,
@@ -26,6 +28,7 @@ import {
   formatHistoricalDischarge,
   formatHistoricalRain,
   formatHistoricalStage,
+  formatTrimmedDecimalPtBr,
 } from "@/lib/history/normalize";
 import type { GeoPoint } from "@/lib/sgb/location";
 import type { SgbFloodLevelCm } from "@/lib/sgb/stages";
@@ -35,6 +38,7 @@ export type HistoricalMapAssociationSelection = {
   readonly eventTitle: string;
   readonly eventPeriodLabel: string;
   readonly observedPeakCm: number;
+  readonly historicalEquivalenceConfirmed: boolean;
   readonly representationLabel: string;
   readonly mode: "single" | "compare";
   readonly stageACm: SgbFloodLevelCm;
@@ -70,16 +74,87 @@ function getEvidenceKindLabel(kind: DocumentaryEvidenceKind): string {
     case "municipal_decree":
       return "Decreto municipal";
     case "technical_report":
-      return "Relatório técnico";
+      return "Relatório técnico institucional";
     case "civil_defense_record":
-      return "Registro Defesa Civil";
+      return "Registro oficial Defesa Civil";
     case "academic_study":
       return "Estudo acadêmico";
     case "press_report":
       return "Imprensa verificada";
     case "external_photograph":
       return "Fotografia externa creditada";
+    case "project_audit":
+      return "Auditoria interna do projeto";
   }
+}
+
+function getDocumentaryBasisLabel(level: DocumentaryBasisLevel): string {
+  switch (level) {
+    case "primary_official_act_and_report":
+      return "Base documental primária (decreto municipal oficial e/ou relatório SGB)";
+    case "secondary_press_citing_civil_defense":
+      return "Base secundária (imprensa regional citando Defesa Civil / SEDEC-RJ)";
+    case "hydrological_telemetry_only":
+      return "Base hidrométrica (sem confirmação documental de inundação urbana)";
+  }
+}
+
+function ThresholdDurationItem({
+  dur,
+}: Readonly<{
+  dur: StationThresholdDuration;
+}>) {
+  if (dur.aggregationScope === "multi_event_or_annual_aggregate") {
+    return (
+      <li>
+        <strong>{dur.thresholdLabel} (agregado multi-evento/anual):</strong>{" "}
+        {formatDurationHours(dur.aggregateHoursReported)} ({dur.sourceLabel})
+        {dur.note ? ` — ${dur.note}` : ""}
+      </li>
+    );
+  }
+
+  const provenText =
+    dur.provenContinuousHours !== null
+      ? formatDurationHours(dur.provenContinuousHours)
+      : "Não comprovada continuamente (janela mesclada / BLOCKED_LOCAL_DATA)";
+
+  return (
+    <li>
+      <strong>{dur.thresholdLabel}:</strong> duração contínua comprovada:{" "}
+      <strong>{provenText}</strong>
+      {dur.mergedWindowSpanHours !== null && (
+        <>
+          {" "}
+          · janela mesclada:{" "}
+          {formatDurationHours(dur.mergedWindowSpanHours)}
+        </>
+      )}
+      {dur.readingsAboveCount !== null && (
+        <>
+          {" "}
+          · {dur.readingsAboveCount.toLocaleString("pt-BR")} leituras acima do
+          limiar
+        </>
+      )}
+      {dur.nominalSampleSupportHours !== null && (
+        <>
+          {" "}
+          (suporte amostral nominal:{" "}
+          {formatDurationHours(dur.nominalSampleSupportHours)})
+        </>
+      )}
+      {dur.unaccountedSlotsInWindow !== null &&
+        dur.unaccountedSlotsInWindow > 0 && (
+          <>
+            {" "}
+            · {dur.unaccountedSlotsInWindow.toLocaleString("pt-BR")} passos
+            abaixo do limiar ou em lacuna
+          </>
+        )}{" "}
+      ({dur.sourceLabel}){dur.note ? ` — ${dur.note}` : ""}
+    </li>
+  );
 }
 
 function StationObservationCard({
@@ -133,7 +208,7 @@ function StationObservationCard({
         </div>
 
         <div>
-          <dt>Vazão máxima</dt>
+          <dt>Vazão máxima do evento</dt>
           <dd>
             {formatHistoricalDischarge(obs.peakDischargeM3s)}
             {obs.dischargeNote && (
@@ -153,13 +228,25 @@ function StationObservationCard({
         </div>
 
         <div>
-          <dt>Cobertura temporal</dt>
-          <dd>{formatCoveragePct(obs.coveragePct)}</dd>
+          <dt>Cobertura na janela do evento</dt>
+          <dd>
+            {formatCoveragePct(obs.coveragePct)}
+            {obs.periodAggregateNote && (
+              <small className="history-obs-subnote">
+                {obs.periodAggregateNote}
+              </small>
+            )}
+          </dd>
         </div>
 
         <div>
-          <dt>Referência vertical</dt>
-          <dd>{obs.verticalReferenceLabel}</dd>
+          <dt>Referência e continuidade vertical</dt>
+          <dd>
+            {obs.verticalReferenceLabel}
+            <small className="history-obs-subnote">
+              {obs.datumContinuityNote}
+            </small>
+          </dd>
         </div>
       </dl>
 
@@ -172,7 +259,9 @@ function StationObservationCard({
 
       {obs.secondaryPeaks.length > 0 && (
         <div className="history-secondary-peaks">
-          <strong>Leituras complementares / divergências registradas na mesma estação:</strong>
+          <strong>
+            Leituras complementares / divergências registradas na mesma estação:
+          </strong>
           <ul>
             {obs.secondaryPeaks.map((sp) => (
               <li key={`${sp.sourceTitle}-${sp.nativeLabel}`}>
@@ -188,11 +277,7 @@ function StationObservationCard({
           <strong>Duração acima dos limiares da própria estação:</strong>
           <ul>
             {obs.thresholdDurations.map((dur) => (
-              <li key={dur.thresholdLabel}>
-                <strong>{dur.thresholdLabel}:</strong>{" "}
-                {formatDurationHours(dur.hoursAbove)} ({dur.sourceLabel})
-                {dur.note ? ` — ${dur.note}` : ""}
-              </li>
+              <ThresholdDurationItem key={dur.thresholdLabel} dur={dur} />
             ))}
           </ul>
         </div>
@@ -236,8 +321,7 @@ export function EventDetailPanel({
   );
 
   const linkedControlPoints = useMemo(
-    () =>
-      controlPoints.filter((cp) => event.controlPointIds.includes(cp.id)),
+    () => controlPoints.filter((cp) => event.controlPointIds.includes(cp.id)),
     [controlPoints, event.controlPointIds],
   );
 
@@ -310,7 +394,8 @@ export function EventDetailPanel({
         <h3 id="history-event-detail-title">{event.title}</h3>
         <p className="history-detail-dates">
           <strong>Período:</strong> {event.periodLabel} ({event.startDateIso} a{" "}
-          {event.endDateIso})
+          {event.endDateIso}) ·{" "}
+          <span>{getDocumentaryBasisLabel(event.documentaryBasisLevel)}</span>
         </p>
         <p className="history-detail-window-note">{event.windowTimestampNote}</p>
       </header>
@@ -358,7 +443,8 @@ export function EventDetailPanel({
         <p className="history-section-caption">
           As escalas de RHN 58790002 (cm), INEA 213042120 (m), Barra do Braúna
           (cm) e Cataguases (cm) são fisicamente independentes e nunca recebem
-          offsets arbitrários.
+          offsets arbitrários. Agregados mensais ou anuais permanecem separados
+          das métricas específicas de cada evento.
         </p>
         <div className="history-station-obs-stack">
           {event.stationObservations.map((obs) => (
@@ -396,8 +482,9 @@ export function EventDetailPanel({
           <div className="history-map-assoc-ready">
             <p className="history-map-assoc-lead">
               <strong>Compatibilidade verificada em RHN 58790002</strong> (pico
-              observado de {mapAssociation.observedPeakCm.toString().replace(".", ",")}{" "}
-              cm · datum {mapAssociation.verticalDatum}):
+              observado de{" "}
+              {formatTrimmedDecimalPtBr(mapAssociation.observedPeakCm, 2)} cm ·
+              datum {mapAssociation.verticalDatum}):
             </p>
             <p className="history-map-assoc-warning">
               {mapAssociation.nonExactWarning}
@@ -412,6 +499,7 @@ export function EventDetailPanel({
                     eventTitle: event.title,
                     eventPeriodLabel: event.periodLabel,
                     observedPeakCm: mapAssociation.observedPeakCm,
+                    historicalEquivalenceConfirmed: true,
                     representationLabel: mapAssociation.isExactSgbStage
                       ? `Extensão oficial modelada (${formatSgbMeters(mapAssociation.recommendedSingleStageCm)} m)`
                       : `Cenário aproximado (${formatSgbMeters(mapAssociation.recommendedSingleStageCm)} m na régua 58790002)`,
@@ -431,13 +519,15 @@ export function EventDetailPanel({
                   type="button"
                   className="secondary-action-btn"
                   onClick={() => {
-                    const [lowCm, highCm] =
-                      mapAssociation.bracketingCompareStagesCm!;
+                    const pair = mapAssociation.bracketingCompareStagesCm;
+                    if (!pair) return;
+                    const [lowCm, highCm] = pair;
                     onSelectHistoricalMapScenario({
                       eventId: event.id,
                       eventTitle: event.title,
                       eventPeriodLabel: event.periodLabel,
                       observedPeakCm: mapAssociation.observedPeakCm,
+                      historicalEquivalenceConfirmed: true,
                       representationLabel: `Representação derivada — faixa SGB ${formatSgbMeters(lowCm)} × ${formatSgbMeters(highCm)} m`,
                       mode: "compare",
                       stageACm: lowCm,
@@ -456,8 +546,85 @@ export function EventDetailPanel({
           </div>
         ) : (
           <div className="history-blocked-notice">
-            <strong>Associação ao mapa não habilitada para este evento:</strong>{" "}
+            <strong>Associação histórica ao mapa bloqueada:</strong>{" "}
             {mapAssociation.reason}
+            {mapAssociation.independentScenarioExploration && (
+              <div className="history-map-assoc-ready">
+                <p className="history-map-assoc-warning">
+                  <strong>
+                    Exploração de cenário SGB independente (sem equivalência
+                    histórica confirmada):
+                  </strong>{" "}
+                  {mapAssociation.independentScenarioExploration.disclaimer}
+                </p>
+                <div className="history-map-assoc-actions">
+                  <button
+                    type="button"
+                    className="secondary-action-btn"
+                    onClick={() => {
+                      const indep =
+                        mapAssociation.independentScenarioExploration;
+                      if (!indep) return;
+                      onSelectHistoricalMapScenario({
+                        eventId: event.id,
+                        eventTitle: event.title,
+                        eventPeriodLabel: event.periodLabel,
+                        observedPeakCm: indep.nominalObservedPeakCm,
+                        historicalEquivalenceConfirmed: false,
+                        representationLabel: `Exploração independente SGB (${formatSgbMeters(indep.nominalSingleStageCm)} m — sem equivalência histórica confirmada)`,
+                        mode: "single",
+                        stageACm: indep.nominalSingleStageCm,
+                        stageBCm: null,
+                      });
+                    }}
+                  >
+                    Explorar cenário SGB independente (
+                    {formatSgbMeters(
+                      mapAssociation.independentScenarioExploration
+                        .nominalSingleStageCm,
+                    )}{" "}
+                    m, sem equivalência confirmada)
+                  </button>
+
+                  {mapAssociation.independentScenarioExploration
+                    .nominalBracketingStagesCm && (
+                    <button
+                      type="button"
+                      className="secondary-action-btn"
+                      onClick={() => {
+                        const indep =
+                          mapAssociation.independentScenarioExploration;
+                        if (!indep?.nominalBracketingStagesCm) return;
+                        const [lowCm, highCm] = indep.nominalBracketingStagesCm;
+                        onSelectHistoricalMapScenario({
+                          eventId: event.id,
+                          eventTitle: event.title,
+                          eventPeriodLabel: event.periodLabel,
+                          observedPeakCm: indep.nominalObservedPeakCm,
+                          historicalEquivalenceConfirmed: false,
+                          representationLabel: `Exploração independente derivada — faixa SGB ${formatSgbMeters(lowCm)} × ${formatSgbMeters(highCm)} m (sem equivalência histórica confirmada)`,
+                          mode: "compare",
+                          stageACm: lowCm,
+                          stageBCm: highCm,
+                        });
+                      }}
+                    >
+                      Explorar faixa SGB independente{" "}
+                      {formatSgbMeters(
+                        mapAssociation.independentScenarioExploration
+                          .nominalBracketingStagesCm[0],
+                      )}{" "}
+                      ×{" "}
+                      {formatSgbMeters(
+                        mapAssociation.independentScenarioExploration
+                          .nominalBracketingStagesCm[1],
+                      )}{" "}
+                      m (sem equivalência confirmada)
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>

@@ -134,7 +134,7 @@ function TimelineEventCard({
           >
             {mapAssoc.status === "compatible"
               ? `Mapa SGB aprox.: ${(mapAssoc.recommendedSingleStageCm / 100).toFixed(2).replace(".", ",")} m`
-              : "Mapa SGB bloqueado"}
+              : "Sem equivalência SGB confirmada"}
           </span>
         </div>
       </button>

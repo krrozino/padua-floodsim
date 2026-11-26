@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "2026.11.26-r02e.1",
+  "catalogVersion": "2026.11.26-r02e.2",
   "stations": [
     {
       "id": "RHN-58790002",
@@ -14,7 +14,7 @@
       "nominalCadenceMinutes": 15,
       "drainageAreaKm2": 8210,
       "gaugeZeroMeters": 79.709,
-      "gaugeZeroStatusNote": "79,709 m nivelado com GPS geodésico no estudo de mancha SGB (set/2024). Continuidade pré-2020 em relação a esse nivelamento pendente de confirmação formal.",
+      "gaugeZeroStatusNote": "Zero 79,709 m (hgeoHNOR_IMBITUBA) nivelado com GPS geodésico no estudo de mancha SGB (set/2024). A consistência mediana entre leituras telemétricas e diárias convencionais em 2020–2025 (quality_report.json) indica estabilidade interna da escala local nesse intervalo, mas não substitui registro oficial de nivelamento de RNs por período nem resolve a divergência cadastral de 2,415 km entre coordenadas ANA e SGB.",
       "verticalDatum": "hgeoHNOR_IMBITUBA",
       "verticalDatumStatus": "confirmed",
       "coordinatesWgs84": null,
@@ -43,7 +43,7 @@
         }
       ],
       "sgbCrosswalkValidated": true,
-      "independenceConstraintNote": "Única estação com equivalência altimétrica direta às 11 manchas SGB (300–550 cm), restrita aos registros com continuidade verificada da régua.",
+      "independenceConstraintNote": "Única estação de referência das 11 manchas SGB (300–550 cm). Equivalência histórica confirmada exige evidência específica de continuidade do zero da régua por período; na ausência dessa comprovação, mantém-se a associação histórica bloqueada e permite-se apenas exploração independente de cenários SGB.",
       "historicalAuditStatus": "audited_primary_target",
       "officialUrl": "https://rigeo.sgb.gov.br/handle/doc/25035"
     },
@@ -327,13 +327,17 @@
           "gapsAndInconsistencies": [
             "Continuidade do zero da régua entre 2012 e o nivelamento geodésico SGB de 2024 (79,709 m hgeoHNOR_IMBITUBA) ainda não confirmada formalmente."
           ],
-          "verticalReferenceLabel": "Régua RHN 58790002 (continuidade altimétrica 2012 vs. zero 79,709 m de 2024 em verificação)",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade para 2012 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Apenas o pico documental (450 cm) está disponível no repositório; evita-se reaquisição pré-2020 em massa.",
           "provenanceIds": [
             "PROV-SGB-SAH-2024",
             "PROV-SGB-MANCHA-2024"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "unverified_no_leveling_record",
+          "datumContinuityNote": "Sem histórico oficial de nivelamento de RNs que comprove invariância do zero da régua entre janeiro de 2012 e o levantamento GPS geodésico do SGB em setembro de 2024 (79,709 m hgeoHNOR_IMBITUBA)."
         },
         {
           "stationId": "INEA-213042120",
@@ -361,7 +365,7 @@
           "rainWindowNote": "Planilha de 2012 contém 2.976 registros de chuva no mês, sujeitos a reprocessamento local autorizado (BLOCKED_LOCAL_DATA).",
           "thresholdDurations": [],
           "coveragePct": 100,
-          "qualitySummary": "Cobertura mensal de 100,0% em jan/2012 (2.976/2.976 leituras de 15 min; mín. 2,35 m, máx. 6,91 m). Esquema de 4 colunas sem flag explícita de QC.",
+          "qualitySummary": "Cobertura integral na janela de 02–06/01/2012 (decorrente de 100,0% de preenchimento em todo o mês de jan/2012). Esquema de 4 colunas sem flag explícita de QC.",
           "gapsAndInconsistencies": [
             "Cabeçalho 'DATA E HORA' sem GMT; incerteza de 1 h entre BRST (UTC−2) e UTC−3 fixo.",
             "Diferença de ~2,41 m entre 6,91 m (INEA) e 4,50 m (RHN 58790002) comprova a independência das duas escalas."
@@ -371,7 +375,11 @@
           "seriesAvailabilityNote": "Série bruta fora do Git (BLOCKED_LOCAL_DATA) e redistribuição pública pendente de confirmação formal do INEA (#46).",
           "provenanceIds": [
             "PROV-INEA-DRIVE-XLSX"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Agregado mensal jan/2012 (INEA_HISTORICAL_ARCHIVE): 2.976/2.976 leituras de 15 min (100,0%; mín. mensal 2,35 m, máx. 6,91 m).",
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Seção física independente (~6 km a montante) com datum vertical não confirmado e histórico de ajustes de sensor (2021–2026)."
         },
         {
           "stationId": "RHN-58770000",
@@ -406,7 +414,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-SGB-SAH-2024"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
@@ -459,7 +471,8 @@
         "CP-MONSENHOR-DINIZ",
         "CP-ILHA-CONVIVENCIA"
       ],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "primary_official_act_and_report"
     },
     {
       "id": "HIST-2020-01-25",
@@ -471,9 +484,9 @@
       "endDateIso": "2020-02-08",
       "windowTimestampNote": "Janela acima de 240 cm em 58790002: 2020-01-25T04:30:00Z a 2020-02-08T06:00:00Z (pico em 26/01/2020 às 14:15 BRT).",
       "classification": "documented_urban_flood",
-      "classificationRationale": "Ultrapassou a cota de inundação SGB (398,5 cm telemétrico / 383 cm Tabela 5 SAH-Pomba) com registros da Defesa Civil e imprensa sobre alagamentos em Pádua em 25–26/01/2020.",
+      "classificationRationale": "Ultrapassou a cota de inundação SGB (398,5 cm telemétrico / 383 cm Tabela 5 SAH-Pomba) com registros de imprensa regional citando atuação da Defesa Civil em áreas atingidas de Pádua em 25–26/01/2020 (evidência jornalística secundária; sem decreto municipal primário localizado no portal).",
       "summary": "Evento prolongado de verão com pico telemétrico de 398,5 cm em 58790002 em 26/01/2020 (14:15 BRT) e alagamentos urbanos registrados.",
-      "hydrologicalContext": "Onda de cheia proveniente de Minas Gerais (Cataguases 860,09 cm / 1.142,1 m³/s em 25/01 19:15Z; Barra do Braúna 530,0 cm em 26/01 08:00Z), mantendo 58790002 acima de atenção por 337,5 h.",
+      "hydrologicalContext": "Onda de cheia proveniente de Minas Gerais (Cataguases 860,09 cm em 25/01 19:15Z; Barra do Braúna 530,0 cm em 26/01 08:00Z). Em 58790002, a janela mesclada (<= 72 h) abrangeu 337,5 h, com 796 leituras >= 240 cm (199,0 h de suporte amostral nominal).",
       "urbanImpactSummary": "Reportagens regionais (G1 Norte Fluminense e J3News, 25–26/01/2020) registram Santo Antônio de Pádua entre os municípios atingidos por alagamentos após a cheia do Rio Pomba.",
       "stationObservations": [
         {
@@ -481,7 +494,7 @@
           "informationClass": "processed",
           "availability": "verified_telemetry",
           "usableForComparison": true,
-          "datumContinuityVerified": true,
+          "datumContinuityVerified": false,
           "peakStageCm": 398.5,
           "rawPeakValue": 398.5,
           "rawPeakUnit": "cm",
@@ -519,26 +532,36 @@
           "rainWindowNote": "Acumulado telemétrico na janela EVT-20200125-02.",
           "thresholdDurations": [
             {
-              "thresholdLabel": "Janela mesclada acima de Atenção SGB (>= 240 cm)",
+              "thresholdLabel": "Acima de Atenção SGB (>= 240 cm)",
               "thresholdNativeValue": "240 cm",
-              "hoursAbove": 337.5,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 337.5,
+              "readingsAboveCount": 796,
+              "nominalSampleSupportHours": 199.0,
+              "unaccountedSlotsInWindow": 555,
+              "provenContinuousHours": null,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": true,
               "sourceLabel": "candidate_events.json (EVT-20200125-02)",
-              "includesMergedGaps": true,
-              "note": "796 leituras acima de 240 cm."
+              "note": "Janela mesclada (fusão <= 72 h) de 337.5 h (1351 passos nominais de 15 min), contendo 796 leituras >= 240 cm (199.0 h de suporte amostral nominal) e 555 passos (138.75 h nominais) abaixo do limiar ou sem medição. Duração contínua sem recessões/lacunas não comprovada sem série bruta (BLOCKED_LOCAL_DATA)."
             }
           ],
-          "coveragePct": 100,
+          "coveragePct": null,
           "qualitySummary": "Série telemétrica verificada no EXP-2026-001 combinada à série diária convencional 100% completa em 2020.",
           "gapsAndInconsistencies": [
             "Diferença de 15,5 cm entre o pico telemétrico subdiário (398,5 cm às 14:15 BRT) e o valor da Tabela 5 do SAH-Pomba 2024 (383 cm)."
           ],
-          "verticalReferenceLabel": "Zero da régua 79,709 m · Datum hgeoHNOR_IMBITUBA",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade geodésica em 2020 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001",
             "PROV-SGB-SAH-2024"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Cobertura exata da janela mesclada não decomposta sem CSV bruto (BLOCKED_LOCAL_DATA). Agregado anual de referência em 2020 (quality_report.json): 95,8% na telemetria.",
+          "datumContinuityStatus": "unverified_internal_consistency_only",
+          "datumContinuityNote": "Consistência interna telemétrica × convencional diária verificada em 2020 (quality_report.json), porém sem boletim oficial de nivelamento de RNs por período comprovando equivalência geodésica estrita ao zero 79,709 m (hgeoHNOR_IMBITUBA, SGB set/2024) e com divergência cadastral de 2,415 km em aberto."
         },
         {
           "stationId": "INEA-213042120",
@@ -557,8 +580,8 @@
           "rainStationLabel": null,
           "rainWindowNote": null,
           "thresholdDurations": [],
-          "coveragePct": 54.39,
-          "qualitySummary": "Aba 2020 possui 54,39% de cobertura anual, mas o recorte de jan/2020 não foi extraído na auditoria pontual R02-A para evitar reaquisição.",
+          "coveragePct": null,
+          "qualitySummary": "Recorte específico de jan–fev/2020 não extraído na auditoria pontual para evitar reaquisição em massa.",
           "gapsAndInconsistencies": [
             "Pico específico do INEA em jan/2020 mantido como 'Não disponível' sem preenchimento com zero."
           ],
@@ -567,7 +590,11 @@
           "seriesAvailabilityNote": "Série bruta fora do Git (BLOCKED_LOCAL_DATA) e redistribuição pública pendente de confirmação formal do INEA (#46).",
           "provenanceIds": [
             "PROV-INEA-DRIVE-XLSX"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Agregado anual da aba 2020 (INEA_HISTORICAL_ARCHIVE): 19.111/35.136 leituras não nulas (54,39% no ano).",
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Seção física independente (~6 km a montante) com datum vertical não confirmado e histórico de ajustes de sensor (2021–2026)."
         },
         {
           "stationId": "RHN-58788600",
@@ -602,7 +629,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         },
         {
           "stationId": "RHN-58770000",
@@ -623,8 +654,8 @@
             "hasExcelSerialRoundingNote": false,
             "conversionNote": "Timestamp auditado em UTC; exibido em horário padrão de Brasília (UTC−3, sem horário de verão no período 2020–2026)."
           },
-          "peakDischargeM3s": 1142.1,
-          "dischargeNote": "Máximo anual de 2020 em Cataguases.",
+          "peakDischargeM3s": null,
+          "dischargeNote": "Vazão específica do evento não publicada com timestamp em candidate_events.json (agregado máximo anual em quality_report.json para 2020: 1142,1 m³/s).",
           "accumulatedRainMm": null,
           "rainStationLabel": null,
           "rainWindowNote": null,
@@ -637,7 +668,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
@@ -675,7 +710,8 @@
         "CP-MONSENHOR-DINIZ",
         "CP-ILHA-CONVIVENCIA"
       ],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "secondary_press_citing_civil_defense"
     },
     {
       "id": "HIST-2020-02-13",
@@ -688,7 +724,7 @@
       "windowTimestampNote": "Janela acima de 240 cm em 58790002: 2020-02-13T09:15:00Z a 2020-02-19T07:30:00Z (pico em 15/02/2020 às 07:30 BRT).",
       "classification": "elevated_hydrological_event",
       "classificationRationale": "Apesar de atingir 408,0 cm telemétrico (407 cm Tabela 5 SAH-Pomba), não foram localizados decretos municipais, boletins da Defesa Civil ou reportagens independentes comprovando inundação urbana de ruas em Pádua entre 13 e 19/02/2020.",
-      "summary": "Quarta maior cheia pós-2001 na régua 58790002 (408,0 cm; 1.121,3 m³/s), classificada como evento hidrológico elevado por ausência de evidência documental primária de inundação urbana.",
+      "summary": "Quarta maior cheia pós-2001 na régua 58790002 (408,0 cm telemétrico; 407 cm Tabela 5 SAH-Pomba), classificada como evento hidrológico elevado por ausência de evidência documental primária de inundação urbana.",
       "hydrologicalContext": "Impulsionado por onda de cheia de Cataguases (823,42 cm em 14/02 09:45Z) e 104,8 mm de chuva local em Pádua.",
       "urbanImpactSummary": null,
       "stationObservations": [
@@ -697,7 +733,7 @@
           "informationClass": "processed",
           "availability": "verified_telemetry",
           "usableForComparison": true,
-          "datumContinuityVerified": true,
+          "datumContinuityVerified": false,
           "peakStageCm": 408,
           "rawPeakValue": 408,
           "rawPeakUnit": "cm",
@@ -720,8 +756,8 @@
             "hasExcelSerialRoundingNote": false,
             "conversionNote": "Timestamp auditado em UTC; exibido em horário padrão de Brasília (UTC−3, sem horário de verão no período 2020–2026)."
           },
-          "peakDischargeM3s": 1121.3,
-          "dischargeNote": "Máximo anual de 2020 em 58790002::discharge_m3s.",
+          "peakDischargeM3s": null,
+          "dischargeNote": "Vazão específica do evento não publicada com timestamp em candidate_events.json (agregado máximo anual em quality_report.json para 2020: 1121,3 m³/s).",
           "accumulatedRainMm": 104.8,
           "rainStationLabel": "PCD SGB/ANA 58790002 (02142067)",
           "rainWindowNote": null,
@@ -729,22 +765,32 @@
             {
               "thresholdLabel": "Acima de Atenção SGB (>= 240 cm)",
               "thresholdNativeValue": "240 cm",
-              "hoursAbove": 142.25,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 142.25,
+              "readingsAboveCount": 467,
+              "nominalSampleSupportHours": 116.75,
+              "unaccountedSlotsInWindow": 103,
+              "provenContinuousHours": null,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": true,
               "sourceLabel": "candidate_events.json (EVT-20200213-03)",
-              "includesMergedGaps": false,
-              "note": "467 leituras acima de 240 cm."
+              "note": "Janela mesclada (fusão <= 72 h) de 142.25 h (570 passos nominais de 15 min), contendo 467 leituras >= 240 cm (116.75 h de suporte amostral nominal) e 103 passos (25.75 h nominais) abaixo do limiar ou sem medição. Duração contínua sem recessões/lacunas não comprovada sem série bruta (BLOCKED_LOCAL_DATA)."
             }
           ],
-          "coveragePct": 100,
+          "coveragePct": null,
           "qualitySummary": "Telemetria e série convencional diária consistentes (diferença <= 4 cm no pico).",
           "gapsAndInconsistencies": [],
-          "verticalReferenceLabel": "Zero da régua 79,709 m · Datum hgeoHNOR_IMBITUBA",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade geodésica em 2020 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001",
             "PROV-SGB-SAH-2024"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Cobertura exata da janela mesclada não decomposta sem CSV bruto (BLOCKED_LOCAL_DATA). Agregado anual de referência em 2020 (quality_report.json): 95,8% na telemetria.",
+          "datumContinuityStatus": "unverified_internal_consistency_only",
+          "datumContinuityNote": "Consistência interna telemétrica × convencional diária verificada em 2020 (quality_report.json), porém sem boletim oficial de nivelamento de RNs por período comprovando equivalência geodésica estrita ao zero 79,709 m (hgeoHNOR_IMBITUBA, SGB set/2024) e com divergência cadastral de 2,415 km em aberto."
         },
         {
           "stationId": "RHN-58788600",
@@ -781,7 +827,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         },
         {
           "stationId": "RHN-58770000",
@@ -816,7 +866,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
@@ -842,7 +896,8 @@
         "CP-MONSENHOR-DINIZ",
         "CP-ILHA-CONVIVENCIA"
       ],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "hydrological_telemetry_only"
     },
     {
       "id": "HIST-2020-02-28",
@@ -856,7 +911,7 @@
       "classification": "elevated_hydrological_event",
       "classificationRationale": "Superou a cota de inundação da régua 58790002 (369,0 cm telemétrico / 372 cm Tabela 5 SAH-Pomba), sem registro documental confirmado de inundação de ruas.",
       "summary": "Terceiro pulso elevado do verão de 2020 em Santo Antônio de Pádua II, alcançando 369,0 cm na telemetria (372 cm no ranking do SGB) em 06/03/2020.",
-      "hydrologicalContext": "Propagação de cheia com pico de 758,39 cm em Cataguases e 483,0 cm em Barra do Braúna, mantendo 58790002 acima de 240 cm por 212,0 h.",
+      "hydrologicalContext": "Propagação de cheia com pico de 758,39 cm em Cataguases e 483,0 cm em Barra do Braúna, mantendo 58790002 continuamente acima de 240 cm por 212,0 h comprovadas (849 leituras consecutivas de 15 min, suporte nominal 212,25 h).",
       "urbanImpactSummary": null,
       "stationObservations": [
         {
@@ -864,7 +919,7 @@
           "informationClass": "processed",
           "availability": "verified_telemetry",
           "usableForComparison": true,
-          "datumContinuityVerified": true,
+          "datumContinuityVerified": false,
           "peakStageCm": 369,
           "rawPeakValue": 369,
           "rawPeakUnit": "cm",
@@ -896,22 +951,32 @@
             {
               "thresholdLabel": "Acima de Atenção SGB (>= 240 cm)",
               "thresholdNativeValue": "240 cm",
-              "hoursAbove": 212,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 212.0,
+              "readingsAboveCount": 849,
+              "nominalSampleSupportHours": 212.25,
+              "unaccountedSlotsInWindow": 0,
+              "provenContinuousHours": 212.0,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": false,
               "sourceLabel": "candidate_events.json (EVT-20200228-04)",
-              "includesMergedGaps": false,
-              "note": "849 leituras acima de 240 cm."
+              "note": "Excursão contínua comprovada: 849 leituras consecutivas de 15 min preenchem 100% dos 849 passos da janela (212.25 h de suporte amostral nominal, 0 lacunas ou recessões internas)."
             }
           ],
           "coveragePct": 100,
           "qualitySummary": "Série contínua verificada em 58790002.",
           "gapsAndInconsistencies": [],
-          "verticalReferenceLabel": "Zero da régua 79,709 m · Datum hgeoHNOR_IMBITUBA",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade geodésica em 2020 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001",
             "PROV-SGB-SAH-2024"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Agregado anual de referência em 2020 (quality_report.json): 95,8% de completude telemétrica.",
+          "datumContinuityStatus": "unverified_internal_consistency_only",
+          "datumContinuityNote": "Consistência interna telemétrica × convencional diária verificada em 2020 (quality_report.json), porém sem boletim oficial de nivelamento de RNs por período comprovando equivalência geodésica estrita ao zero 79,709 m (hgeoHNOR_IMBITUBA, SGB set/2024) e com divergência cadastral de 2,415 km em aberto."
         },
         {
           "stationId": "RHN-58788600",
@@ -946,7 +1011,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         },
         {
           "stationId": "RHN-58770000",
@@ -981,7 +1050,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
@@ -1003,7 +1076,8 @@
         "Diferença de 3 cm entre a telemetria auditada (369 cm) e a Tabela 5 do SAH-Pomba 2024 (372 cm)."
       ],
       "controlPointIds": [],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "hydrological_telemetry_only"
     },
     {
       "id": "HIST-2022-01-08",
@@ -1016,8 +1090,8 @@
       "windowTimestampNote": "Janela acima de 240 cm em 58790002: 2022-01-08T11:45:00Z a 2022-01-14T21:30:00Z. Pico INEA às 04:15 BRT e pico SGB/RHN às 07:00 BRT de 11/01/2022.",
       "classification": "documented_urban_flood",
       "classificationRationale": "Confirmada por telemetria das 4 estações, Decreto Municipal nº 004/2022 (COBRADE 1.2.1.0.0), Relatório SAH-Pomba 2022, dissertação acadêmica (Simiqueli, 2024) e fotografia identificada.",
-      "summary": "Terceira maior cheia pós-2001 em Santo Antônio de Pádua: 423,0 cm na telemetria de 58790002 (425 cm SAH-Pomba; 1.199,7 m³/s) e 6,452 m no INEA em 11/01/2022, motivando o Decreto nº 004/2022.",
-      "hydrologicalContext": "Chuva local de 168,4 mm somada à onda de montante (Cataguases 762,0 cm / 973,5 m³/s; Barra do Braúna 528,0 cm 8 h antes do pico em Pádua II).",
+      "summary": "Terceira maior cheia pós-2001 em Santo Antônio de Pádua: 423,0 cm na telemetria de 58790002 (425 cm SAH-Pomba) e 6,452 m no INEA em 11/01/2022, motivando o Decreto Municipal nº 004/2022.",
+      "hydrologicalContext": "Chuva local de 168,4 mm somada à onda de montante (Cataguases 762,0 cm; Barra do Braúna 528,0 cm 8 h antes do pico em Pádua II), com 153,75 h contínuas comprovadas acima de 240 cm (616 leituras sem lacunas).",
       "urbanImpactSummary": "Transbordamento iniciado às 13h BRT de 09/01/2022 (5,04 m INEA), tomando ruas em diversos bairros, com gabinete de crise, restrição a caminhões e Decreto Municipal nº 004/2022.",
       "stationObservations": [
         {
@@ -1025,7 +1099,7 @@
           "informationClass": "processed",
           "availability": "verified_telemetry",
           "usableForComparison": true,
-          "datumContinuityVerified": true,
+          "datumContinuityVerified": false,
           "peakStageCm": 423,
           "rawPeakValue": 423,
           "rawPeakUnit": "cm",
@@ -1056,8 +1130,8 @@
             "hasExcelSerialRoundingNote": false,
             "conversionNote": "Timestamp auditado em UTC; exibido em horário padrão de Brasília (UTC−3, sem horário de verão no período 2020–2026)."
           },
-          "peakDischargeM3s": 1199.7,
-          "dischargeNote": "Máximo anual de 2022 em 58790002::discharge_m3s.",
+          "peakDischargeM3s": null,
+          "dischargeNote": "Vazão específica do evento não publicada com timestamp em candidate_events.json (agregado máximo anual em quality_report.json para 2022: 1199,7 m³/s).",
           "accumulatedRainMm": 168.4,
           "rainStationLabel": "PCD SGB/ANA 58790002 (02142067)",
           "rainWindowNote": null,
@@ -1065,31 +1139,47 @@
             {
               "thresholdLabel": "Acima de Atenção SGB (>= 240 cm)",
               "thresholdNativeValue": "240 cm",
-              "hoursAbove": 153.75,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 153.75,
+              "readingsAboveCount": 616,
+              "nominalSampleSupportHours": 154.0,
+              "unaccountedSlotsInWindow": 0,
+              "provenContinuousHours": 153.75,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": false,
               "sourceLabel": "candidate_events.json (EVT-20220108-11)",
-              "includesMergedGaps": false,
-              "note": "616 leituras acima de 240 cm."
+              "note": "Excursão contínua comprovada: 616 leituras consecutivas de 15 min preenchem 100% dos 616 passos da janela (154.0 h de suporte amostral nominal, 0 lacunas ou recessões internas)."
             },
             {
-              "thresholdLabel": "Acima de Inundação SGB (>= 310 cm, soma jan–fev/2022)",
+              "thresholdLabel": "Soma sazonal acima de Inundação SGB (>= 310 cm em jan–fev/2022)",
               "thresholdNativeValue": "310 cm",
-              "hoursAbove": 246,
+              "aggregationScope": "multi_event_or_annual_aggregate",
+              "mergedWindowSpanHours": null,
+              "readingsAboveCount": null,
+              "nominalSampleSupportHours": null,
+              "unaccountedSlotsInWindow": null,
+              "provenContinuousHours": null,
+              "aggregateHoursReported": 246,
+              "includesMergedGapsOrRecessions": true,
               "sourceLabel": "SGB Relatório Anual SAH-Pomba 2022 (doc/22818, p. 8 e p. 28)",
-              "includesMergedGaps": false,
-              "note": "Total anual acumulado nos eventos de janeiro e fevereiro de 2022."
+              "note": "Agregado anual/sazonal somando os eventos de janeiro e fevereiro de 2022; NÃO representa duração individual de HIST-2022-01-08 e é bloqueado em comparações entre eventos."
             }
           ],
           "coveragePct": 100,
           "qualitySummary": "Série telemétrica e convencional sem lacunas na janela de 08–14/01/2022.",
           "gapsAndInconsistencies": [],
-          "verticalReferenceLabel": "Zero da régua 79,709 m · Datum hgeoHNOR_IMBITUBA",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade geodésica em 2022 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001",
             "PROV-SGB-SAH-2024",
             "PROV-SGB-SAH-2022"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Agregado anual de referência em 2022 (quality_report.json): 93,52% de completude telemétrica.",
+          "datumContinuityStatus": "unverified_internal_consistency_only",
+          "datumContinuityNote": "Consistência interna telemétrica × convencional diária verificada em 2022 (quality_report.json), porém sem boletim oficial de nivelamento de RNs por período comprovando equivalência geodésica estrita ao zero 79,709 m (hgeoHNOR_IMBITUBA, SGB set/2024) e com divergência cadastral de 2,415 km em aberto."
         },
         {
           "stationId": "INEA-213042120",
@@ -1116,8 +1206,8 @@
           "rainStationLabel": null,
           "rainWindowNote": null,
           "thresholdDurations": [],
-          "coveragePct": 99.97,
-          "qualitySummary": "2.975/2.976 registros no mês (99,97%), majoritariamente 'Bruto'. Pico de 6,452 m às 04:15 BRT antecede em 2 h 45 min o pico em 58790002.",
+          "coveragePct": null,
+          "qualitySummary": "Pico telemétrico do evento verificado em 11/01/2022 07:15 GMT (6,452 m), antecedendo em 2 h 45 min o pico em 58790002.",
           "gapsAndInconsistencies": [
             "7 registros negativos espúrios em jan–fev/2022 (mínimo −0,769 m em jan/2022), exigindo filtragem de QC."
           ],
@@ -1126,7 +1216,11 @@
           "seriesAvailabilityNote": "Série bruta fora do Git (BLOCKED_LOCAL_DATA) e redistribuição pública pendente de confirmação formal do INEA (#46).",
           "provenanceIds": [
             "PROV-INEA-DRIVE-XLSX"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Agregado mensal jan/2022 (INEA_HISTORICAL_ARCHIVE): 2.975/2.976 registros não nulos no mês (99,97%, majoritariamente 'Bruto'; mín. mensal espúrio −0,769 m; 7 negativos no bimestre jan–fev/2022).",
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Seção física independente (~6 km a montante) com datum vertical não confirmado e histórico de ajustes de sensor (2021–2026)."
         },
         {
           "stationId": "RHN-58788600",
@@ -1161,7 +1255,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         },
         {
           "stationId": "RHN-58770000",
@@ -1182,8 +1280,8 @@
             "hasExcelSerialRoundingNote": false,
             "conversionNote": "Timestamp auditado em UTC; exibido em horário padrão de Brasília (UTC−3, sem horário de verão no período 2020–2026)."
           },
-          "peakDischargeM3s": 973.5,
-          "dischargeNote": "Máximo anual de 2022 em Cataguases.",
+          "peakDischargeM3s": null,
+          "dischargeNote": "Vazão específica do evento não publicada com timestamp em candidate_events.json (agregado máximo anual em quality_report.json para 2022: 973,5 m³/s).",
           "accumulatedRainMm": null,
           "rainStationLabel": null,
           "rainWindowNote": null,
@@ -1196,7 +1294,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
@@ -1260,8 +1362,8 @@
         }
       ],
       "keyDivergencesAndCaveats": [
-        "Valores negativos espúrios no INEA em jan–fev/2022 (mínimo −0,769 m) exigem filtragem de QC.",
-        "Pico de 423,0 cm (telemetria) / 425 cm (SAH-Pomba) em 58790002 é compatível com o cenário oficial SGB de 4,25 m."
+        "Valores negativos espúrios no agregado mensal/bimestral do INEA em jan–fev/2022 (mínimo −0,769 m em jan/2022) exigem filtragem de QC.",
+        "Pico de 423,0 cm (telemetria) / 425 cm (SAH-Pomba) em 58790002 situa-se na vizinhança nominal da COTA_425cm, porém sem equivalência altimétrica histórica confirmada por histórico de nivelamento de RNs."
       ],
       "controlPointIds": [
         "CP-MONSENHOR-DINIZ",
@@ -1269,7 +1371,8 @@
         "CP-BEIRA-RIO-SENAR",
         "CP-PONTE-RAUL-VEIGA"
       ],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "primary_official_act_and_report"
     },
     {
       "id": "HIST-2022-02-04",
@@ -1281,8 +1384,8 @@
       "endDateIso": "2022-02-27",
       "windowTimestampNote": "Janela mesclada acima de 240 cm em 58790002: 2022-02-04T06:15:00Z a 2022-02-27T18:15:00Z (inclui lacuna de 23,25 h em 10–11/02). Pico em 16/02/2022 às 12:45 BRT.",
       "classification": "documented_urban_flood",
-      "classificationRationale": "Superou simultaneamente a cota de inundação SGB (365,0 cm) e a cota de transbordo INEA (5,516 m), com situação de emergência reportada pela SEDEC-RJ / CNN Brasil e contabilizada nas 246 h de inundação do Relatório SAH-Pomba 2022.",
-      "summary": "Segundo episódio de extravasamento do verão de 2022: 365,0 cm em 58790002 e 5,516 m no INEA em 16/02/2022, somando com janeiro 246 h acima de 310 cm.",
+      "classificationRationale": "Superou simultaneamente a cota de inundação SGB (365,0 cm) e a cota de transbordo INEA (5,516 m), com situação de emergência e vias alagadas reportadas pela imprensa citando nota da SEDEC-RJ (CNN Brasil, 11/02/2022; decreto municipal específico de fev/2022 não localizado no portal oficial).",
+      "summary": "Segundo episódio de extravasamento do verão de 2022: 365,0 cm em 58790002 e 5,516 m no INEA em 16/02/2022 (janela mesclada de 564,0 h com 1.444 leituras >= 240 cm / 361,0 h de suporte amostral nominal e lacuna de 23,25 h).",
       "hydrologicalContext": "Bacia saturada desde janeiro com repiques ao longo de 23 dias (chuva local 89,4 mm; Cataguases 644,0 cm; Barra do Braúna 473,0 cm).",
       "urbanImpactSummary": "Nota da Secretaria de Estado de Defesa Civil (SEDEC-RJ, CNN Brasil em 11/02/2022) inclui Santo Antônio de Pádua entre os cinco municípios em situação de emergência com apoio estadual.",
       "stationObservations": [
@@ -1291,7 +1394,7 @@
           "informationClass": "processed",
           "availability": "verified_telemetry",
           "usableForComparison": true,
-          "datumContinuityVerified": true,
+          "datumContinuityVerified": false,
           "peakStageCm": 365,
           "rawPeakValue": 365,
           "rawPeakUnit": "cm",
@@ -1312,26 +1415,36 @@
           "rainWindowNote": null,
           "thresholdDurations": [
             {
-              "thresholdLabel": "Janela mesclada acima de Atenção SGB (>= 240 cm)",
+              "thresholdLabel": "Acima de Atenção SGB (>= 240 cm)",
               "thresholdNativeValue": "240 cm",
-              "hoursAbove": 564,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 564.0,
+              "readingsAboveCount": 1444,
+              "nominalSampleSupportHours": 361.0,
+              "unaccountedSlotsInWindow": 813,
+              "provenContinuousHours": null,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": true,
               "sourceLabel": "candidate_events.json (EVT-20220204-12)",
-              "includesMergedGaps": true,
-              "note": "1.444 leituras acima de 240 cm."
+              "note": "Janela mesclada (fusão <= 72 h) de 564.0 h (2257 passos nominais de 15 min), contendo 1444 leituras >= 240 cm (361.0 h de suporte amostral nominal) e 813 passos (203.25 h nominais) abaixo do limiar ou sem medição. Inclui lacuna telemétrica documentada de 23,25 h em 10–11/02/2022. Duração contínua sem recessões/lacunas não comprovada sem série bruta (BLOCKED_LOCAL_DATA)."
             }
           ],
-          "coveragePct": 95.88,
+          "coveragePct": null,
           "qualitySummary": "Telemetria válida no pico de 16/02/2022, com interrupção de 23,25 h nos dias 10–11/02/2022.",
           "gapsAndInconsistencies": [
             "Lacuna telemétrica de 23,25 h entre 2022-02-10T17:30:00Z e 2022-02-11T16:45:00Z — preservada sem interpolação."
           ],
-          "verticalReferenceLabel": "Zero da régua 79,709 m · Datum hgeoHNOR_IMBITUBA",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade geodésica em 2022 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001",
             "PROV-SGB-SAH-2022"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Cobertura exata da janela mesclada não decomposta sem CSV bruto (BLOCKED_LOCAL_DATA). Agregado anual de referência em 2022 (quality_report.json): 93,52% na telemetria.",
+          "datumContinuityStatus": "unverified_internal_consistency_only",
+          "datumContinuityNote": "Consistência interna telemétrica × convencional diária verificada em 2022 (quality_report.json), porém sem boletim oficial de nivelamento de RNs por período comprovando equivalência geodésica estrita ao zero 79,709 m (hgeoHNOR_IMBITUBA, SGB set/2024) e com divergência cadastral de 2,415 km em aberto."
         },
         {
           "stationId": "INEA-213042120",
@@ -1358,8 +1471,8 @@
           "rainStationLabel": null,
           "rainWindowNote": null,
           "thresholdDurations": [],
-          "coveragePct": 99.96,
-          "qualitySummary": "2.687/2.688 leituras em fev/2022 (99,96%); pico de 5,516 m ocorre 45 min antes do pico em 58790002.",
+          "coveragePct": null,
+          "qualitySummary": "Pico telemétrico do evento verificado em 16/02/2022 15:00 GMT (5,516 m), 45 min antes do pico em 58790002.",
           "gapsAndInconsistencies": [
             "Valores negativos espúrios no mês (mínimo −0,229 m) e nota de ajuste de sensor (−0,09 m)."
           ],
@@ -1368,7 +1481,11 @@
           "seriesAvailabilityNote": "Série bruta fora do Git (BLOCKED_LOCAL_DATA) e redistribuição pública pendente de confirmação formal do INEA (#46).",
           "provenanceIds": [
             "PROV-INEA-DRIVE-XLSX"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Agregado mensal fev/2022 (INEA_HISTORICAL_ARCHIVE): 2.687/2.688 leituras não nulos no mês (99,96%; mín. mensal espúrio −0,229 m; nota de ajuste de sensor −0,09 m).",
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Seção física independente (~6 km a montante) com datum vertical não confirmado e histórico de ajustes de sensor (2021–2026)."
         },
         {
           "stationId": "RHN-58788600",
@@ -1403,7 +1520,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         },
         {
           "stationId": "RHN-58770000",
@@ -1438,7 +1559,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
@@ -1457,7 +1582,7 @@
         },
         {
           "id": "DOC-2022-FEB-CNN",
-          "kind": "civil_defense_record",
+          "kind": "press_report",
           "title": "Cinco municípios do RJ decretam situação de emergência após fortes chuvas (SEDEC-RJ inclui Pádua)",
           "authorOrInstitution": "CNN Brasil / Secretaria de Estado de Defesa Civil (SEDEC-RJ)",
           "publishedDate": "2022-02-11",
@@ -1476,7 +1601,8 @@
         "CP-MONSENHOR-DINIZ",
         "CP-ILHA-CONVIVENCIA"
       ],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "secondary_press_citing_civil_defense"
     },
     {
       "id": "HIST-2023-01-08",
@@ -1490,7 +1616,7 @@
       "classification": "documented_urban_flood",
       "classificationRationale": "Ampla inundação urbana e tributária (Rio Pomba + Rio Pirapetinga), documentada pelo Decreto Municipal nº 002/2023, relatórios SGB 2023/2024, Defesa Civil (6.800 desalojados, >15.000 afetados) e fotografia aérea na Praça Pereira Lima.",
       "summary": "Segunda maior enchente pós-2001 em Pádua: 428,0 cm na série telemétrica/diária SGB (431 cm no relatório de mancha SGB 2024) e 1.287,9 m³/s em 08/01/2023, enquanto o INEA sofreu pane de memória de 01 a 18/01/2023.",
-      "hydrologicalContext": "Chuva local de 168,2 mm somada a escoamento de montante (Cataguases 780,0 cm / 1.004,0 m³/s) e cheia simultânea do Rio Pirapetinga (188 h >= 310 cm em 2022/2023).",
+      "hydrologicalContext": "Chuva local de 168,2 mm somada a escoamento de montante (Cataguases 780,0 cm; Pádua II 1.287,9 m³/s) e cheia simultânea do Rio Pirapetinga. Em 58790002, a janela mesclada (<= 72 h) abrangeu 370,75 h com 1.162 leituras >= 240 cm (290,5 h de suporte amostral nominal).",
       "urbanImpactSummary": "6.800 desalojados, 21 desabrigados e >15.000 afetados; Praça Pereira Lima inundada; Rua Alberto Freire (Santa Luzia) e distritos de Ibitinema e São Pedro atingidos pelo Rio Pirapetinga; hospital de campanha e abrigo no Colégio Cerga acionados pelo Decreto nº 002/2023.",
       "stationObservations": [
         {
@@ -1498,7 +1624,7 @@
           "informationClass": "processed",
           "availability": "verified_telemetry",
           "usableForComparison": true,
-          "datumContinuityVerified": true,
+          "datumContinuityVerified": false,
           "peakStageCm": 428,
           "rawPeakValue": 428,
           "rawPeakUnit": "cm",
@@ -1530,7 +1656,7 @@
             "conversionNote": "Primeiro instante do patamar máximo de 428,0 cm (1.287,9 m³/s), repetido até 2023-01-08T16:45:00Z."
           },
           "peakDischargeM3s": 1287.9,
-          "dischargeNote": "Maior vazão de toda a série 2020–2026 em 58790002::discharge_m3s.",
+          "dischargeNote": "Vazão específica do evento confirmada com timestamp em quality_report.json (top_10_peaks: 1.287,9 m³/s em 2023-01-08T12:45:00Z..16:45:00Z).",
           "accumulatedRainMm": 168.2,
           "rainStationLabel": "PCD SGB/ANA 58790002 (02142067)",
           "rainWindowNote": null,
@@ -1538,26 +1664,38 @@
             {
               "thresholdLabel": "Acima de Atenção SGB (>= 240 cm)",
               "thresholdNativeValue": "240 cm",
-              "hoursAbove": 370.75,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 370.75,
+              "readingsAboveCount": 1162,
+              "nominalSampleSupportHours": 290.5,
+              "unaccountedSlotsInWindow": 322,
+              "provenContinuousHours": null,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": true,
               "sourceLabel": "candidate_events.json (EVT-20221231-27)",
-              "includesMergedGaps": false,
-              "note": "1.162 leituras acima de 240 cm."
+              "note": "Janela mesclada (fusão <= 72 h) de 370.75 h (1484 passos nominais de 15 min), contendo 1162 leituras >= 240 cm (290.5 h de suporte amostral nominal) e 322 passos (80.5 h nominais) abaixo do limiar ou sem medição. Duração contínua sem recessões/lacunas não comprovada sem série bruta (BLOCKED_LOCAL_DATA)."
             },
             {
-              "thresholdLabel": "Acima de Inundação SGB (>= 310 cm em 2022/2023)",
+              "thresholdLabel": "Soma anual acima de Inundação SGB (>= 310 cm no ciclo 2022/2023)",
               "thresholdNativeValue": "310 cm",
-              "hoursAbove": 188,
+              "aggregationScope": "multi_event_or_annual_aggregate",
+              "mergedWindowSpanHours": null,
+              "readingsAboveCount": null,
+              "nominalSampleSupportHours": null,
+              "unaccountedSlotsInWindow": null,
+              "provenContinuousHours": null,
+              "aggregateHoursReported": 188,
+              "includesMergedGapsOrRecessions": true,
               "sourceLabel": "SGB Relatório Anual SAH-Pomba 2023 (doc/23915, p. 26–27)",
-              "includesMergedGaps": false,
-              "note": "Duração anual acima de 310 cm publicada para o ciclo 2022/2023."
+              "note": "Agregado anual publicado para o ciclo hidrológico 2022/2023; NÃO representa duração individual de HIST-2023-01-08 e é bloqueado em comparações entre eventos."
             }
           ],
-          "coveragePct": 100,
+          "coveragePct": null,
           "qualitySummary": "Série telemétrica e convencional diária completas durante a crista principal de 08/01/2023.",
           "gapsAndInconsistencies": [
             "Divergência documental de 3 cm entre 428,0 cm (telemetria/diária/SAH-Pomba) e 431 cm (Relatório de Mancha SGB set/2024, p. 12)."
           ],
-          "verticalReferenceLabel": "Zero da régua 79,709 m · Datum hgeoHNOR_IMBITUBA",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade geodésica em 2023 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
@@ -1565,7 +1703,11 @@
             "PROV-SGB-MANCHA-2024",
             "PROV-SGB-SAH-2024",
             "PROV-SGB-SAH-2023"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Cobertura exata da janela mesclada não decomposta sem CSV bruto (BLOCKED_LOCAL_DATA). Agregado anual de referência em 2023 (quality_report.json): 99,01% na telemetria.",
+          "datumContinuityStatus": "unverified_internal_consistency_only",
+          "datumContinuityNote": "Consistência interna telemétrica × convencional diária verificada em 2023 (quality_report.json), porém sem boletim oficial de nivelamento de RNs por período comprovando equivalência geodésica estrita ao zero 79,709 m (hgeoHNOR_IMBITUBA, SGB set/2024) e com divergência cadastral de 2,415 km em aberto."
         },
         {
           "stationId": "INEA-213042120",
@@ -1584,8 +1726,8 @@
           "rainStationLabel": null,
           "rainWindowNote": null,
           "thresholdDurations": [],
-          "coveragePct": 43.1,
-          "qualitySummary": "LACUNA CRÍTICA: ausência total de dados de 2023-01-01 00:00 GMT até 2023-01-18 15:15 GMT (1.694 leituras perdidas; 43,1% no mês). O pico de 08/01/2023 NÃO foi registrado pelo INEA.",
+          "coveragePct": null,
+          "qualitySummary": "LACUNA CRÍTICA NA CRISTA DO EVENTO: ausência total de dados de 2023-01-01 00:00 GMT até 2023-01-18 15:15 GMT (0% de cobertura entre 01 e 16/01/2023; o pico de 08/01/2023 NÃO foi registrado pelo INEA).",
           "gapsAndInconsistencies": [
             "Nota na aba 2023: 'No momento da extração dos dados da memória interna deu erro. Realizado reset do sistema do modem. N.A.=2.88m'.",
             "O máximo aparente da aba 2023 (5,238 m em 26/01/2023) pertence a HIST-2023-01-21 e não a 08/01/2023."
@@ -1595,7 +1737,11 @@
           "seriesAvailabilityNote": "Erro de extração na memória interna do modem entre 01 e 18/01/2023 documentado pelo INEA.",
           "provenanceIds": [
             "PROV-INEA-DRIVE-XLSX"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Agregado mensal jan/2023 (INEA_HISTORICAL_ARCHIVE): 1.282/2.976 leituras no mês (43,1% mensal, integralmente após 18/01/2023 15:15 GMT; 1.694 registros perdidos na primeira quinzena).",
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Seção física independente (~6 km a montante) com datum vertical não confirmado e histórico de ajustes de sensor (2021–2026)."
         },
         {
           "stationId": "RHN-58788600",
@@ -1624,7 +1770,11 @@
           "seriesAvailabilityNote": "Série contaminada por flatline de 81,08%.",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         },
         {
           "stationId": "RHN-58770000",
@@ -1645,8 +1795,8 @@
             "hasExcelSerialRoundingNote": false,
             "conversionNote": "Timestamp auditado em UTC; exibido em horário padrão de Brasília (UTC−3, sem horário de verão no período 2020–2026)."
           },
-          "peakDischargeM3s": 1004,
-          "dischargeNote": "Máximo anual de 2023 em Cataguases.",
+          "peakDischargeM3s": null,
+          "dischargeNote": "Vazão específica do evento não publicada com timestamp em candidate_events.json (agregado máximo anual em quality_report.json para 2023: 1004 m³/s).",
           "accumulatedRainMm": null,
           "rainStationLabel": null,
           "rainWindowNote": null,
@@ -1659,7 +1809,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
@@ -1697,7 +1851,7 @@
         },
         {
           "id": "DOC-2023-JAN-J3",
-          "kind": "civil_defense_record",
+          "kind": "press_report",
           "title": "Fortes chuvas deixam cidades do Noroeste Fluminense em situação de emergência (>15 mil afetados e 6.800 desalojados em Pádua)",
           "authorOrInstitution": "J3News / Defesa Civil Municipal e SEDEC-RJ",
           "publishedDate": "2023-01-12",
@@ -1736,7 +1890,8 @@
         "CP-PONTES-PEDESTRES",
         "CP-AV-CHAIM-ELIAS"
       ],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "primary_official_act_and_report"
     },
     {
       "id": "HIST-2023-01-21",
@@ -1758,7 +1913,7 @@
           "informationClass": "processed",
           "availability": "verified_telemetry",
           "usableForComparison": true,
-          "datumContinuityVerified": true,
+          "datumContinuityVerified": false,
           "peakStageCm": 337,
           "rawPeakValue": 337,
           "rawPeakUnit": "cm",
@@ -1781,21 +1936,31 @@
             {
               "thresholdLabel": "Acima de Atenção SGB (>= 240 cm)",
               "thresholdNativeValue": "240 cm",
-              "hoursAbove": 151.25,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 151.25,
+              "readingsAboveCount": 304,
+              "nominalSampleSupportHours": 76.0,
+              "unaccountedSlotsInWindow": 302,
+              "provenContinuousHours": null,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": true,
               "sourceLabel": "candidate_events.json (EVT-20230121-28)",
-              "includesMergedGaps": false,
-              "note": "304 leituras acima de 240 cm."
+              "note": "Janela mesclada (fusão <= 72 h) de 151.25 h (606 passos nominais de 15 min), contendo 304 leituras >= 240 cm (76.0 h de suporte amostral nominal) e 302 passos (75.5 h nominais) abaixo do limiar ou sem medição. Duração contínua sem recessões/lacunas não comprovada sem série bruta (BLOCKED_LOCAL_DATA)."
             }
           ],
-          "coveragePct": 100,
+          "coveragePct": null,
           "qualitySummary": "Telemetria verificada no pico de 26/01/2023.",
           "gapsAndInconsistencies": [],
-          "verticalReferenceLabel": "Zero da régua 79,709 m · Datum hgeoHNOR_IMBITUBA",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade geodésica em 2023 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Cobertura exata da janela mesclada não decomposta sem CSV bruto (BLOCKED_LOCAL_DATA). Agregado anual de referência em 2023 (quality_report.json): 99,01% na telemetria.",
+          "datumContinuityStatus": "unverified_internal_consistency_only",
+          "datumContinuityNote": "Consistência interna telemétrica × convencional diária verificada em 2023 (quality_report.json), porém sem boletim oficial de nivelamento de RNs por período comprovando equivalência geodésica estrita ao zero 79,709 m (hgeoHNOR_IMBITUBA, SGB set/2024) e com divergência cadastral de 2,415 km em aberto."
         },
         {
           "stationId": "INEA-213042120",
@@ -1822,8 +1987,8 @@
           "rainStationLabel": null,
           "rainWindowNote": null,
           "thresholdDurations": [],
-          "coveragePct": 100,
-          "qualitySummary": "Operação retomada após o reset do modem em 18/01/2023 15:15 GMT; pico de 5,238 m antecede em 1 h 15 min o pico em 58790002.",
+          "coveragePct": null,
+          "qualitySummary": "Operação retomada após o reset do modem em 18/01/2023 15:15 GMT; pico verificado de 5,238 m em 26/01/2023 13:30 GMT.",
           "gapsAndInconsistencies": [
             "Representa apenas o máximo pós-18/01/2023 da aba 2023 do INEA, não o máximo real do ano."
           ],
@@ -1832,7 +1997,11 @@
           "seriesAvailabilityNote": "Série bruta fora do Git (BLOCKED_LOCAL_DATA) e redistribuição pública pendente de confirmação formal do INEA (#46).",
           "provenanceIds": [
             "PROV-INEA-DRIVE-XLSX"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Agregado mensal jan/2023 (INEA_HISTORICAL_ARCHIVE): 43,1% no mês completo em razão da pane de 01–18/01/2023; completude específica da subjanela 21–27/01/2023 não desagregada no manifesto.",
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Seção física independente (~6 km a montante) com datum vertical não confirmado e histórico de ajustes de sensor (2021–2026)."
         },
         {
           "stationId": "RHN-58788600",
@@ -1861,7 +2030,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         },
         {
           "stationId": "RHN-58770000",
@@ -1896,13 +2069,17 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
         {
           "id": "DOC-2023-JAN21-AUDIT",
-          "kind": "technical_report",
+          "kind": "project_audit",
           "title": "Auditoria cruzada EXP-2026-001 + INEA_HISTORICAL_ARCHIVE (distinção entre 08/01 e 26/01/2023)",
           "authorOrInstitution": "Pádua FloodSim — Inventário Auditado",
           "publishedDate": "2026-11-25",
@@ -1918,7 +2095,8 @@
         "Catalogado separadamente para impedir que 5,238 m (26/01/2023) seja erroneamente atribuído à cheia de 08/01/2023."
       ],
       "controlPointIds": [],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "hydrological_telemetry_only"
     },
     {
       "id": "HIST-2025-12-17",
@@ -1931,8 +2109,8 @@
       "windowTimestampNote": "Janela acima de 240 cm em 58790002: 2025-12-17T22:30:00Z a 2025-12-19T14:15:00Z (pico em 18/12/2025 às 12:15 BRT).",
       "classification": "elevated_hydrological_event",
       "classificationRationale": "Tangenciou o limiar nominal de inundação SGB (310,76 cm telemétrico; 312,0 cm diário), sem registros documentais de alagamento urbano.",
-      "summary": "Pulso rápido de 39,75 h acima de atenção em dezembro de 2025 que tangenciou 310 cm em 58790002 (310,76 cm; 692,03 m³/s).",
-      "hydrologicalContext": "Propagação rápida desde Cataguases (514,41 cm / 627,51 m³/s) e Barra do Braúna (381,0 cm) com 58,0 mm de chuva local.",
+      "summary": "Pulso rápido de 39,75 h contínuas comprovadas acima de atenção (160 leituras de 15 min) em dezembro de 2025 que tangenciou 310 cm em 58790002 (310,76 cm).",
+      "hydrologicalContext": "Propagação rápida desde Cataguases (514,41 cm) e Barra do Braúna (381,0 cm) com 58,0 mm de chuva local.",
       "urbanImpactSummary": null,
       "stationObservations": [
         {
@@ -1940,7 +2118,7 @@
           "informationClass": "processed",
           "availability": "verified_telemetry",
           "usableForComparison": true,
-          "datumContinuityVerified": true,
+          "datumContinuityVerified": false,
           "peakStageCm": 310.76,
           "rawPeakValue": 310.76,
           "rawPeakUnit": "cm",
@@ -1951,7 +2129,8 @@
               "sourceTitle": "Série convencional diária 58790002 (quality_report.json)",
               "informationClass": "observed",
               "isSecondaryPressOrBulletin": false,
-              "note": "Máximo anual de 2025 na série convencional diária."
+              "note": "Agregado máximo anual (yearly['2025'].max) da série convencional diária em quality_report.json, sem timestamp individual listado em top_10_peaks.",
+              "isPeriodAggregate": true
             }
           ],
           "peakTimestamp": {
@@ -1963,8 +2142,8 @@
             "hasExcelSerialRoundingNote": false,
             "conversionNote": "Timestamp auditado em UTC; exibido em horário padrão de Brasília (UTC−3, sem horário de verão no período 2020–2026)."
           },
-          "peakDischargeM3s": 692.03,
-          "dischargeNote": "Máximo anual de 2025 em 58790002::discharge_m3s.",
+          "peakDischargeM3s": null,
+          "dischargeNote": "Vazão específica do evento não publicada com timestamp em candidate_events.json (agregado máximo anual em quality_report.json para 2025: 692,03 m³/s).",
           "accumulatedRainMm": 58,
           "rainStationLabel": "PCD SGB/ANA 58790002 (02142067)",
           "rainWindowNote": null,
@@ -1972,21 +2151,31 @@
             {
               "thresholdLabel": "Acima de Atenção SGB (>= 240 cm)",
               "thresholdNativeValue": "240 cm",
-              "hoursAbove": 39.75,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 39.75,
+              "readingsAboveCount": 160,
+              "nominalSampleSupportHours": 40.0,
+              "unaccountedSlotsInWindow": 0,
+              "provenContinuousHours": 39.75,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": false,
               "sourceLabel": "candidate_events.json (EVT-20251217-36)",
-              "includesMergedGaps": false,
-              "note": "160 leituras acima de 240 cm."
+              "note": "Excursão contínua comprovada: 160 leituras consecutivas de 15 min preenchem 100% dos 160 passos da janela (40.0 h de suporte amostral nominal, 0 lacunas ou recessões internas)."
             }
           ],
           "coveragePct": 100,
           "qualitySummary": "100% de cobertura telemétrica na janela do evento.",
           "gapsAndInconsistencies": [],
-          "verticalReferenceLabel": "Zero da régua 79,709 m · Datum hgeoHNOR_IMBITUBA",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade geodésica em 2025 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Agregado anual de referência em 2025 (quality_report.json): 99,69% de completude telemétrica.",
+          "datumContinuityStatus": "unverified_internal_consistency_only",
+          "datumContinuityNote": "Consistência interna telemétrica × convencional diária verificada em 2025 (quality_report.json), porém sem boletim oficial de nivelamento de RNs por período comprovando equivalência geodésica estrita ao zero 79,709 m (hgeoHNOR_IMBITUBA, SGB set/2024) e com divergência cadastral de 2,415 km em aberto."
         },
         {
           "stationId": "RHN-58788600",
@@ -2021,7 +2210,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         },
         {
           "stationId": "RHN-58770000",
@@ -2042,8 +2235,8 @@
             "hasExcelSerialRoundingNote": false,
             "conversionNote": "Timestamp auditado em UTC; exibido em horário padrão de Brasília (UTC−3, sem horário de verão no período 2020–2026)."
           },
-          "peakDischargeM3s": 627.51,
-          "dischargeNote": "Máximo anual de 2025 em Cataguases.",
+          "peakDischargeM3s": null,
+          "dischargeNote": "Vazão específica do evento não publicada com timestamp em candidate_events.json (agregado máximo anual em quality_report.json para 2025: 627,51 m³/s).",
           "accumulatedRainMm": null,
           "rainStationLabel": null,
           "rainWindowNote": null,
@@ -2056,13 +2249,17 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
         {
           "id": "DOC-2025-DEC-EXP",
-          "kind": "technical_report",
+          "kind": "project_audit",
           "title": "Catálogo hidrológico auditado EXP-2026-001 (EVT-20251217-36)",
           "authorOrInstitution": "Pádua FloodSim — Auditoria RHN/ANA",
           "publishedDate": "2026-11-25",
@@ -2081,7 +2278,8 @@
         "CP-MONSENHOR-DINIZ",
         "CP-BEIRA-RIO-SENAR"
       ],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "hydrological_telemetry_only"
     },
     {
       "id": "HIST-2026-02-05",
@@ -2103,7 +2301,7 @@
           "informationClass": "processed",
           "availability": "verified_telemetry",
           "usableForComparison": true,
-          "datumContinuityVerified": true,
+          "datumContinuityVerified": false,
           "peakStageCm": 294.7,
           "rawPeakValue": 294.7,
           "rawPeakUnit": "cm",
@@ -2126,21 +2324,31 @@
             {
               "thresholdLabel": "Acima de Atenção SGB (>= 240 cm)",
               "thresholdNativeValue": "240 cm",
-              "hoursAbove": 121.5,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 121.5,
+              "readingsAboveCount": 357,
+              "nominalSampleSupportHours": 89.25,
+              "unaccountedSlotsInWindow": 130,
+              "provenContinuousHours": null,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": true,
               "sourceLabel": "candidate_events.json (EVT-20260205-37)",
-              "includesMergedGaps": false,
-              "note": "357 leituras acima de 240 cm."
+              "note": "Janela mesclada (fusão <= 72 h) de 121.5 h (487 passos nominais de 15 min), contendo 357 leituras >= 240 cm (89.25 h de suporte amostral nominal) e 130 passos (32.5 h nominais) abaixo do limiar ou sem medição. Duração contínua sem recessões/lacunas não comprovada sem série bruta (BLOCKED_LOCAL_DATA)."
             }
           ],
-          "coveragePct": 100,
+          "coveragePct": null,
           "qualitySummary": "Série telemétrica contínua em fevereiro de 2026.",
           "gapsAndInconsistencies": [],
-          "verticalReferenceLabel": "Zero da régua 79,709 m · Datum hgeoHNOR_IMBITUBA",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade em 2026 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Cobertura exata da janela mesclada não decomposta sem CSV bruto (BLOCKED_LOCAL_DATA). Agregado anual de referência em 2026 (quality_report.json): 81,67% na telemetria.",
+          "datumContinuityStatus": "unverified_no_leveling_record",
+          "datumContinuityNote": "Telemetria operacional de 2026 sem série diária convencional consistida publicada e sem confirmação institucional pós-set/2024 de manutenção do zero 79,709 m (hgeoHNOR_IMBITUBA)."
         },
         {
           "stationId": "RHN-58788600",
@@ -2175,7 +2383,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         },
         {
           "stationId": "RHN-58770000",
@@ -2210,13 +2422,17 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
         {
           "id": "DOC-2026-FEB05-EXP",
-          "kind": "technical_report",
+          "kind": "project_audit",
           "title": "Catálogo hidrológico auditado EXP-2026-001 (EVT-20260205-37)",
           "authorOrInstitution": "Pádua FloodSim — Auditoria RHN/ANA",
           "publishedDate": "2026-11-25",
@@ -2232,7 +2448,8 @@
         "Abaixo de 300 cm em 58790002: associação às manchas oficiais SGB (300–550 cm) bloqueada sem extrapolação."
       ],
       "controlPointIds": [],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "hydrological_telemetry_only"
     },
     {
       "id": "HIST-2026-02-25",
@@ -2245,8 +2462,8 @@
       "windowTimestampNote": "Janela acima de 240 cm em 58790002: 2026-02-25T11:15:00Z a 2026-03-02T02:45:00Z. No INEA (Decreto nº 025/2026): transbordo às 23:30 BRT de 26/02, pico de 6,314 m às 14:15 BRT de 28/02 (17:15 GMT) e saída às 14:00 BRT de 01/03/2026.",
       "classification": "documented_urban_flood",
       "classificationRationale": "Cobertura convergente nas 4 estações auditadas somada ao Decreto Municipal nº 025/2026 (FIDE RJ-F-3304706-12100-20260226) e cobertura jornalística verificada.",
-      "summary": "Enchente severa mais recente de Santo Antônio de Pádua: 412,0 cm / 1.197,7 m³/s em 58790002 às 15:30 BRT de 28/02/2026 e 6,314 m no INEA às 14:15 BRT (38,5 h em transbordo INEA).",
-      "hydrologicalContext": "Onda expressiva da Zona da Mata mineira (Cataguases atingiu 815,99 cm / 1.166,25 m³/s em 27/02 22:00Z; Barra do Braúna 560,0 cm / 1.017,74 m³/s em 28/02 15:00Z) combinada a 61,0 mm de chuva local.",
+      "summary": "Enchente severa mais recente de Santo Antônio de Pádua: 412,0 cm em 58790002 às 15:30 BRT de 28/02/2026 e 6,314 m no INEA às 14:15 BRT (38,5 h contínuas acima do transbordo INEA documentadas no Decreto nº 025/2026).",
+      "hydrologicalContext": "Onda expressiva da Zona da Mata mineira (Cataguases atingiu 815,99 cm / 1.166,25 m³/s em 27/02 22:00Z; Barra do Braúna 560,0 cm / 1.017,74 m³/s em 28/02 15:00Z) combinada a 61,0 mm de chuva local. Em 58790002, janela mesclada de 111,5 h com 443 leituras >= 240 cm (110,75 h de suporte amostral nominal).",
       "urbanImpactSummary": "Situação de Emergência Nível II declarada pelo Decreto Municipal nº 025/2026 (180 dias, protocolo S2ID RJ-F-3304706-12100-20260226), com alagamento extenso de vias urbanas.",
       "stationObservations": [
         {
@@ -2254,7 +2471,7 @@
           "informationClass": "processed",
           "availability": "verified_telemetry",
           "usableForComparison": true,
-          "datumContinuityVerified": true,
+          "datumContinuityVerified": false,
           "peakStageCm": 412,
           "rawPeakValue": 412,
           "rawPeakUnit": "cm",
@@ -2268,8 +2485,8 @@
             "hasExcelSerialRoundingNote": false,
             "conversionNote": "Timestamp auditado em UTC; exibido em horário padrão de Brasília (UTC−3, sem horário de verão no período 2020–2026)."
           },
-          "peakDischargeM3s": 1197.7,
-          "dischargeNote": "Máximo anual de 2026 em 58790002::discharge_m3s.",
+          "peakDischargeM3s": null,
+          "dischargeNote": "Vazão específica do evento não publicada com timestamp em candidate_events.json (agregado máximo anual em quality_report.json para 2026: 1197,7 m³/s).",
           "accumulatedRainMm": 61,
           "rainStationLabel": "PCD SGB/ANA 58790002 (02142067)",
           "rainWindowNote": null,
@@ -2277,21 +2494,31 @@
             {
               "thresholdLabel": "Acima de Atenção SGB (>= 240 cm)",
               "thresholdNativeValue": "240 cm",
-              "hoursAbove": 111.5,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 111.5,
+              "readingsAboveCount": 443,
+              "nominalSampleSupportHours": 110.75,
+              "unaccountedSlotsInWindow": 4,
+              "provenContinuousHours": null,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": true,
               "sourceLabel": "candidate_events.json (EVT-20260225-38)",
-              "includesMergedGaps": false,
-              "note": "443 leituras acima de 240 cm."
+              "note": "Janela mesclada (fusão <= 72 h) de 111.5 h (447 passos nominais de 15 min), contendo 443 leituras >= 240 cm (110.75 h de suporte amostral nominal) e 4 passos (1.0 h nominais) abaixo do limiar ou sem medição. Duração contínua sem recessões/lacunas não comprovada sem série bruta (BLOCKED_LOCAL_DATA)."
             }
           ],
-          "coveragePct": 100,
+          "coveragePct": null,
           "qualitySummary": "Série telemétrica contínua sem lacunas na janela de 25/02 a 02/03/2026.",
           "gapsAndInconsistencies": [],
-          "verticalReferenceLabel": "Zero da régua 79,709 m · Datum hgeoHNOR_IMBITUBA",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade em 2026 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Cobertura exata da janela mesclada não decomposta sem CSV bruto (BLOCKED_LOCAL_DATA). Agregado anual de referência em 2026 (quality_report.json): 81,67% na telemetria.",
+          "datumContinuityStatus": "unverified_no_leveling_record",
+          "datumContinuityNote": "Telemetria operacional de 2026 sem série diária convencional consistida publicada e sem confirmação institucional pós-set/2024 de manutenção do zero 79,709 m (hgeoHNOR_IMBITUBA)."
         },
         {
           "stationId": "INEA-213042120",
@@ -2330,14 +2557,20 @@
             {
               "thresholdLabel": "Acima de Transbordo INEA (>= 5,00 m)",
               "thresholdNativeValue": "5,00 m",
-              "hoursAbove": 38.5,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 38.5,
+              "readingsAboveCount": null,
+              "nominalSampleSupportHours": null,
+              "unaccountedSlotsInWindow": 0,
+              "provenContinuousHours": 38.5,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": false,
               "sourceLabel": "Decreto Municipal nº 025/2026 (26/02 23:30 BRT a 01/03 14:00 BRT)",
-              "includesMergedGaps": false,
-              "note": "Cronologia oficial da Defesa Civil em concordância com a planilha GMT do INEA."
+              "note": "Excursão contínua documentada pela Defesa Civil no Decreto nº 025/2026 em período com 100% de cobertura na planilha GMT do INEA."
             }
           ],
           "coveragePct": 100,
-          "qualitySummary": "100,0% de cobertura em fev/2026 (1.741 'Bruto' + 947 'Ajustado'). Confronto com o Decreto nº 025/2026 (6,31 m às 14:15 BRT) comprova que 'Data e Hora (GMT)' é UTC+0 real.",
+          "qualitySummary": "Cobertura integral na janela de 25/02 a 02/03/2026 (0 ausências entre 01/02 e 30/03/2026 16:45 GMT). Confronto com o Decreto nº 025/2026 (6,31 m às 14:15 BRT) comprova que 'Data e Hora (GMT)' é UTC+0 real.",
           "gapsAndInconsistencies": [
             "Em jan/2026 houve 2.175 linhas 'Suspeito' antes do ajuste de calibração realizado em fev/2026."
           ],
@@ -2347,7 +2580,11 @@
           "provenanceIds": [
             "PROV-INEA-DRIVE-XLSX",
             "PROV-DECRETO-025-2026"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Agregados mensais 2026 (INEA_HISTORICAL_ARCHIVE): fev/2026 com 2.688/2.688 leituras (100,0%: 1.741 'Bruto' + 947 'Ajustado'); mar/2026 com 2.852 leituras 'Bruto' até 30/03 16:45 (95,8% do mês completo); jan/2026 anterior teve 2.175 linhas 'Suspeito'.",
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Seção física independente (~6 km a montante) com datum vertical não confirmado e histórico de ajustes de sensor (2021–2026)."
         },
         {
           "stationId": "RHN-58788600",
@@ -2369,7 +2606,7 @@
             "conversionNote": "Timestamp auditado em UTC; exibido em horário padrão de Brasília (UTC−3, sem horário de verão no período 2020–2026)."
           },
           "peakDischargeM3s": 1017.74,
-          "dischargeNote": "Máximo anual de 2026 em 58788600::discharge_m3s.",
+          "dischargeNote": "Vazão específica do evento confirmada com timestamp em quality_report.json (top_10_peaks: 1.017,74 m³/s em 2026-02-28T15:00:00Z).",
           "accumulatedRainMm": null,
           "rainStationLabel": null,
           "rainWindowNote": null,
@@ -2382,7 +2619,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         },
         {
           "stationId": "RHN-58770000",
@@ -2404,7 +2645,7 @@
             "conversionNote": "Timestamp auditado em UTC; exibido em horário padrão de Brasília (UTC−3, sem horário de verão no período 2020–2026)."
           },
           "peakDischargeM3s": 1166.25,
-          "dischargeNote": "Maior vazão de toda a série 2020–2026 em Cataguases.",
+          "dischargeNote": "Vazão específica do evento confirmada com timestamp em quality_report.json (top_10_peaks: 1.166,25 m³/s em 2026-02-27T22:00:00Z..2026-02-28T00:30:00Z).",
           "accumulatedRainMm": null,
           "rainStationLabel": null,
           "rainWindowNote": null,
@@ -2417,7 +2658,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
@@ -2482,7 +2727,7 @@
       ],
       "keyDivergencesAndCaveats": [
         "Único grande evento pós-2020 com cobertura telemétrica simultânea e sem flatlines nas 4 estações auditadas.",
-        "Pico de 412,0 cm em 58790002 permite associação aproximada (4,00 m) ou comparação topológica derivada (4,00 × 4,25 m) sem interpolação."
+        "Embora 412,0 cm esteja dentro de 300–550 cm em 58790002, não há série convencional consistida nem boletim de nivelamento pós-2024 para 2026; permite-se apenas exploração independente de cenário SGB sem equivalência histórica confirmada."
       ],
       "controlPointIds": [
         "CP-MONSENHOR-DINIZ",
@@ -2490,7 +2735,8 @@
         "CP-BEIRA-RIO-SENAR",
         "CP-HOSPITAL-HELIO-MONTEZANO"
       ],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "primary_official_act_and_report"
     },
     {
       "id": "HIST-2026-03-14",
@@ -2512,7 +2758,7 @@
           "informationClass": "processed",
           "availability": "verified_telemetry",
           "usableForComparison": true,
-          "datumContinuityVerified": true,
+          "datumContinuityVerified": false,
           "peakStageCm": 298,
           "rawPeakValue": 298,
           "rawPeakUnit": "cm",
@@ -2535,21 +2781,31 @@
             {
               "thresholdLabel": "Acima de Atenção SGB (>= 240 cm)",
               "thresholdNativeValue": "240 cm",
-              "hoursAbove": 22.5,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 22.5,
+              "readingsAboveCount": 91,
+              "nominalSampleSupportHours": 22.75,
+              "unaccountedSlotsInWindow": 0,
+              "provenContinuousHours": 22.5,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": false,
               "sourceLabel": "candidate_events.json (EVT-20260314-39)",
-              "includesMergedGaps": false,
-              "note": "91 leituras acima de 240 cm."
+              "note": "Excursão contínua comprovada: 91 leituras consecutivas de 15 min preenchem 100% dos 91 passos da janela (22.75 h de suporte amostral nominal, 0 lacunas ou recessões internas)."
             }
           ],
           "coveragePct": 100,
           "qualitySummary": "100% de cobertura telemétrica na janela.",
           "gapsAndInconsistencies": [],
-          "verticalReferenceLabel": "Zero da régua 79,709 m · Datum hgeoHNOR_IMBITUBA",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade em 2026 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Agregado anual de referência em 2026 (quality_report.json): 81,67% de completude telemétrica.",
+          "datumContinuityStatus": "unverified_no_leveling_record",
+          "datumContinuityNote": "Telemetria operacional de 2026 sem série diária convencional consistida publicada e sem confirmação institucional pós-set/2024 de manutenção do zero 79,709 m (hgeoHNOR_IMBITUBA)."
         },
         {
           "stationId": "RHN-58788600",
@@ -2584,7 +2840,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         },
         {
           "stationId": "RHN-58770000",
@@ -2619,13 +2879,17 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
         {
           "id": "DOC-2026-MAR14-EXP",
-          "kind": "technical_report",
+          "kind": "project_audit",
           "title": "Catálogo hidrológico auditado EXP-2026-001 (EVT-20260314-39)",
           "authorOrInstitution": "Pádua FloodSim — Auditoria RHN/ANA",
           "publishedDate": "2026-11-25",
@@ -2641,7 +2905,8 @@
         "Pico de 298,0 cm inferior à menor mancha SGB (300 cm); associação espacial bloqueada."
       ],
       "controlPointIds": [],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "hydrological_telemetry_only"
     },
     {
       "id": "HIST-2026-03-21",
@@ -2663,7 +2928,7 @@
           "informationClass": "processed",
           "availability": "verified_telemetry",
           "usableForComparison": true,
-          "datumContinuityVerified": true,
+          "datumContinuityVerified": false,
           "peakStageCm": 296,
           "rawPeakValue": 296,
           "rawPeakUnit": "cm",
@@ -2686,21 +2951,31 @@
             {
               "thresholdLabel": "Acima de Atenção SGB (>= 240 cm)",
               "thresholdNativeValue": "240 cm",
-              "hoursAbove": 34.25,
+              "aggregationScope": "single_event",
+              "mergedWindowSpanHours": 34.25,
+              "readingsAboveCount": 138,
+              "nominalSampleSupportHours": 34.5,
+              "unaccountedSlotsInWindow": 0,
+              "provenContinuousHours": 34.25,
+              "aggregateHoursReported": null,
+              "includesMergedGapsOrRecessions": false,
               "sourceLabel": "candidate_events.json (EVT-20260321-40)",
-              "includesMergedGaps": false,
-              "note": "138 leituras acima de 240 cm."
+              "note": "Excursão contínua comprovada: 138 leituras consecutivas de 15 min preenchem 100% dos 138 passos da janela (34.5 h de suporte amostral nominal, 0 lacunas ou recessões internas)."
             }
           ],
           "coveragePct": 100,
           "qualitySummary": "100% de cobertura durante a janela de 21–23/03/2026.",
           "gapsAndInconsistencies": [],
-          "verticalReferenceLabel": "Zero da régua 79,709 m · Datum hgeoHNOR_IMBITUBA",
+          "verticalReferenceLabel": "Escala RHN 58790002 (zero 79,709 m hgeoHNOR_IMBITUBA em set/2024; continuidade em 2026 não confirmada)",
           "seriesAvailability": "blocked_local_data",
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": "Agregado anual de referência em 2026 (quality_report.json): 81,67% de completude telemétrica.",
+          "datumContinuityStatus": "unverified_no_leveling_record",
+          "datumContinuityNote": "Telemetria operacional de 2026 sem série diária convencional consistida publicada e sem confirmação institucional pós-set/2024 de manutenção do zero 79,709 m (hgeoHNOR_IMBITUBA)."
         },
         {
           "stationId": "RHN-58788600",
@@ -2735,7 +3010,11 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         },
         {
           "stationId": "RHN-58770000",
@@ -2770,13 +3049,17 @@
           "seriesAvailabilityNote": "Série processada indisponível no ambiente cloud (BLOCKED_LOCAL_DATA).",
           "provenanceIds": [
             "PROV-EXP-2026-001"
-          ]
+          ],
+          "datumContinuityEvidence": null,
+          "periodAggregateNote": null,
+          "datumContinuityStatus": "not_applicable_independent_station",
+          "datumContinuityNote": "Estação hidrométrica a montante com referência vertical local independente de Santo Antônio de Pádua."
         }
       ],
       "documentaryEvidence": [
         {
           "id": "DOC-2026-MAR21-EXP",
-          "kind": "technical_report",
+          "kind": "project_audit",
           "title": "Catálogo hidrológico auditado EXP-2026-001 (EVT-20260321-40)",
           "authorOrInstitution": "Pádua FloodSim — Auditoria RHN/ANA",
           "publishedDate": "2026-11-25",
@@ -2792,7 +3075,8 @@
         "Pico de 296,0 cm inferior à menor mancha SGB (300 cm); associação espacial bloqueada."
       ],
       "controlPointIds": [],
-      "primaryStationId": "RHN-58790002"
+      "primaryStationId": "RHN-58790002",
+      "documentaryBasisLevel": "hydrological_telemetry_only"
     }
   ]
 }

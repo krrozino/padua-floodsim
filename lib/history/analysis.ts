@@ -9,7 +9,9 @@ import type {
   HistoricalMapAssociation,
   HistoricalStationId,
   StationEventObservation,
+  StationThresholdDuration,
 } from "./contract.ts";
+import { formatTrimmedDecimalPtBr } from "./normalize.ts";
 
 export type HistoricalSortOrder = "newest_first" | "oldest_first";
 
@@ -72,26 +74,36 @@ function matchesEventFilters(
   ) {
     return false;
   }
-  if (filters.stationId !== "all") {
-    return hasVerifiedStationMeasurement(event, filters.stationId);
+  if (
+    filters.stationId !== "all" &&
+    !hasVerifiedStationMeasurement(event, filters.stationId)
+  ) {
+    return false;
   }
   return true;
 }
 
+function compareEventStartDates(
+  a: HistoricalFloodEvent,
+  b: HistoricalFloodEvent,
+  sortOrder: HistoricalSortOrder,
+): number {
+  const cmp = a.startDateIso.localeCompare(b.startDateIso);
+  if (cmp !== 0) {
+    return sortOrder === "oldest_first" ? cmp : -cmp;
+  }
+  return sortOrder === "oldest_first"
+    ? a.id.localeCompare(b.id)
+    : b.id.localeCompare(a.id);
+}
+
 export function filterAndSortHistoricalEvents(
   events: readonly HistoricalFloodEvent[],
-  filters: HistoricalEventFilters,
+  filters: HistoricalEventFilters = DEFAULT_HISTORICAL_FILTERS,
 ): readonly HistoricalFloodEvent[] {
-  const filtered = events.filter((ev) => matchesEventFilters(ev, filters));
-  const sign = filters.sortOrder === "oldest_first" ? 1 : -1;
-
-  return [...filtered].sort((a, b) => {
-    const dateCompare = a.startDateIso.localeCompare(b.startDateIso);
-    if (dateCompare !== 0) {
-      return sign * dateCompare;
-    }
-    return sign * a.id.localeCompare(b.id);
-  });
+  return events
+    .filter((ev) => matchesEventFilters(ev, filters))
+    .sort((a, b) => compareEventStartDates(a, b, filters.sortOrder));
 }
 
 export type CompatibleEventComparisonResult =
@@ -116,9 +128,14 @@ export type CompatibleEventComparisonResult =
       readonly rainBMm: number | null;
       readonly deltaRainMm: number | null;
       readonly sharedThresholdLabel: string | null;
-      readonly durationAHours: number | null;
-      readonly durationBHours: number | null;
-      readonly deltaDurationHours: number | null;
+      /** Populated ONLY when continuous exceedance without internal gaps/recessions is proven. */
+      readonly provenDurationAHours: number | null;
+      readonly provenDurationBHours: number | null;
+      readonly deltaProvenDurationHours: number | null;
+      readonly nominalSupportAHours: number | null;
+      readonly nominalSupportBHours: number | null;
+      readonly mergedWindowSpanAHours: number | null;
+      readonly mergedWindowSpanBHours: number | null;
       readonly warnings: readonly string[];
     }
   | {
@@ -127,45 +144,83 @@ export type CompatibleEventComparisonResult =
       readonly reason: string;
     };
 
+type SharedDurationMetrics = {
+  readonly sharedThresholdLabel: string | null;
+  readonly provenDurationAHours: number | null;
+  readonly provenDurationBHours: number | null;
+  readonly deltaProvenDurationHours: number | null;
+  readonly nominalSupportAHours: number | null;
+  readonly nominalSupportBHours: number | null;
+  readonly mergedWindowSpanAHours: number | null;
+  readonly mergedWindowSpanBHours: number | null;
+  readonly warning: string | null;
+};
+
+function findMatchingSingleEventDuration(
+  durations: readonly StationThresholdDuration[],
+  thresholdNativeValue: string,
+): StationThresholdDuration | undefined {
+  return durations.find(
+    (d) =>
+      d.aggregationScope === "single_event" &&
+      d.thresholdNativeValue === thresholdNativeValue,
+  );
+}
+
+/**
+ * Compares threshold durations strictly across `single_event` records on the
+ * same threshold. Multi-event, monthly, or annual sums (`246 h`, `188 h`) are
+ * unconditionally excluded, and `deltaProvenDurationHours` is computed ONLY
+ * when BOTH events have proven continuous duration without internal gaps/recessions.
+ */
 function computeSharedThresholdComparison(
   obsA: StationEventObservation,
   obsB: StationEventObservation,
-): {
-  readonly sharedThresholdLabel: string | null;
-  readonly durationAHours: number | null;
-  readonly durationBHours: number | null;
-  readonly deltaDurationHours: number | null;
-  readonly warning: string | null;
-} {
+): SharedDurationMetrics {
   for (const durA of obsA.thresholdDurations) {
-    const matchingB = obsB.thresholdDurations.find(
-      (durB) => durB.thresholdNativeValue === durA.thresholdNativeValue,
+    if (durA.aggregationScope !== "single_event") continue;
+
+    const matchingB = findMatchingSingleEventDuration(
+      obsB.thresholdDurations,
+      durA.thresholdNativeValue,
     );
     if (!matchingB) continue;
 
-    const aIsAnnual = /soma|anual|2022\/2023/i.test(durA.thresholdLabel);
-    const bIsAnnual = /soma|anual|2022\/2023/i.test(matchingB.thresholdLabel);
-    if (aIsAnnual !== bIsAnnual) continue;
+    const deltaProven = computeNullableDelta(
+      durA.provenContinuousHours,
+      matchingB.provenContinuousHours,
+      100,
+    );
+    const hasMergedOrUnproven =
+      durA.includesMergedGapsOrRecessions ||
+      matchingB.includesMergedGapsOrRecessions ||
+      durA.provenContinuousHours === null ||
+      matchingB.provenContinuousHours === null;
 
-    const delta =
-      Math.round((matchingB.hoursAbove - durA.hoursAbove) * 100) / 100;
-    const hasMergedGap = durA.includesMergedGaps || matchingB.includesMergedGaps;
     return {
       sharedThresholdLabel: durA.thresholdLabel,
-      durationAHours: durA.hoursAbove,
-      durationBHours: matchingB.hoursAbove,
-      deltaDurationHours: delta,
-      warning: hasMergedGap
-        ? "Ao menos uma janela de duração acima do limiar inclui mesclagem de lacuna telemétrica documentada."
+      provenDurationAHours: durA.provenContinuousHours,
+      provenDurationBHours: matchingB.provenContinuousHours,
+      deltaProvenDurationHours: deltaProven,
+      nominalSupportAHours: durA.nominalSampleSupportHours,
+      nominalSupportBHours: matchingB.nominalSampleSupportHours,
+      mergedWindowSpanAHours: durA.mergedWindowSpanHours,
+      mergedWindowSpanBHours: matchingB.mergedWindowSpanHours,
+      warning: hasMergedOrUnproven
+        ? "Ao menos um evento possui janela mesclada (<= 72 h) com lacunas ou recessões abaixo do limiar; por isso a diferença de duração contínua comprovada não é computada sobre a extensão bruta da janela."
         : null,
     };
   }
 
   return {
     sharedThresholdLabel: null,
-    durationAHours: null,
-    durationBHours: null,
-    deltaDurationHours: null,
+    provenDurationAHours: null,
+    provenDurationBHours: null,
+    deltaProvenDurationHours: null,
+    nominalSupportAHours: null,
+    nominalSupportBHours: null,
+    mergedWindowSpanAHours: null,
+    mergedWindowSpanBHours: null,
     warning: null,
   };
 }
@@ -195,30 +250,34 @@ function computeNullableDelta(
   return Math.round((b - a) * precisionFactor) / precisionFactor;
 }
 
+type ComparisonWarningContext = {
+  readonly eventA: HistoricalFloodEvent;
+  readonly eventB: HistoricalFloodEvent;
+  readonly obsA: UsableObservation;
+  readonly obsB: UsableObservation;
+  readonly stationShortName: string;
+  readonly durationWarning: string | null;
+};
+
 function collectComparisonWarnings(
-  eventA: HistoricalFloodEvent,
-  eventB: HistoricalFloodEvent,
-  obsA: UsableObservation,
-  obsB: UsableObservation,
-  stationShortName: string,
-  durationWarning: string | null,
+  ctx: ComparisonWarningContext,
 ): readonly string[] {
   const warnings: string[] = [];
-  if (!obsA.datumContinuityVerified || !obsB.datumContinuityVerified) {
+  if (!ctx.obsA.datumContinuityVerified || !ctx.obsB.datumContinuityVerified) {
     warnings.push(
-      `Continuidade histórica do zero da régua em ${stationShortName} não está integralmente confirmada entre ${eventA.year} e ${eventB.year}; interprete Δ pico com cautela.`,
+      `Continuidade geodésica do zero da régua em ${ctx.stationShortName} não está formalmente comprovada por histórico de nivelamento entre ${ctx.eventA.periodLabel} e ${ctx.eventB.periodLabel}; interprete Δ pico com cautela.`,
     );
   }
   if (
-    Boolean(obsA.peakTimestamp?.hasDstAmbiguity) ||
-    Boolean(obsB.peakTimestamp?.hasDstAmbiguity)
+    Boolean(ctx.obsA.peakTimestamp?.hasDstAmbiguity) ||
+    Boolean(ctx.obsB.peakTimestamp?.hasDstAmbiguity)
   ) {
     warnings.push(
       "Ao menos um evento possui incerteza de horário de verão (BRST UTC−2 vs. UTC−3) no instante do pico.",
     );
   }
-  if (durationWarning) {
-    warnings.push(durationWarning);
+  if (ctx.durationWarning) {
+    warnings.push(ctx.durationWarning);
   }
   return warnings;
 }
@@ -284,14 +343,19 @@ export function compareHistoricalEventsOnStation(
   }
 
   const durationCmp = computeSharedThresholdComparison(obsA, obsB);
-  const warnings = collectComparisonWarnings(
+  const warnings = collectComparisonWarnings({
     eventA,
     eventB,
     obsA,
     obsB,
-    stationRef.shortName,
-    durationCmp.warning,
-  );
+    stationShortName: stationRef.shortName,
+    durationWarning: durationCmp.warning,
+  });
+
+  const deltaPeakCm =
+    Math.round((obsB.peakStageCm - obsA.peakStageCm) * 100) / 100;
+  const deltaRawPeak =
+    Math.round((obsB.rawPeakValue - obsA.rawPeakValue) * 1000) / 1000;
 
   return {
     status: "compatible",
@@ -302,15 +366,11 @@ export function compareHistoricalEventsOnStation(
     eventBId: eventB.id,
     peakACm: obsA.peakStageCm,
     peakBCm: obsB.peakStageCm,
-    deltaPeakCm: computeNullableDelta(obsA.peakStageCm, obsB.peakStageCm, 100)!,
+    deltaPeakCm,
     rawUnit: obsA.rawPeakUnit,
     rawPeakA: obsA.rawPeakValue,
     rawPeakB: obsB.rawPeakValue,
-    deltaRawPeak: computeNullableDelta(
-      obsA.rawPeakValue,
-      obsB.rawPeakValue,
-      1000,
-    )!,
+    deltaRawPeak,
     dischargeAM3s: obsA.peakDischargeM3s,
     dischargeBM3s: obsB.peakDischargeM3s,
     deltaDischargeM3s: computeNullableDelta(
@@ -326,9 +386,13 @@ export function compareHistoricalEventsOnStation(
       10,
     ),
     sharedThresholdLabel: durationCmp.sharedThresholdLabel,
-    durationAHours: durationCmp.durationAHours,
-    durationBHours: durationCmp.durationBHours,
-    deltaDurationHours: durationCmp.deltaDurationHours,
+    provenDurationAHours: durationCmp.provenDurationAHours,
+    provenDurationBHours: durationCmp.provenDurationBHours,
+    deltaProvenDurationHours: durationCmp.deltaProvenDurationHours,
+    nominalSupportAHours: durationCmp.nominalSupportAHours,
+    nominalSupportBHours: durationCmp.nominalSupportBHours,
+    mergedWindowSpanAHours: durationCmp.mergedWindowSpanAHours,
+    mergedWindowSpanBHours: durationCmp.mergedWindowSpanBHours,
     warnings,
   };
 }
@@ -346,12 +410,12 @@ function buildSpatialTaxonomyNotes(
         ? `Extensão oficial modelada: camada estática HEC-RAS 1D publicada pelo SGB (2024) para exatamente ${nearestCm} cm (${(nearestCm / 100).toFixed(2).replace(".", ",")} m) na estação 58790002.`
         : "Extensão oficial modelada: polígonos estáticos SGB (2024) disponíveis em passos discretos de 25 cm (300 a 550 cm) na régua 58790002.",
     derivedRepresentation: bracketing
-      ? `Representação derivada: sobreposição topológica A × B entre as cotas oficiais adjacentes ${bracketing[0]} cm e ${bracketing[1]} cm que enquadram o pico observado, sem interpolar nova mancha.`
+      ? `Representação derivada: sobreposição topológica A × B entre as cotas oficiais adjacentes ${bracketing[0]} cm e ${bracketing[1]} cm, sem interpolar nova mancha.`
       : "Representação derivada: métricas de área e sobreposição calculadas sobre geometrias oficiais SGB sem geração de polígonos intermediários.",
     approximateScenario:
       !isExact && nearestCm !== null
-        ? `Cenário aproximado: cota discreta SGB mais próxima (${nearestCm} cm / ${(nearestCm / 100).toFixed(2).replace(".", ",")} m) na mesma estação e datum (58790002, hgeoHNOR_IMBITUBA). Não é registro exato da enchente histórica.`
-        : "Cenário aproximado: associação discreta à cota SGB mais próxima quando estação, datum e faixa de cotas são compatíveis.",
+        ? `Cenário aproximado: cota discreta SGB mais próxima (${nearestCm} cm / ${(nearestCm / 100).toFixed(2).replace(".", ",")} m) quando estação, continuidade vertical da régua e faixa de cotas estão confirmadas.`
+        : "Cenário aproximado: associação discreta à cota SGB mais próxima somente quando estação, continuidade vertical da régua por período e faixa de cotas estão confirmadas.",
   };
 }
 
@@ -386,9 +450,23 @@ function findNearestAndBracketingSgbStages(peakCm: number): {
   return { isExact: false, nearestCm, bracketing: null };
 }
 
+function hasConfirmedDatumContinuity(obs: UsableObservation): boolean {
+  return Boolean(
+    obs.datumContinuityVerified &&
+      typeof obs.datumContinuityEvidence === "string" &&
+      obs.datumContinuityEvidence.trim().length > 0,
+  );
+}
+
 /**
  * Evaluates whether a historical event can be associated with an official SGB
- * flood scenario on the map (Section 7).
+ * flood scenario on the map (Section 7 + Vertical Continuity Gate).
+ *
+ * Requires BOTH `datumContinuityVerified === true` AND non-empty period-specific
+ * `datumContinuityEvidence`. In the absence of period-specific leveling evidence,
+ * historical equivalence remains BLOCKED with a generalized reason (never
+ * assuming 2012), offering at most independent SGB scenario exploration without
+ * confirmed historical equivalence when `300 <= peakStageCm <= 550`.
  */
 export function resolveHistoricalMapAssociation(
   event: HistoricalFloodEvent,
@@ -398,37 +476,32 @@ export function resolveHistoricalMapAssociation(
   if (!isUsableObservation(sgbObs)) {
     return {
       status: "blocked",
+      historicalEquivalenceConfirmed: false,
+      blockCode: "missing_sgb_station_observation",
       eventId: event.id,
       representationKind: "blocked_incompatible_reference",
       observedExtentAvailable: false,
       reason:
-        "Associação espacial bloqueada: o evento não possui leitura verificada na estação de referência RHN 58790002. Leituras do INEA (213042120) ou de montante não podem ser convertidas em cotas SGB sem crosswalk validado.",
-      taxonomyNotes: buildSpatialTaxonomyNotes(null, null, false),
-    };
-  }
-
-  if (!sgbObs.datumContinuityVerified) {
-    return {
-      status: "blocked",
-      eventId: event.id,
-      representationKind: "blocked_incompatible_reference",
-      observedExtentAvailable: false,
-      reason:
-        "Associação espacial bloqueada por precaução altimétrica: embora o pico de 450 cm seja da estação 58790002, a continuidade do zero da régua entre 2012 e o nivelamento geodésico SGB de 2024 (79,709 m hgeoHNOR_IMBITUBA) ainda não foi confirmada institucionalmente.",
+        "Associação histórica bloqueada: o evento não possui leitura verificada na estação de referência RHN 58790002. Leituras do INEA (213042120) ou de estações a montante não podem ser convertidas em cotas SGB sem crosswalk validado.",
+      independentScenarioExploration: null,
       taxonomyNotes: buildSpatialTaxonomyNotes(null, null, false),
     };
   }
 
   const minSgb = SGB_FLOOD_LEVELS_CM[0];
   const maxSgb = SGB_FLOOD_LEVELS_CM.at(-1) ?? 550;
+  const formattedPeak = formatTrimmedDecimalPtBr(sgbObs.peakStageCm, 2);
 
   if (sgbObs.peakStageCm < minSgb || sgbObs.peakStageCm > maxSgb) {
     return {
       status: "blocked",
+      historicalEquivalenceConfirmed: false,
+      blockCode: "outside_sgb_modeled_range",
       eventId: event.id,
       representationKind: "blocked_incompatible_reference",
       observedExtentAvailable: false,
-      reason: `Associação espacial bloqueada: o pico observado em 58790002 (${sgbObs.peakStageCm.toFixed(1).replace(".0", "").replace(".", ",")} cm) está fora do intervalo modelado pelo SGB (${minSgb} a ${maxSgb} cm). Não é realizada extrapolação abaixo de 3,00 m nem acima de 5,50 m.`,
+      reason: `Associação histórica bloqueada: o pico observado em RHN 58790002 em ${event.periodLabel} (${formattedPeak} cm) está fora do intervalo modelado pelo SGB (${minSgb} a ${maxSgb} cm). Não é realizada extrapolação abaixo de 3,00 m nem acima de 5,50 m.`,
+      independentScenarioExploration: null,
       taxonomyNotes: buildSpatialTaxonomyNotes(null, null, false),
     };
   }
@@ -436,15 +509,38 @@ export function resolveHistoricalMapAssociation(
   const { isExact, nearestCm, bracketing } = findNearestAndBracketingSgbStages(
     sgbObs.peakStageCm,
   );
+
+  if (!hasConfirmedDatumContinuity(sgbObs)) {
+    return {
+      status: "blocked",
+      historicalEquivalenceConfirmed: false,
+      blockCode: "unverified_datum_continuity",
+      eventId: event.id,
+      representationKind: "blocked_incompatible_reference",
+      observedExtentAvailable: false,
+      reason: `Associação histórica bloqueada por precaução altimétrica: para ${event.periodLabel} (pico nominal de ${formattedPeak} cm em RHN 58790002), ainda não há evidência documental específica de continuidade do zero da régua em relação ao nivelamento geodésico SGB de setembro de 2024 (79,709 m hgeoHNOR_IMBITUBA). ${sgbObs.datumContinuityNote}`,
+      independentScenarioExploration: {
+        nominalObservedPeakCm: sgbObs.peakStageCm,
+        nominalSingleStageCm: nearestCm,
+        nominalBracketingStagesCm: bracketing,
+        disclaimer:
+          "Permite consultar de forma independente o catálogo estático SGB (2024) na vizinhança nominal da leitura, SEM equivalência histórica confirmada e SEM representar a extensão real observada.",
+      },
+      taxonomyNotes: buildSpatialTaxonomyNotes(nearestCm, bracketing, isExact),
+    };
+  }
+
   const offsetCm = Math.round((nearestCm - sgbObs.peakStageCm) * 100) / 100;
 
   return {
     status: "compatible",
+    historicalEquivalenceConfirmed: true,
     eventId: event.id,
     eventTitle: event.title,
     eventPeriodLabel: event.periodLabel,
     stationId: "RHN-58790002",
     verticalDatum: "hgeoHNOR_IMBITUBA",
+    datumContinuityEvidence: sgbObs.datumContinuityEvidence!,
     observedPeakCm: sgbObs.peakStageCm,
     isExactSgbStage: isExact,
     primaryRepresentationKind: isExact

@@ -6,7 +6,7 @@ import type {
 } from "./contract.ts";
 import rawCatalog from "./data/historicalCatalog.json" with { type: "json" };
 
-export const HISTORICAL_CATALOG_VERSION = "2026.11.26-r02e.1" as const;
+export const HISTORICAL_CATALOG_VERSION = "2026.11.26-r02e.2" as const;
 
 export const HISTORICAL_STATION_REGISTRY: readonly HistoricalStationReference[] =
   rawCatalog.stations as unknown as readonly HistoricalStationReference[];

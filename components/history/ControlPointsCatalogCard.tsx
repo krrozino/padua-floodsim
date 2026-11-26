@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import type {
   ControlPointCategory,
   ControlPointEvidenceState,
   HistoricalControlPoint,
 } from "@/lib/history/contract";
+import { summarizeControlPointsReadiness } from "@/lib/history/controlPoints";
 import type { GeoPoint } from "@/lib/sgb/location";
 
 function getCategoryLabel(category: ControlPointCategory): string {
@@ -44,6 +46,11 @@ export function ControlPointsCatalogCard({
   controlPoints: readonly HistoricalControlPoint[];
   onInspectCoordinateOnMap: (point: GeoPoint, label: string) => void;
 }>) {
+  const readiness = useMemo(
+    () => summarizeControlPointsReadiness(controlPoints),
+    [controlPoints],
+  );
+
   return (
     <article
       className="card history-control-points-card"
@@ -55,10 +62,19 @@ export function ControlPointsCatalogCard({
             Pontos de controle para validação científica futura
           </strong>
           <p className="section-lead history-sublead">
-            Estrutura preparada para avaliação das manchas oficiais do SGB e do
-            futuro modelo próprio DEM + conectividade. Coordenadas não auditadas
-            permanecem nulas e ausência de fotografia nunca é convertida em
-            ausência de inundação.
+            Estrutura preparada para avaliação futura das manchas SGB e do
+            modelo próprio DEM + conectividade. Coordenadas não auditadas
+            permanecem nulas, a faixa de proximidade de contorno (±0,5 m) é
+            tratada como indeterminada e ausência de fotografia nunca é
+            convertida em ausência de inundação.{" "}
+            <strong>
+              Atualmente há {readiness.usableCoordinateAndKnownStatePairs} pares
+              utilizáveis com coordenada auditada + estado conhecido (
+              {readiness.verifiedCoordinatesCount} coordenadas auditadas;{" "}
+              {readiness.documentedKnownStateRecordsCount} registros com estado
+              documentado sem coordenada pontual) — nenhuma métrica de
+              desempenho espacial é publicada nesta etapa.
+            </strong>
           </p>
         </div>
         <span
