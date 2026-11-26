@@ -870,12 +870,12 @@ function buildLowestStageDistinctionNote(params: {
       params.lowestInterceptedLevelCm === 300
         ? "3,00 m (300 cm) é a menor cota publicada pelo SGB (2024). Essa menor cota identificada entre os cenários consultados não corresponde necessariamente ao início real de inundação, pois não há cenários oficiais abaixo de 300 cm."
         : `${meters} m (${params.lowestInterceptedLevelCm} cm) é a menor cota identificada entre os cenários SGB consultados (passo discreto de 25 cm, sem interpolação). Não corresponde necessariamente ao início real de inundação no local.`;
-    const boundarySuffix =
-      params.lowestInterceptedRelation === "boundary"
-        ? ` A identificação nessa cota ocorre na faixa de proximidade geométrica de ±${tolFormatted} m sobre o contorno vetorial, o que não representa precisão física da inundação.`
-        : params.boundaryLevelsCm.length > 0
-          ? ` Cenários marcados como fronteira utilizam faixa de proximidade geométrica de ±${tolFormatted} m (não precisão física da inundação).`
-          : "";
+    let boundarySuffix = "";
+    if (params.lowestInterceptedRelation === "boundary") {
+      boundarySuffix = ` A identificação nessa cota ocorre na faixa de proximidade geométrica de ±${tolFormatted} m sobre o contorno vetorial, o que não representa precisão física da inundação.`;
+    } else if (params.boundaryLevelsCm.length > 0) {
+      boundarySuffix = ` Cenários marcados como fronteira utilizam faixa de proximidade geométrica de ±${tolFormatted} m (não precisão física da inundação).`;
+    }
     const partialSuffix = params.isComplete
       ? ""
       : " Há cenários não verificados/com falha; cotas inferiores indisponíveis não foram descartadas.";

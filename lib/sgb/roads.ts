@@ -513,6 +513,41 @@ function deduplicateSortedParams(params: number[]): number[] {
   return uniqueParams;
 }
 
+function collectCoveredSubIntervals(
+  a: readonly [number, number],
+  b: readonly [number, number],
+  uniqueParams: readonly number[],
+  candidatePolys: readonly IndexedPolygon["polygon"][],
+): readonly (readonly [number, number])[] {
+  const covered: [number, number][] = [];
+
+  for (let i = 0; i < uniqueParams.length - 1; i += 1) {
+    const t0 = uniqueParams[i];
+    const t1 = uniqueParams[i + 1];
+    if (t1 - t0 <= 1e-10) continue;
+    const tm = (t0 + t1) / 2;
+    const midLon = a[0] + tm * (b[0] - a[0]);
+    const midLat = a[1] + tm * (b[1] - a[1]);
+
+    const relation = classifyPointInValidatedPolygons(
+      { lat: midLat, lon: midLon },
+      candidatePolys,
+      1e-3,
+    );
+
+    if (relation === "inside" || relation === "boundary") {
+      const prev = covered.at(-1);
+      if (prev && Math.abs(prev[1] - t0) <= 1e-9) {
+        prev[1] = t1;
+      } else {
+        covered.push([t0, t1]);
+      }
+    }
+  }
+
+  return covered;
+}
+
 /**
  * Clips a single line segment AB against validated flood polygons (supporting
  * MultiPolygons and internal holes) and returns the covered intervals [t0, t1].
@@ -548,33 +583,7 @@ function clipSegmentToCoveredIntervals(
 
   const uniqueParams = deduplicateSortedParams(params);
   const candidatePolys = candidates.map((c) => c.polygon);
-  const covered: [number, number][] = [];
-
-  for (let i = 0; i < uniqueParams.length - 1; i += 1) {
-    const t0 = uniqueParams[i];
-    const t1 = uniqueParams[i + 1];
-    if (t1 - t0 <= 1e-10) continue;
-    const tm = (t0 + t1) / 2;
-    const midLon = a[0] + tm * (b[0] - a[0]);
-    const midLat = a[1] + tm * (b[1] - a[1]);
-
-    const relation = classifyPointInValidatedPolygons(
-      { lat: midLat, lon: midLon },
-      candidatePolys,
-      1e-3,
-    );
-
-    if (relation === "inside" || relation === "boundary") {
-      const prev = covered.at(-1);
-      if (prev && Math.abs(prev[1] - t0) <= 1e-9) {
-        prev[1] = t1;
-      } else {
-        covered.push([t0, t1]);
-      }
-    }
-  }
-
-  return covered;
+  return collectCoveredSubIntervals(a, b, uniqueParams, candidatePolys);
 }
 
 /**
@@ -650,7 +659,7 @@ function extractFeatureLineStrings(
 ):
   | { readonly ok: true; readonly lineStrings: readonly [number, number][][] }
   | { readonly ok: false; readonly reason: string } {
-  if (!feature || feature.type !== "Feature" || !feature.geometry) {
+  if (feature?.type !== "Feature" || !feature.geometry) {
     return { ok: false, reason: `Feição viária inválida no índice ${idx}.` };
   }
 

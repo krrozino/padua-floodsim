@@ -275,6 +275,19 @@ function CompareScenarioRelationBox({
   );
 }
 
+function formatLowestCrossStageLabel(
+  summary: CrossStagePointSummary | null,
+): string {
+  if (!summary || summary.lowestInterceptedLevelCm === null) {
+    return "Nenhuma interseção identificada";
+  }
+  const baseLabel = `${formatMetersFromCm(summary.lowestInterceptedLevelCm)} m (${summary.lowestInterceptedLevelCm} cm)`;
+  if (summary.lowestInterceptedRelation === "boundary") {
+    return `${baseLabel} · fronteira (±0,5 m)`;
+  }
+  return baseLabel;
+}
+
 function CrossStageAnalysisSection({
   status,
   completed,
@@ -296,14 +309,7 @@ function CrossStageAnalysisSection({
   onCancelAllStages: () => void;
   onSelectStageFromMatrix: (levelMeters: number) => void;
 }>) {
-  const lowestLabel =
-    summary?.lowestInterceptedLevelCm === null || !summary
-      ? "Nenhuma interseção identificada"
-      : `${formatMetersFromCm(summary.lowestInterceptedLevelCm)} m (${summary.lowestInterceptedLevelCm} cm)${
-          summary.lowestInterceptedRelation === "boundary"
-            ? " · fronteira (±0,5 m)"
-            : ""
-        }`;
+  const lowestLabel = formatLowestCrossStageLabel(summary);
 
   return (
     <div className="cross-stage-section">

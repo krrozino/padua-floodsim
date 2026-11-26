@@ -275,16 +275,18 @@ export async function runCrossStagePointAnalysis(params: {
   };
 
   let cursor = 0;
-  const worker = async () => {
-    while (cursor < queue.length && !signal?.aborted) {
-      const idx = cursor;
-      cursor += 1;
-      await processQueuedStage(queue[idx]);
+  const runNext = async (): Promise<void> => {
+    if (cursor >= queue.length || signal?.aborted) {
+      return;
     }
+    const idx = cursor;
+    cursor += 1;
+    await processQueuedStage(queue[idx]);
+    return runNext();
   };
 
   const workerCount = Math.min(boundedConcurrency, queue.length);
-  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  await Promise.all(Array.from({ length: workerCount }, () => runNext()));
 
   if (signal?.aborted) {
     return { status: "aborted" };

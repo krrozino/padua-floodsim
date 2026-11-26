@@ -84,6 +84,65 @@ function resolveMarkerRelation(
   return "outside";
 }
 
+function resolveBadgeVisualState(
+  mapMode: MapScenarioMode,
+  layerStatus: FloodLayerStatus,
+  layerStatusB: FloodLayerStatus | null,
+  levelCm: number,
+  levelBCm: number,
+): FloodLayerStatus["state"] {
+  if (mapMode === "single") {
+    return layerStatus.levelCm === levelCm ? layerStatus.state : "loading";
+  }
+  const aCurrent = layerStatus.levelCm === levelCm ? layerStatus.state : "loading";
+  const bCurrent =
+    layerStatusB?.levelCm === levelBCm ? layerStatusB.state : "loading";
+
+  if (aCurrent === "error" || bCurrent === "error") return "error";
+  if (aCurrent === "empty" || bCurrent === "empty") return "empty";
+  if (aCurrent === "official" && bCurrent === "official") return "official";
+  return "loading";
+}
+
+function resolveMapBadgeText(
+  mapMode: MapScenarioMode,
+  badgeVisualState: FloodLayerStatus["state"],
+  layerStatus: FloodLayerStatus,
+  ortometricElevation: number | undefined,
+  levelCm: number,
+  levelBCm: number,
+): string {
+  if (mapMode === "compare") {
+    if (badgeVisualState === "official") {
+      return `Comparação A ${formatMetersFromCm(levelCm)} m × B ${formatMetersFromCm(levelBCm)} m`;
+    }
+    if (badgeVisualState === "error") {
+      return "Falha ao carregar camada(s) SGB · comparação pausada";
+    }
+    if (badgeVisualState === "empty") {
+      return "SGB retornou camada vazia · comparação indisponível";
+    }
+    return `Carregando cenários SGB (${formatMetersFromCm(levelCm)} m e ${formatMetersFromCm(levelBCm)} m)...`;
+  }
+
+  if (layerStatus.levelCm !== levelCm) {
+    return "Carregando cenário oficial do SGB...";
+  }
+  if (layerStatus.state === "official") {
+    const orthoLabel = ortometricElevation
+      ? ` (${ortometricElevation.toFixed(2).replace(".", ",")} m ortométrica)`
+      : "";
+    return `Cota ${formatMetersFromCm(layerStatus.levelCm)} m${orthoLabel}`;
+  }
+  if (layerStatus.state === "error") {
+    return "Mancha SGB indisponível · nenhuma extensão exibida";
+  }
+  if (layerStatus.state === "empty") {
+    return "SGB retornou camada vazia · nenhuma extensão exibida";
+  }
+  return "Carregando cenário oficial do SGB...";
+}
+
 const NAV_ITEMS: readonly { readonly id: PlatformSection; readonly label: string }[] = [
   { id: "mapa", label: "Mapa e cenários" },
   { id: "monitoramento", label: "Monitoramento" },
@@ -333,61 +392,37 @@ export function FloodDashboard() {
     [],
   );
 
-  const badgeVisualState = useMemo((): FloodLayerStatus["state"] => {
-    if (mapMode === "single") {
-      return layerStatus.levelCm === levelCm ? layerStatus.state : "loading";
-    }
-    const aCurrent = layerStatus.levelCm === levelCm ? layerStatus.state : "loading";
-    const bCurrent =
-      layerStatusB && layerStatusB.levelCm === levelBCm
-        ? layerStatusB.state
-        : "loading";
+  const badgeVisualState = useMemo(
+    () =>
+      resolveBadgeVisualState(
+        mapMode,
+        layerStatus,
+        layerStatusB,
+        levelCm,
+        levelBCm,
+      ),
+    [mapMode, layerStatus, layerStatusB, levelCm, levelBCm],
+  );
 
-    if (aCurrent === "error" || bCurrent === "error") return "error";
-    if (aCurrent === "empty" || bCurrent === "empty") return "empty";
-    if (aCurrent === "official" && bCurrent === "official") return "official";
-    return "loading";
-  }, [mapMode, layerStatus, layerStatusB, levelCm, levelBCm]);
-
-  const mapBadge = useMemo(() => {
-    if (mapMode === "compare") {
-      if (badgeVisualState === "official") {
-        return `Comparação A ${formatMetersFromCm(levelCm)} m × B ${formatMetersFromCm(levelBCm)} m`;
-      }
-      if (badgeVisualState === "error") {
-        return "Falha ao carregar camada(s) SGB · comparação pausada";
-      }
-      if (badgeVisualState === "empty") {
-        return "SGB retornou camada vazia · comparação indisponível";
-      }
-      return `Carregando cenários SGB (${formatMetersFromCm(levelCm)} m e ${formatMetersFromCm(levelBCm)} m)...`;
-    }
-
-    if (layerStatus.levelCm !== levelCm) {
-      return "Carregando cenário oficial do SGB...";
-    }
-    if (layerStatus.state === "official") {
-      return `Cota ${formatMetersFromCm(layerStatus.levelCm)} m${
-        ortometricElevation
-          ? ` (${ortometricElevation.toFixed(2).replace(".", ",")} m ortométrica)`
-          : ""
-      }`;
-    }
-    if (layerStatus.state === "error") {
-      return "Mancha SGB indisponível · nenhuma extensão exibida";
-    }
-    if (layerStatus.state === "empty") {
-      return "SGB retornou camada vazia · nenhuma extensão exibida";
-    }
-    return "Carregando cenário oficial do SGB...";
-  }, [
-    mapMode,
-    badgeVisualState,
-    layerStatus,
-    ortometricElevation,
-    levelCm,
-    levelBCm,
-  ]);
+  const mapBadge = useMemo(
+    () =>
+      resolveMapBadgeText(
+        mapMode,
+        badgeVisualState,
+        layerStatus,
+        ortometricElevation,
+        levelCm,
+        levelBCm,
+      ),
+    [
+      mapMode,
+      badgeVisualState,
+      layerStatus,
+      ortometricElevation,
+      levelCm,
+      levelBCm,
+    ],
+  );
 
   const validDerivedArea =
     layerStatus.state === "official" &&
