@@ -324,6 +324,8 @@ export type FloodMapProps = {
   retryToken?: number;
   retryTokenB?: number;
   isVisible?: boolean;
+  isMapFocus?: boolean;
+  onToggleMapFocus?: () => void;
 };
 
 export function FloodMap({
@@ -344,6 +346,8 @@ export function FloodMap({
   retryToken = 0,
   retryTokenB = 0,
   isVisible = true,
+  isMapFocus = false,
+  onToggleMapFocus,
 }: FloodMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -366,6 +370,7 @@ export function FloodMap({
   const [mapRetry, setMapRetry] = useState(0);
   const [showFlood, setShowFlood] = useState(true);
   const [showStations, setShowStations] = useState(true);
+  const [showLayerControls, setShowLayerControls] = useState(true);
 
   const scenarioA = useSgbFlood(level, retryToken, true);
   const scenarioB = useSgbFlood(
@@ -471,10 +476,18 @@ export function FloodMap({
   }, [comparison]);
 
   useEffect(() => {
-    if (isVisible && mapRef.current) {
-      mapRef.current.resize();
-    }
-  }, [isVisible]);
+    const container = containerRef.current;
+    if (!isVisible || !container || !readyMap) return;
+    const resize = () => {
+      if (container.clientWidth > 0 && container.clientHeight > 0) {
+        readyMap.resize();
+      }
+    };
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [isVisible, readyMap]);
 
   // Style readiness only controls rendering; the SGB request starts independently.
   useEffect(() => {
@@ -828,6 +841,20 @@ export function FloodMap({
         role="group"
         aria-label="Controles do mapa"
       >
+        {onToggleMapFocus && (
+          <button
+            type="button"
+            className="map-ctrl-btn"
+            aria-expanded={!isMapFocus}
+            aria-controls="map-information-panel"
+            onClick={() => {
+              if (!isMapFocus) setShowLayerControls(false);
+              onToggleMapFocus();
+            }}
+          >
+            {isMapFocus ? "Sair do mapa em foco" : "Mapa em foco"}
+          </button>
+        )}
         <button
           type="button"
           className="map-ctrl-btn"
@@ -837,7 +864,16 @@ export function FloodMap({
           Centralizar
         </button>
 
-        <div className="map-layer-toggles">
+        <button
+          type="button"
+          className="map-ctrl-btn"
+          aria-expanded={showLayerControls}
+          aria-controls="map-layer-options"
+          onClick={() => setShowLayerControls((value) => !value)}
+        >
+          {showLayerControls ? "Recolher camadas" : "Camadas"}
+        </button>
+        <div id="map-layer-options" className="map-layer-toggles" hidden={!showLayerControls}>
           <label
             className="toggle-label"
             title={
