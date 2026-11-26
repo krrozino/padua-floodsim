@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, useRef, useCallback } from "react";
+import { useMemo, useState, useRef, useCallback, useEffect } from "react";
+import { CompactScenarioControls } from "@/components/dashboard/CompactScenarioControls";
 import {
   FloodMap,
   type FloodLayerStatus,
@@ -156,6 +157,24 @@ export function FloodDashboard() {
   const [level, setLevel] = useState(4.25);
   const [compareLevelB, setCompareLevelB] = useState(5.5);
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
+  const [isScenarioCollapsed, setIsScenarioCollapsed] = useState(false);
+  const [isMapFocus, setIsMapFocus] = useState(false);
+
+  const handleToggleMapFocus = useCallback(() => {
+    if (!isMapFocus) setIsScenarioCollapsed(true);
+    setIsMapFocus(!isMapFocus);
+  }, [isMapFocus]);
+
+  useEffect(() => {
+    if (!isMapFocus || isMethodologyOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        setIsMapFocus(false);
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isMapFocus, isMethodologyOpen]);
 
   const [layerStatus, setLayerStatus] = useState<FloodLayerStatus>({
     state: "loading",
@@ -467,7 +486,7 @@ export function FloodDashboard() {
   }, [validDerivedArea, validDerivedAreaB]);
 
   return (
-    <div className="platform-root">
+    <div className={`platform-root ${isMapFocus && activeSection === "mapa" ? "is-map-focused" : ""}`}>
       {/* Top Navigation Bar */}
       <header className="topbar">
         <div className="brand">
@@ -525,10 +544,40 @@ export function FloodDashboard() {
               retryToken={retryToken}
               retryTokenB={retryTokenB}
               isVisible={activeSection === "mapa"}
+              isMapFocus={isMapFocus}
+              onToggleMapFocus={handleToggleMapFocus}
             />
 
             {/* Bottom Scenario Controls */}
-            <div className={`slider-card ${mapMode === "compare" ? "is-compare" : ""}`}>
+            <div className={`slider-card ${mapMode === "compare" ? "is-compare" : ""} ${isScenarioCollapsed ? "is-collapsed" : ""}`}>
+              <div className="scenario-panel-heading">
+                <strong>Controles de cota SGB</strong>
+                <button
+                  type="button"
+                  className="scenario-collapse-btn"
+                  aria-expanded={!isScenarioCollapsed}
+                  aria-controls="scenario-expanded-controls"
+                  onClick={() => setIsScenarioCollapsed((value) => !value)}
+                >
+                  {isScenarioCollapsed ? "Expandir controles" : "Recolher controles"}
+                </button>
+              </div>
+              {isScenarioCollapsed && (
+                <CompactScenarioControls
+                  mode={mapMode}
+                  levelCm={levelCm}
+                  levelBCm={levelBCm}
+                  onChangeLevel={setLevel}
+                  onChangeLevelB={setCompareLevelB}
+                  onStepLevel={handleStepLevel}
+                  onModeChange={setMapMode}
+                  onSwapLevels={handleSwapLevels}
+                  mapBadge={mapBadge}
+                  badgeState={badgeVisualState}
+                  onRetry={handleRetryActive}
+                />
+              )}
+              <div id="scenario-expanded-controls" hidden={isScenarioCollapsed}>
               <div className="slider-status-bar">
                 <div className={`scenario-status-badge ${badgeVisualState}`}>
                   <span
@@ -828,11 +877,22 @@ export function FloodDashboard() {
                   </div>
                 </div>
               )}
+              </div>
+              {isMapFocus && (
+                <p className="map-focus-notice">
+                  Esta plataforma não substitui os alertas e as orientações dos órgãos oficiais.
+                </p>
+              )}
             </div>
           </section>
 
           {/* Right Contextual Information Panel */}
-          <aside className="right-panel" aria-label="Informações hidrológicas e legenda">
+          <aside
+            id="map-information-panel"
+            className="right-panel"
+            hidden={isMapFocus}
+            aria-label="Informações hidrológicas e legenda"
+          >
             <p className="official-notice-compact" role="note">
               Esta plataforma não substitui os alertas e as orientações dos
               órgãos oficiais.

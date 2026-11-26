@@ -2640,3 +2640,144 @@ a {
     top: 126px;
   }
 }
+
+
+/* R02-UX: preserve a usable map while exploring compact controls. */
+.scenario-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+  color: var(--navy);
+  font-size: 13px;
+}
+.scenario-collapse-btn {
+  background: #fff;
+  border: 1px solid #a9b9ca;
+  color: var(--navy);
+  border-radius: 8px;
+  padding: 6px 10px;
+  min-height: 36px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.slider-card {
+  max-height: calc(100% - 104px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  bottom: 30px;
+}
+.slider-card.is-collapsed {
+  width: min(420px, calc(100% - 24px));
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+#scenario-expanded-controls[hidden],
+.map-layer-toggles[hidden],
+.right-panel[hidden] {
+  display: none;
+}
+.compact-scenario-controls {
+  display: grid;
+  gap: 6px;
+}
+.compact-stage-reference {
+  margin: 0;
+  font-size: 11px;
+  color: #334155;
+}
+.compact-stage-row,
+.compact-mode-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.compact-stage-row .stage-step-btn {
+  flex-shrink: 0;
+  min-width: 40px;
+  min-height: 40px;
+}
+.compact-stage-select {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 700;
+}
+.compact-stage-select select {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  border: 1px solid #a9b9ca;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--navy);
+  padding: 4px;
+}
+.compact-scenario-controls .scenario-status-badge {
+  font-size: 11px;
+  padding: 4px 6px;
+  max-width: 100%;
+}
+.map-focus-notice {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #78350f;
+}
+.platform-root.is-map-focused {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.is-map-focused .topbar { display: none; }
+.is-map-focused .map-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  height: 100%;
+}
+.is-map-focused .map-panel {
+  height: 100%;
+  min-height: 0;
+}
+.map-controls-panel {
+  max-width: calc(100% - 72px);
+  max-height: calc(100% - 120px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.scenario-collapse-btn:focus-visible,
+.compact-stage-select select:focus-visible,
+.map-ctrl-btn:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+@media (max-width: 860px) {
+  .map-panel {
+    height: min(72dvh, 680px);
+    min-height: min(440px, 72dvh);
+  }
+  .is-map-focused .map-panel {
+    height: 100%;
+    min-height: 0;
+  }
+  .slider-card {
+    bottom: 30px;
+    max-height: calc(100% - 112px);
+  }
+  .map-controls-panel {
+    top: 10px;
+    right: 10px;
+    gap: 5px;
+  }
+  .map-ctrl-btn,
+  .scenario-collapse-btn {
+    min-height: 40px;
+  }
+}
