@@ -199,16 +199,17 @@ export function MethodologyModal({
               <li>
                 <strong>Consulta geográfica e consulta entre cotas (dado derivado):</strong>{" "}
                 A verificação de ponto por clique no mapa ou coordenadas (WGS84 / EPSG:4326)
-                avalia interseção real ponto × polígono (suportando <code>Polygon</code>,{" "}
-                <code>MultiPolygon</code> e anéis internos/buracos), distinguindo interior,
-                fronteira (tolerância métrica de ±0,5 m), ausência de interseção, ponto fora da
-                cobertura conhecida do modelo SGB e informação indisponível. A consulta sob
-                demanda nas 11 cotas oficiais verifica cada cenário independentemente (sem
-                interpolar cotas nem presumir aninhamento) e distingue a menor cota identificada
-                entre os cenários consultados do início real de inundação. Busca por endereço
-                público e métricas viárias OSM permanecem fora da interface pública por limites
-                de termos de uso, cobertura incompleta de logradouros/números e pendências de
-                licença/precisão.
+                avalia interseção real ponto × polígono sobre a geometria consultada (suportando{" "}
+                <code>Polygon</code>, <code>MultiPolygon</code> e anéis internos/buracos),
+                distinguindo interior, faixa de proximidade geométrica da fronteira (±0,5 m, que{" "}
+                <strong>não representa precisão física</strong> da inundação), ausência de
+                interseção, posição em relação ao envelope auxiliar do MapServer SGB (que não
+                comprova cobertura hidráulica integral no seu interior) e informação indisponível.
+                A consulta sob demanda nas 11 cotas oficiais verifica cada cenário
+                independentemente (sem interpolar cotas nem presumir aninhamento) e distingue a
+                menor cota identificada entre os cenários consultados do início real de inundação.
+                Busca por endereço público e métricas viárias OSM permanecem fora da interface
+                pública nesta rodada.
               </li>
               <li>
                 <strong>Régua INEA vs. Cota de referência SGB — Pádua II (58790002):</strong> O

@@ -2168,7 +2168,7 @@ a {
 .location-coords-row strong {
   font-size: 12px;
   color: var(--navy);
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .location-origin-tag {
@@ -2283,7 +2283,7 @@ a {
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.08);
+  background: #e2e8f0;
   color: #0f172a;
 }
 
@@ -2298,8 +2298,8 @@ a {
 
 .location-safety-note {
   font-size: 10.5px;
-  color: #475569;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  color: #334155;
+  border-top: 1px solid #cbd5e1;
   padding-top: 6px;
 }
 
@@ -2341,7 +2341,7 @@ a {
 .location-stage-pill.is-unavailable {
   background: #e2e8f0;
   border-color: #94a3b8;
-  color: #475569;
+  color: #334155;
 }
 
 .cross-stage-section {
@@ -2448,12 +2448,20 @@ a {
 }
 
 .cross-stage-matrix {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 5px;
 }
 
+.cross-stage-matrix li {
+  min-width: 0;
+}
+
 .cross-stage-chip {
+  width: 100%;
   border: 1px solid #cbd5e1;
   border-radius: 7px;
   padding: 5px 4px;
@@ -2498,13 +2506,13 @@ a {
 .cross-stage-chip.is-unavailable {
   background: #f1f5f9;
   border-color: #94a3b8;
-  color: #475569;
+  color: #334155;
 }
 
 .cross-stage-chip.is-pending {
   background: #f8fafc;
-  border-color: #e2e8f0;
-  color: #94a3b8;
+  border-color: #cbd5e1;
+  color: #475569;
 }
 
 .cross-stage-chip:hover {

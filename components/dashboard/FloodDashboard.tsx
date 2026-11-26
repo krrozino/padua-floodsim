@@ -34,6 +34,8 @@ import {
   evaluatePointAgainstFloodScenario,
   evaluatePointInComparison,
   type GeoPoint,
+  type PointComparisonQueryResult,
+  type PointScenarioQueryResult,
   type SpatialPointRelation,
 } from "@/lib/sgb/location";
 import {
@@ -49,6 +51,37 @@ export type MapScenarioMode = "single" | "compare";
 
 function formatMetersFromCm(levelCm: number) {
   return (levelCm / 100).toFixed(2).replace(".", ",");
+}
+
+function resolveMarkerRelation(
+  selectedPoint: GeoPoint | null,
+  mapMode: MapScenarioMode,
+  singlePointResult: PointScenarioQueryResult | null,
+  comparePointResult: PointComparisonQueryResult | null,
+): SpatialPointRelation {
+  if (!selectedPoint) return "unavailable";
+  if (mapMode === "single") {
+    return singlePointResult?.relation ?? "unavailable";
+  }
+  if (comparePointResult?.status !== "valid") {
+    return "unavailable";
+  }
+  if (comparePointResult.combinedRelation === "neither") {
+    return "outside";
+  }
+  if (
+    comparePointResult.relationA === "inside" ||
+    comparePointResult.relationB === "inside"
+  ) {
+    return "inside";
+  }
+  if (
+    comparePointResult.relationA === "boundary" ||
+    comparePointResult.relationB === "boundary"
+  ) {
+    return "boundary";
+  }
+  return "outside";
 }
 
 const NAV_ITEMS: readonly { readonly id: PlatformSection; readonly label: string }[] = [
@@ -190,31 +223,16 @@ export function FloodDashboard() {
     levelBCm,
   ]);
 
-  const markerRelation: SpatialPointRelation = useMemo(() => {
-    if (!selectedPoint) return "unavailable";
-    if (mapMode === "single") {
-      return singlePointResult?.relation ?? "unavailable";
-    }
-    if (!comparePointResult || comparePointResult.status !== "valid") {
-      return "unavailable";
-    }
-    if (comparePointResult.combinedRelation === "neither") {
-      return "outside";
-    }
-    if (
-      comparePointResult.relationA === "inside" ||
-      comparePointResult.relationB === "inside"
-    ) {
-      return "inside";
-    }
-    if (
-      comparePointResult.relationA === "boundary" ||
-      comparePointResult.relationB === "boundary"
-    ) {
-      return "boundary";
-    }
-    return "outside";
-  }, [selectedPoint, mapMode, singlePointResult, comparePointResult]);
+  const markerRelation: SpatialPointRelation = useMemo(
+    () =>
+      resolveMarkerRelation(
+        selectedPoint,
+        mapMode,
+        singlePointResult,
+        comparePointResult,
+      ),
+    [selectedPoint, mapMode, singlePointResult, comparePointResult],
+  );
 
   const preloadedStagesForCrossQuery = useMemo(() => {
     const map: Partial<Record<SgbFloodLevelCm, FloodAreaInput>> = {};

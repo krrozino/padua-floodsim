@@ -14,8 +14,10 @@ import {
   type FloodAreaInput,
 } from "./area.ts";
 import {
-  SGB_MODEL_COVERAGE_BBOX,
+  DEFAULT_AUXILIARY_MAPSERVER_DOMAIN,
+  SGB_MAPSERVER_ENVELOPE_BBOX,
   classifyPointInValidatedPolygons,
+  type PointModelCoverageDomain,
 } from "./location.ts";
 
 export const SGB_ROAD_EXPOSURE_METHOD_ID = "wgs84-geodesic-line-clip-v1" as const;
@@ -23,11 +25,16 @@ export const OSM_ROAD_LICENSE = "ODbL-1.0" as const;
 export const OSM_ROAD_ATTRIBUTION = "© OpenStreetMap contributors" as const;
 
 /**
- * Maximum acceptable share of unnamed road length for public UI eligibility.
- * In Santo Antônio de Pádua (2026-11-25 audit), OSM unnamed length is 56.5% overall
- * (38.1%–52.6% within SGB stages), far above this threshold.
+ * Provisional governance criterion (10%) for unnamed road-length share when
+ * considering future promotion of nominal road metrics to the public UI.
+ *
+ * Scientific note: total intercepted road-axis length and nominal street
+ * identification are distinct metrics. This 10% threshold is strictly a
+ * provisional project governance criterion, NOT a universal scientific requirement.
  */
-export const MAX_PUBLIC_UI_UNNAMED_RATIO = 0.1;
+export const PROVISIONAL_PUBLIC_UI_UNNAMED_RATIO_CRITERION = 0.1;
+export const MAX_PUBLIC_UI_UNNAMED_RATIO =
+  PROVISIONAL_PUBLIC_UI_UNNAMED_RATIO_CRITERION;
 
 // WGS84 ellipsoid constants for Vincenty inverse geodesic length
 const WGS84_A = 6_378_137.0;
@@ -64,9 +71,28 @@ export type RoadNetworkInput = FeatureCollection<
   RoadFeatureProperties
 >;
 
+export type RoadEnvelopeStatus =
+  | "within_mapserver_envelope"
+  | "extends_outside_mapserver_envelope";
+
+export type RoadHydraulicDomainStatus =
+  | "covered"
+  | "outside_or_partial_model_extent"
+  | "unknown";
+
+/**
+ * Denominator completeness status for per-road percentage calculations:
+ * - `"complete_documented"`: road denominator explicitly documented as complete
+ *   AND verified within a validated hydraulic model domain polygon.
+ * - `"unverified_bbox_only"`: road lies inside the auxiliary MapServer bbox,
+ *   which does NOT prove complete road denominator or full hydraulic coverage.
+ * - `"extends_outside_envelope"`: road extends beyond the auxiliary MapServer
+ *   envelope or validated hydraulic domain.
+ */
 export type RoadDenominatorStatus =
-  | "complete_in_coverage"
-  | "extends_outside_coverage";
+  | "complete_documented"
+  | "unverified_bbox_only"
+  | "extends_outside_envelope";
 
 export type RoadExposureItem = {
   readonly canonicalKey: string;
@@ -77,11 +103,13 @@ export type RoadExposureItem = {
   readonly totalLengthMeters: number;
   readonly interceptedLengthMeters: number;
   readonly interceptedSegmentCount: number;
+  readonly envelopeStatus: RoadEnvelopeStatus;
+  readonly hydraulicDomainStatus: RoadHydraulicDomainStatus;
   readonly denominatorStatus: RoadDenominatorStatus;
   /**
-   * Percentage of the road axis intercepted by the flood polygon.
-   * Strictly `null` when the road extends outside the known model coverage
-   * (incomplete denominator) or total length is 0.
+   * Percentage of the road axis intercepted by the queried flood geometry.
+   * Strictly `null` unless `denominatorStatus === "complete_documented"` (never
+   * assumed complete merely because coordinates fall inside an auxiliary bbox).
    */
   readonly interceptedPercent: number | null;
 };
@@ -100,6 +128,8 @@ export type RoadExposureSemanticGuardrails = {
   readonly doesNotIndicateDamage: true;
   readonly doesNotIndicateDepth: true;
   readonly doesNotIndicateTrafficImpossibility: true;
+  readonly totalAxisLengthDistinctFromNominalIdentification: true;
+  readonly unnamedRatioCriterionIsProvisional: true;
 };
 
 export type RoadExposureResult =
@@ -113,6 +143,7 @@ export type RoadExposureResult =
       readonly roadAttribution: typeof OSM_ROAD_ATTRIBUTION;
       readonly levelCm: number;
       readonly excludedBridgesAndTunnels: boolean;
+      readonly hydraulicDomainKind: PointModelCoverageDomain["kind"];
       readonly totalNetworkLengthMeters: number;
       readonly totalInterceptedLengthMeters: number;
       readonly totalInterceptedLengthKm: number;
@@ -151,6 +182,8 @@ const SEMANTIC_GUARDRAILS: RoadExposureSemanticGuardrails = {
   doesNotIndicateDamage: true,
   doesNotIndicateDepth: true,
   doesNotIndicateTrafficImpossibility: true,
+  totalAxisLengthDistinctFromNominalIdentification: true,
+  unnamedRatioCriterionIsProvisional: true,
 };
 
 const ABBREVIATION_RULES: readonly (readonly [RegExp, string])[] = [
@@ -171,7 +204,10 @@ const ABBREVIATION_RULES: readonly (readonly [RegExp, string])[] = [
   [/\bpres\b/g, "presidente"],
   [/\bsta\b/g, "santa"],
   [/\bsto\b/g, "santo"],
-  [/\bs\b(?=\s+(?:jose|joao|paulo|pedro|antonio|sebastiao|felix|luis|luiz|francisco))/g, "sao"],
+  [
+    /\bs\b(?=\s+(?:jose|joao|paulo|pedro|antonio|sebastiao|felix|luis|luiz|francisco))/g,
+    "sao",
+  ],
 ];
 
 /**
@@ -303,12 +339,10 @@ export function computeGeodesicSegmentLengthMeters(
   }
 
   if (!converged) {
-    // Fallback spherical approximation only for antipodal degenerate cases
     const dLat = phi2 - phi1;
-    const dLon = L;
     const a =
       Math.sin(dLat / 2) ** 2 +
-      Math.cos(phi1) * Math.cos(phi2) * Math.sin(dLon / 2) ** 2;
+      Math.cos(phi1) * Math.cos(phi2) * Math.sin(L / 2) ** 2;
     return 2 * 6_371_008.8 * Math.asin(Math.min(1, Math.sqrt(a)));
   }
 
@@ -353,6 +387,11 @@ type BBox = {
   readonly maxLat: number;
 };
 
+type Segment2D = {
+  readonly start: readonly [number, number];
+  readonly end: readonly [number, number];
+};
+
 function computeRingBbox(ring: ClipRing): BBox {
   let minLon = Infinity;
   let minLat = Infinity;
@@ -377,20 +416,19 @@ function bboxesOverlap(a: BBox, b: BBox, pad = 1e-10): boolean {
 }
 
 /**
- * Collects exact intersection parameters t ∈ [0, 1] of segment P(t) = A + t(B-A)
- * against segment CD (including crossings, touches, and collinear overlaps).
+ * Collects exact intersection parameters t ∈ [0, 1] of segment `seg` against
+ * polygon edge `edge` (including crossings, touches, and collinear overlaps).
  */
 function collectSegmentEdgeIntersectionParams(
-  ax: number,
-  ay: number,
-  bx: number,
-  by: number,
-  cx: number,
-  cy: number,
-  dx: number,
-  dy: number,
+  seg: Segment2D,
+  edge: Segment2D,
   outParams: number[],
 ): void {
+  const [ax, ay] = seg.start;
+  const [bx, by] = seg.end;
+  const [cx, cy] = edge.start;
+  const [dx, dy] = edge.end;
+
   const rx = bx - ax;
   const ry = by - ay;
   const sx = dx - cx;
@@ -400,11 +438,9 @@ function collectSegmentEdgeIntersectionParams(
   const qpx = cx - ax;
   const qpy = cy - ay;
   const qpxr = qpx * ry - qpy * rx;
-
   const eps = 1e-15;
 
   if (Math.abs(rxs) <= eps) {
-    // Parallel or collinear
     if (Math.abs(qpxr) <= 1e-13) {
       const rDotR = rx * rx + ry * ry;
       if (rDotR <= eps) return;
@@ -444,6 +480,39 @@ function indexPolygons(polygons: readonly ClipPolygon[]): readonly IndexedPolygo
   });
 }
 
+function collectRingIntersectionsForSegment(
+  seg: Segment2D,
+  segBbox: BBox,
+  ring: ClipRing,
+  outParams: number[],
+): void {
+  for (let i = 0; i < ring.length - 1; i += 1) {
+    const start = ring[i];
+    const end = ring[i + 1];
+    if (
+      Math.max(start[0], end[0]) < segBbox.minLon - 1e-10 ||
+      Math.min(start[0], end[0]) > segBbox.maxLon + 1e-10 ||
+      Math.max(start[1], end[1]) < segBbox.minLat - 1e-10 ||
+      Math.min(start[1], end[1]) > segBbox.maxLat + 1e-10
+    ) {
+      continue;
+    }
+    collectSegmentEdgeIntersectionParams(seg, { start, end }, outParams);
+  }
+}
+
+function deduplicateSortedParams(params: number[]): number[] {
+  params.sort((x, y) => x - y);
+  const uniqueParams: number[] = [];
+  for (const t of params) {
+    const last = uniqueParams.at(-1);
+    if (last === undefined || t - last > 1e-10) {
+      uniqueParams.push(t);
+    }
+  }
+  return uniqueParams;
+}
+
 /**
  * Clips a single line segment AB against validated flood polygons (supporting
  * MultiPolygons and internal holes) and returns the covered intervals [t0, t1].
@@ -453,6 +522,7 @@ function clipSegmentToCoveredIntervals(
   b: readonly [number, number],
   indexedPolygons: readonly IndexedPolygon[],
 ): readonly (readonly [number, number])[] {
+  const seg: Segment2D = { start: a, end: b };
   const segBbox: BBox = {
     minLon: Math.min(a[0], b[0]),
     minLat: Math.min(a[1], b[1]),
@@ -470,45 +540,13 @@ function clipSegmentToCoveredIntervals(
   const params: number[] = [0, 1];
   for (const item of candidates) {
     for (let r = 0; r < item.polygon.length; r += 1) {
-      if (!bboxesOverlap(segBbox, item.ringBboxes[r])) continue;
-      const ring = item.polygon[r];
-      for (let i = 0; i < ring.length - 1; i += 1) {
-        const [cx, cy] = ring[i];
-        const [dx, dy] = ring[i + 1];
-        if (
-          Math.max(cx, dx) < segBbox.minLon - 1e-10 ||
-          Math.min(cx, dx) > segBbox.maxLon + 1e-10 ||
-          Math.max(cy, dy) < segBbox.minLat - 1e-10 ||
-          Math.min(cy, dy) > segBbox.maxLat + 1e-10
-        ) {
-          continue;
-        }
-        collectSegmentEdgeIntersectionParams(
-          a[0],
-          a[1],
-          b[0],
-          b[1],
-          cx,
-          cy,
-          dx,
-          dy,
-          params,
-        );
+      if (bboxesOverlap(segBbox, item.ringBboxes[r])) {
+        collectRingIntersectionsForSegment(seg, segBbox, item.polygon[r], params);
       }
     }
   }
 
-  params.sort((x, y) => x - y);
-  const uniqueParams: number[] = [];
-  for (const t of params) {
-    if (
-      uniqueParams.length === 0 ||
-      t - uniqueParams[uniqueParams.length - 1] > 1e-10
-    ) {
-      uniqueParams.push(t);
-    }
-  }
-
+  const uniqueParams = deduplicateSortedParams(params);
   const candidatePolys = candidates.map((c) => c.polygon);
   const covered: [number, number][] = [];
 
@@ -520,8 +558,6 @@ function clipSegmentToCoveredIntervals(
     const midLon = a[0] + tm * (b[0] - a[0]);
     const midLat = a[1] + tm * (b[1] - a[1]);
 
-    // Tight collinearity tolerance (1 mm) so segments running directly on polygon
-    // boundary are counted as intercepted while grazing exterior segments are not.
     const relation = classifyPointInValidatedPolygons(
       { lat: midLat, lon: midLon },
       candidatePolys,
@@ -529,7 +565,7 @@ function clipSegmentToCoveredIntervals(
     );
 
     if (relation === "inside" || relation === "boundary") {
-      const prev = covered[covered.length - 1];
+      const prev = covered.at(-1);
       if (prev && Math.abs(prev[1] - t0) <= 1e-9) {
         prev[1] = t1;
       } else {
@@ -586,8 +622,8 @@ export function clipLineStringAgainstPolygons(
       }
     }
 
-    const lastInterval = intervals[intervals.length - 1];
-    prevEndedCovered = lastInterval[1] >= 1 - 1e-9;
+    const lastInterval = intervals.at(-1);
+    prevEndedCovered = lastInterval !== undefined && lastInterval[1] >= 1 - 1e-9;
   }
 
   return {
@@ -608,11 +644,58 @@ function validateLineStringCoords(
   return out;
 }
 
-function isPointInsideCoverageBbox(
-  lon: number,
-  lat: number,
-  bbox: BBox,
-): boolean {
+function extractFeatureLineStrings(
+  feature: RoadLineFeature | null | undefined,
+  idx: number,
+):
+  | { readonly ok: true; readonly lineStrings: readonly [number, number][][] }
+  | { readonly ok: false; readonly reason: string } {
+  if (!feature || feature.type !== "Feature" || !feature.geometry) {
+    return { ok: false, reason: `Feição viária inválida no índice ${idx}.` };
+  }
+
+  if (feature.geometry.type === "LineString") {
+    const valid = validateLineStringCoords(feature.geometry.coordinates);
+    if (!valid) {
+      return {
+        ok: false,
+        reason: `LineString inválido na feição viária ${idx}.`,
+      };
+    }
+    return { ok: true, lineStrings: [valid] };
+  }
+
+  if (feature.geometry.type === "MultiLineString") {
+    if (
+      !Array.isArray(feature.geometry.coordinates) ||
+      feature.geometry.coordinates.length === 0
+    ) {
+      return {
+        ok: false,
+        reason: `MultiLineString vazio ou inválido na feição viária ${idx}.`,
+      };
+    }
+    const lineStrings: [number, number][][] = [];
+    for (const part of feature.geometry.coordinates) {
+      const valid = validateLineStringCoords(part);
+      if (!valid) {
+        return {
+          ok: false,
+          reason: `Parte inválida em MultiLineString na feição viária ${idx}.`,
+        };
+      }
+      lineStrings.push(valid);
+    }
+    return { ok: true, lineStrings };
+  }
+
+  return {
+    ok: false,
+    reason: `Geometria não linear encontrada na malha viária (índice ${idx}).`,
+  };
+}
+
+function isPointInsideBbox(lon: number, lat: number, bbox: BBox): boolean {
   return (
     lon >= bbox.minLon &&
     lon <= bbox.maxLon &&
@@ -621,36 +704,309 @@ function isPointInsideCoverageBbox(
   );
 }
 
+type RoadAccumulator = {
+  readonly canonicalKey: string;
+  readonly displayName: string;
+  readonly identificationSource: "name" | "ref";
+  readonly rawNameVariants: Set<string>;
+  readonly highwayCategories: Set<string>;
+  totalLengthMeters: number;
+  interceptedLengthMeters: number;
+  interceptedSegmentCount: number;
+  extendsOutsideEnvelope: boolean;
+  outsideValidatedDomain: boolean;
+};
+
+function resolveRoadIdentity(
+  rawName: string | null,
+  rawRef: string | null,
+): {
+  readonly canonicalKey: string;
+  readonly displayName: string;
+  readonly source: "name" | "ref";
+} | null {
+  const normName = normalizeRoadName(rawName);
+  if (normName && rawName) {
+    return {
+      canonicalKey: `name:${normName}`,
+      displayName: rawName,
+      source: "name",
+    };
+  }
+  const normRef = normalizeRoadName(rawRef);
+  if (normRef && rawRef) {
+    return {
+      canonicalKey: `ref:${normRef}`,
+      displayName: rawRef,
+      source: "ref",
+    };
+  }
+  return null;
+}
+
+function resolveRoadDenominator(
+  acc: RoadAccumulator,
+  hasValidatedPolygonDomain: boolean,
+  documentedCompleteRoadKeys: ReadonlySet<string> | null,
+): {
+  readonly envelopeStatus: RoadEnvelopeStatus;
+  readonly hydraulicDomainStatus: RoadHydraulicDomainStatus;
+  readonly denominatorStatus: RoadDenominatorStatus;
+  readonly interceptedPercent: number | null;
+} {
+  const envelopeStatus: RoadEnvelopeStatus = acc.extendsOutsideEnvelope
+    ? "extends_outside_mapserver_envelope"
+    : "within_mapserver_envelope";
+
+  let hydraulicDomainStatus: RoadHydraulicDomainStatus;
+  if (hasValidatedPolygonDomain) {
+    hydraulicDomainStatus = acc.outsideValidatedDomain
+      ? "outside_or_partial_model_extent"
+      : "covered";
+  } else if (acc.extendsOutsideEnvelope) {
+    hydraulicDomainStatus = "outside_or_partial_model_extent";
+  } else {
+    hydraulicDomainStatus = "unknown";
+  }
+
+  let denominatorStatus: RoadDenominatorStatus;
+  if (acc.extendsOutsideEnvelope || acc.outsideValidatedDomain) {
+    denominatorStatus = "extends_outside_envelope";
+  } else if (
+    hasValidatedPolygonDomain &&
+    documentedCompleteRoadKeys?.has(acc.canonicalKey)
+  ) {
+    denominatorStatus = "complete_documented";
+  } else {
+    // Being inside the MapServer auxiliary bbox NEVER proves a complete road denominator.
+    denominatorStatus = "unverified_bbox_only";
+  }
+
+  const interceptedPercent =
+    denominatorStatus === "complete_documented" && acc.totalLengthMeters > 0
+      ? Math.min(
+          100,
+          Math.max(0, (acc.interceptedLengthMeters / acc.totalLengthMeters) * 100),
+        )
+      : null;
+
+  return {
+    envelopeStatus,
+    hydraulicDomainStatus,
+    denominatorStatus,
+    interceptedPercent,
+  };
+}
+
+function measureFeatureLines(params: {
+  readonly lineStrings: readonly [number, number][][];
+  readonly indexedPolygons: readonly IndexedPolygon[];
+  readonly envelopeBbox: BBox;
+  readonly validatedDomainPolygons: readonly ClipPolygon[] | null;
+}): {
+  readonly totalLengthM: number;
+  readonly interceptedM: number;
+  readonly interceptedSegs: number;
+  readonly extendsOutsideEnvelope: boolean;
+  readonly outsideValidatedDomain: boolean;
+} {
+  let totalLengthM = 0;
+  let interceptedM = 0;
+  let interceptedSegs = 0;
+  let extendsOutsideEnvelope = false;
+  let outsideValidatedDomain = false;
+
+  for (const coords of params.lineStrings) {
+    totalLengthM += computeGeodesicLineLengthMeters(coords);
+    for (const [lon, lat] of coords) {
+      if (!isPointInsideBbox(lon, lat, params.envelopeBbox)) {
+        extendsOutsideEnvelope = true;
+      }
+      if (params.validatedDomainPolygons && !outsideValidatedDomain) {
+        const rel = classifyPointInValidatedPolygons(
+          { lat, lon },
+          params.validatedDomainPolygons,
+          1e-3,
+        );
+        if (rel === "outside") {
+          outsideValidatedDomain = true;
+        }
+      }
+    }
+    const clipped = clipLineStringAgainstPolygons(
+      coords,
+      params.indexedPolygons,
+    );
+    interceptedM += clipped.interceptedLengthMeters;
+    interceptedSegs += clipped.interceptedSubSegmentCount;
+  }
+
+  return {
+    totalLengthM,
+    interceptedM,
+    interceptedSegs,
+    extendsOutsideEnvelope,
+    outsideValidatedDomain,
+  };
+}
+
+function buildPublicUiBlockReasons(params: {
+  readonly licenseClearedForPublicUi: boolean;
+  readonly unnamedInterceptedRatio: number;
+  readonly maxUnnamedRatio: number;
+}): readonly string[] {
+  const reasons: string[] = [];
+  if (!params.licenseClearedForPublicUi) {
+    reasons.push(
+      "Compatibilidade ODbL 1.0 (OSM) × cadastro municipal (Lei nº 4.135/2021) sem autorização formal de redistribuição combinada.",
+    );
+  }
+  if (params.unnamedInterceptedRatio > params.maxUnnamedRatio) {
+    reasons.push(
+      `Proporção de extensão viária sem identificação nominal (${(params.unnamedInterceptedRatio * 100).toFixed(1)}%) excede o critério provisório de governança (${(params.maxUnnamedRatio * 100).toFixed(0)}%).`,
+    );
+  }
+  return reasons;
+}
+
 /**
  * Evaluates road-axis linear exposure for an OSM-style road FeatureCollection
  * against an official SGB flood scenario polygon (Polygon/MultiPolygon + holes).
  *
- * Scientific & governance safeguards:
+ * Scientific & governance safeguards (harmonized with R02-F / PR #55):
+ * - Distinguishes total intercepted road-axis length from nominal street
+ *   identification as separate metrics.
  * - Excludes elevated bridges (`bridge=yes`) and tunnels (`tunnel=yes`) from
  *   surface road totals by default, reporting them separately with caveats.
- * - Reports percentage per road ONLY when the road's full extent lies inside
- *   the documented coverage bbox (`denominatorStatus === "complete_in_coverage"`).
- * - Evaluates `publicUiEligible` against completeness & licensing gates so low-
- *   coverage collaborative extracts are kept out of the public UI.
- * - Explicitly attaches semantic guardrails prohibiting interpretation as
- *   road blockage, damage, water depth, or traffic impossibility.
+ * - NEVER assumes a complete road denominator merely because vertices lie inside
+ *   the auxiliary MapServer bbox (`denominatorStatus: "unverified_bbox_only"` ->
+ *   `interceptedPercent: null`). Per-road percentages are computed ONLY when an
+ *   explicitly documented complete denominator AND a validated hydraulic domain
+ *   polygon are supplied (`denominatorStatus: "complete_documented"`).
+ * - Treats `PROVISIONAL_PUBLIC_UI_UNNAMED_RATIO_CRITERION` (10%) explicitly as a
+ *   provisional governance criterion, not a universal scientific requirement.
  */
+type RoadExposureAccumulation = {
+  readonly roadMap: Map<string, RoadAccumulator>;
+  readonly elevatedStructures: ElevatedStructureIntersection[];
+  readonly lengthByCategoryGroupMeters: Record<RoadCategoryGroup, number>;
+  totalNetworkLengthMeters: number;
+  totalInterceptedLengthMeters: number;
+  identifiableInterceptedLengthMeters: number;
+  unnamedInterceptedLengthMeters: number;
+  interceptedSegmentCount: number;
+  interceptedFeatureCount: number;
+  elevatedStructuresInterceptedLengthMeters: number;
+};
+
+function upsertRoadAccumulator(
+  roadMap: Map<string, RoadAccumulator>,
+  identity: {
+    readonly canonicalKey: string;
+    readonly displayName: string;
+    readonly source: "name" | "ref";
+  },
+): RoadAccumulator {
+  const existing = roadMap.get(identity.canonicalKey);
+  if (existing) return existing;
+  const created: RoadAccumulator = {
+    canonicalKey: identity.canonicalKey,
+    displayName: identity.displayName,
+    identificationSource: identity.source,
+    rawNameVariants: new Set<string>(),
+    highwayCategories: new Set<string>(),
+    totalLengthMeters: 0,
+    interceptedLengthMeters: 0,
+    interceptedSegmentCount: 0,
+    extendsOutsideEnvelope: false,
+    outsideValidatedDomain: false,
+  };
+  roadMap.set(identity.canonicalKey, created);
+  return created;
+}
+
+function readOptionalTrimmedString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function accumulateMeasuredFeature(params: {
+  readonly state: RoadExposureAccumulation;
+  readonly feature: RoadLineFeature;
+  readonly idx: number;
+  readonly measured: ReturnType<typeof measureFeatureLines>;
+  readonly excludeBridgesAndTunnels: boolean;
+}): void {
+  const { state, feature, idx, measured, excludeBridgesAndTunnels } = params;
+  const props = feature.properties ?? {};
+  const highway = readOptionalTrimmedString(props.highway) ?? "unknown";
+  const categoryGroup = classifyHighwayCategory(highway);
+  const isBridge = isTruthyOsmStructureTag(props.bridge);
+  const isTunnel = isTruthyOsmStructureTag(props.tunnel);
+  const rawName = readOptionalTrimmedString(props.name);
+  const rawRef = readOptionalTrimmedString(props.ref);
+
+  if (excludeBridgesAndTunnels && (isBridge || isTunnel)) {
+    if (measured.interceptedM > 0) {
+      state.elevatedStructuresInterceptedLengthMeters += measured.interceptedM;
+      state.elevatedStructures.push({
+        id: String(props.osmId ?? props.id ?? feature.id ?? `way_${idx}`),
+        name: rawName,
+        ref: rawRef,
+        highway,
+        structureType: isBridge ? "bridge" : "tunnel",
+        interceptedLengthMeters: measured.interceptedM,
+      });
+    }
+    return;
+  }
+
+  state.totalNetworkLengthMeters += measured.totalLengthM;
+
+  const identity = resolveRoadIdentity(rawName, rawRef);
+  if (identity) {
+    const acc = upsertRoadAccumulator(state.roadMap, identity);
+    acc.rawNameVariants.add(rawName ?? rawRef ?? identity.displayName);
+    acc.highwayCategories.add(highway);
+    acc.totalLengthMeters += measured.totalLengthM;
+    acc.interceptedLengthMeters += measured.interceptedM;
+    acc.interceptedSegmentCount += measured.interceptedSegs;
+    acc.extendsOutsideEnvelope ||= measured.extendsOutsideEnvelope;
+    acc.outsideValidatedDomain ||= measured.outsideValidatedDomain;
+  }
+
+  if (measured.interceptedM <= 0) return;
+
+  state.totalInterceptedLengthMeters += measured.interceptedM;
+  state.interceptedSegmentCount += measured.interceptedSegs;
+  state.interceptedFeatureCount += 1;
+  state.lengthByCategoryGroupMeters[categoryGroup] += measured.interceptedM;
+  if (identity) {
+    state.identifiableInterceptedLengthMeters += measured.interceptedM;
+  } else {
+    state.unnamedInterceptedLengthMeters += measured.interceptedM;
+  }
+}
+
 export function evaluateRoadExposure(
   roadNetwork: RoadNetworkInput | null | undefined,
   floodInput: FloodAreaInput | null | undefined,
   levelCm: number,
   options: {
     readonly excludeBridgesAndTunnels?: boolean;
-    readonly coverageBbox?: BBox;
+    readonly coverageDomain?: PointModelCoverageDomain;
+    readonly documentedCompleteRoadKeys?: ReadonlySet<string> | null;
     readonly licenseClearedForPublicUi?: boolean;
     readonly maxPublicUiUnnamedRatio?: number;
   } = {},
 ): RoadExposureResult {
   const excludeBridgesAndTunnels = options.excludeBridgesAndTunnels ?? true;
-  const coverageBbox = options.coverageBbox ?? SGB_MODEL_COVERAGE_BBOX;
+  const coverageDomain =
+    options.coverageDomain ?? DEFAULT_AUXILIARY_MAPSERVER_DOMAIN;
+  const documentedCompleteRoadKeys = options.documentedCompleteRoadKeys ?? null;
   const licenseClearedForPublicUi = options.licenseClearedForPublicUi ?? false;
   const maxUnnamedRatio =
-    options.maxPublicUiUnnamedRatio ?? MAX_PUBLIC_UI_UNNAMED_RATIO;
+    options.maxPublicUiUnnamedRatio ??
+    PROVISIONAL_PUBLIC_UI_UNNAMED_RATIO_CRITERION;
 
   const fail = (
     status: "empty" | "invalid",
@@ -670,8 +1026,7 @@ export function evaluateRoadExposure(
   });
 
   if (
-    !roadNetwork ||
-    roadNetwork.type !== "FeatureCollection" ||
+    roadNetwork?.type !== "FeatureCollection" ||
     !Array.isArray(roadNetwork.features)
   ) {
     return fail("invalid", "Entrada de malha viária GeoJSON ausente ou inválida.");
@@ -686,228 +1041,107 @@ export function evaluateRoadExposure(
     return fail(extractedFlood.status, extractedFlood.reason);
   }
 
+  let validatedDomainPolygons: readonly ClipPolygon[] | null = null;
+  if (coverageDomain.kind === "polygon") {
+    const extractedDomain = extractValidatedPolygons(coverageDomain.geometry);
+    if (extractedDomain.status !== "valid") {
+      return fail(
+        "invalid",
+        `Domínio hidráulico de cobertura inválido: ${extractedDomain.reason}`,
+      );
+    }
+    validatedDomainPolygons = extractedDomain.polygons;
+  }
+
+  const envelopeBbox: BBox =
+    coverageDomain.kind === "bbox"
+      ? coverageDomain.bbox
+      : SGB_MAPSERVER_ENVELOPE_BBOX;
   const indexedPolygons = indexPolygons(extractedFlood.polygons);
 
-  const lengthByCategoryGroupMeters: Record<RoadCategoryGroup, number> = {
-    arterial: 0,
-    local_vehicular: 0,
-    service_access: 0,
-    pedestrian: 0,
-    other: 0,
+  const state: RoadExposureAccumulation = {
+    roadMap: new Map<string, RoadAccumulator>(),
+    elevatedStructures: [],
+    lengthByCategoryGroupMeters: {
+      arterial: 0,
+      local_vehicular: 0,
+      service_access: 0,
+      pedestrian: 0,
+      other: 0,
+    },
+    totalNetworkLengthMeters: 0,
+    totalInterceptedLengthMeters: 0,
+    identifiableInterceptedLengthMeters: 0,
+    unnamedInterceptedLengthMeters: 0,
+    interceptedSegmentCount: 0,
+    interceptedFeatureCount: 0,
+    elevatedStructuresInterceptedLengthMeters: 0,
   };
-
-  type RoadAccumulator = {
-    canonicalKey: string;
-    displayName: string;
-    identificationSource: "name" | "ref";
-    rawNameVariants: Set<string>;
-    highwayCategories: Set<string>;
-    totalLengthMeters: number;
-    interceptedLengthMeters: number;
-    interceptedSegmentCount: number;
-    extendsOutsideCoverage: boolean;
-  };
-
-  const roadMap = new Map<string, RoadAccumulator>();
-  const elevatedStructures: ElevatedStructureIntersection[] = [];
-
-  let totalNetworkLengthMeters = 0;
-  let totalInterceptedLengthMeters = 0;
-  let identifiableInterceptedLengthMeters = 0;
-  let unnamedInterceptedLengthMeters = 0;
-  let interceptedSegmentCount = 0;
-  let interceptedFeatureCount = 0;
-  let elevatedStructuresInterceptedLengthMeters = 0;
 
   for (let idx = 0; idx < roadNetwork.features.length; idx += 1) {
     const feature = roadNetwork.features[idx];
-    if (!feature || feature.type !== "Feature" || !feature.geometry) {
-      return fail("invalid", `Feição viária inválida no índice ${idx}.`);
+    const parsedLines = extractFeatureLineStrings(feature, idx);
+    if (!parsedLines.ok) {
+      return fail("invalid", parsedLines.reason);
     }
-
-    const lineStrings: [number, number][][] = [];
-    if (feature.geometry.type === "LineString") {
-      const valid = validateLineStringCoords(feature.geometry.coordinates);
-      if (!valid) {
-        return fail("invalid", `LineString inválido na feição viária ${idx}.`);
-      }
-      lineStrings.push(valid);
-    } else if (feature.geometry.type === "MultiLineString") {
-      if (
-        !Array.isArray(feature.geometry.coordinates) ||
-        feature.geometry.coordinates.length === 0
-      ) {
-        return fail(
-          "invalid",
-          `MultiLineString vazio ou inválido na feição viária ${idx}.`,
-        );
-      }
-      for (const part of feature.geometry.coordinates) {
-        const valid = validateLineStringCoords(part);
-        if (!valid) {
-          return fail(
-            "invalid",
-            `Parte inválida em MultiLineString na feição viária ${idx}.`,
-          );
-        }
-        lineStrings.push(valid);
-      }
-    } else {
-      return fail(
-        "invalid",
-        `Geometria não linear encontrada na malha viária (índice ${idx}).`,
-      );
-    }
-
-    const props = feature.properties ?? {};
-    const highway =
-      typeof props.highway === "string" && props.highway.trim()
-        ? props.highway.trim()
-        : "unknown";
-    const categoryGroup = classifyHighwayCategory(highway);
-    const isBridge = isTruthyOsmStructureTag(props.bridge);
-    const isTunnel = isTruthyOsmStructureTag(props.tunnel);
-    const rawName =
-      typeof props.name === "string" && props.name.trim()
-        ? props.name.trim()
-        : null;
-    const rawRef =
-      typeof props.ref === "string" && props.ref.trim()
-        ? props.ref.trim()
-        : null;
-
-    let featureTotalLengthM = 0;
-    let featureInterceptedM = 0;
-    let featureInterceptedSegs = 0;
-    let featureExtendsOutside = false;
-
-    for (const coords of lineStrings) {
-      featureTotalLengthM += computeGeodesicLineLengthMeters(coords);
-      if (!featureExtendsOutside) {
-        for (const [lon, lat] of coords) {
-          if (!isPointInsideCoverageBbox(lon, lat, coverageBbox)) {
-            featureExtendsOutside = true;
-            break;
-          }
-        }
-      }
-      const clipped = clipLineStringAgainstPolygons(coords, indexedPolygons);
-      featureInterceptedM += clipped.interceptedLengthMeters;
-      featureInterceptedSegs += clipped.interceptedSubSegmentCount;
-    }
-
-    if (excludeBridgesAndTunnels && (isBridge || isTunnel)) {
-      if (featureInterceptedM > 0) {
-        elevatedStructuresInterceptedLengthMeters += featureInterceptedM;
-        elevatedStructures.push({
-          id: String(props.osmId ?? props.id ?? feature.id ?? `way_${idx}`),
-          name: rawName,
-          ref: rawRef,
-          highway,
-          structureType: isBridge ? "bridge" : "tunnel",
-          interceptedLengthMeters: featureInterceptedM,
-        });
-      }
-      continue;
-    }
-
-    totalNetworkLengthMeters += featureTotalLengthM;
-
-    const normName = normalizeRoadName(rawName);
-    const normRef = !normName ? normalizeRoadName(rawRef) : null;
-    const canonicalKey = normName
-      ? `name:${normName}`
-      : normRef
-        ? `ref:${normRef}`
-        : null;
-
-    if (canonicalKey) {
-      let acc = roadMap.get(canonicalKey);
-      if (!acc) {
-        acc = {
-          canonicalKey,
-          displayName: rawName ?? rawRef ?? canonicalKey,
-          identificationSource: normName ? "name" : "ref",
-          rawNameVariants: new Set<string>(),
-          highwayCategories: new Set<string>(),
-          totalLengthMeters: 0,
-          interceptedLengthMeters: 0,
-          interceptedSegmentCount: 0,
-          extendsOutsideCoverage: false,
-        };
-        roadMap.set(canonicalKey, acc);
-      }
-      if (rawName) acc.rawNameVariants.add(rawName);
-      else if (rawRef) acc.rawNameVariants.add(rawRef);
-      acc.highwayCategories.add(highway);
-      acc.totalLengthMeters += featureTotalLengthM;
-      acc.interceptedLengthMeters += featureInterceptedM;
-      acc.interceptedSegmentCount += featureInterceptedSegs;
-      if (featureExtendsOutside) {
-        acc.extendsOutsideCoverage = true;
-      }
-    }
-
-    if (featureInterceptedM > 0) {
-      totalInterceptedLengthMeters += featureInterceptedM;
-      interceptedSegmentCount += featureInterceptedSegs;
-      interceptedFeatureCount += 1;
-      lengthByCategoryGroupMeters[categoryGroup] += featureInterceptedM;
-      if (canonicalKey) {
-        identifiableInterceptedLengthMeters += featureInterceptedM;
-      } else {
-        unnamedInterceptedLengthMeters += featureInterceptedM;
-      }
-    }
+    const measured = measureFeatureLines({
+      lineStrings: parsedLines.lineStrings,
+      indexedPolygons,
+      envelopeBbox,
+      validatedDomainPolygons,
+    });
+    accumulateMeasuredFeature({
+      state,
+      feature,
+      idx,
+      measured,
+      excludeBridgesAndTunnels,
+    });
   }
 
-  const interceptedRoads: RoadExposureItem[] = Array.from(roadMap.values())
+  const hasValidatedPolygonDomain = validatedDomainPolygons !== null;
+  const interceptedRoads: RoadExposureItem[] = Array.from(
+    state.roadMap.values(),
+  )
     .filter((acc) => acc.interceptedLengthMeters > 0)
     .map((acc) => {
-      const denominatorStatus: RoadDenominatorStatus = acc.extendsOutsideCoverage
-        ? "extends_outside_coverage"
-        : "complete_in_coverage";
-      const interceptedPercent =
-        denominatorStatus === "complete_in_coverage" && acc.totalLengthMeters > 0
-          ? Math.min(
-              100,
-              Math.max(
-                0,
-                (acc.interceptedLengthMeters / acc.totalLengthMeters) * 100,
-              ),
-            )
-          : null;
+      const denom = resolveRoadDenominator(
+        acc,
+        hasValidatedPolygonDomain,
+        documentedCompleteRoadKeys,
+      );
       return {
         canonicalKey: acc.canonicalKey,
         displayName: acc.displayName,
         identificationSource: acc.identificationSource,
-        rawNameVariants: Array.from(acc.rawNameVariants).sort(),
-        highwayCategories: Array.from(acc.highwayCategories).sort(),
+        rawNameVariants: Array.from(acc.rawNameVariants).sort((a, b) =>
+          a.localeCompare(b, "pt-BR"),
+        ),
+        highwayCategories: Array.from(acc.highwayCategories).sort((a, b) =>
+          a.localeCompare(b, "en"),
+        ),
         totalLengthMeters: acc.totalLengthMeters,
         interceptedLengthMeters: acc.interceptedLengthMeters,
         interceptedSegmentCount: acc.interceptedSegmentCount,
-        denominatorStatus,
-        interceptedPercent,
+        envelopeStatus: denom.envelopeStatus,
+        hydraulicDomainStatus: denom.hydraulicDomainStatus,
+        denominatorStatus: denom.denominatorStatus,
+        interceptedPercent: denom.interceptedPercent,
       };
     })
     .sort((a, b) => b.interceptedLengthMeters - a.interceptedLengthMeters);
 
   const unnamedInterceptedRatio =
-    totalInterceptedLengthMeters > 0
-      ? unnamedInterceptedLengthMeters / totalInterceptedLengthMeters
+    state.totalInterceptedLengthMeters > 0
+      ? state.unnamedInterceptedLengthMeters /
+        state.totalInterceptedLengthMeters
       : 0;
 
-  const publicUiBlockReasons: string[] = [];
-  if (!licenseClearedForPublicUi) {
-    publicUiBlockReasons.push(
-      "Compatibilidade ODbL 1.0 (OSM) × cadastro municipal (Lei nº 4.135/2021) sem autorização formal de redistribuição combinada.",
-    );
-  }
-  if (unnamedInterceptedRatio > maxUnnamedRatio) {
-    publicUiBlockReasons.push(
-      `Proporção de extensão viária sem identificação (${(unnamedInterceptedRatio * 100).toFixed(1)}%) excede o limite de qualidade (${(maxUnnamedRatio * 100).toFixed(0)}%).`,
-    );
-  }
+  const publicUiBlockReasons = buildPublicUiBlockReasons({
+    licenseClearedForPublicUi,
+    unnamedInterceptedRatio,
+    maxUnnamedRatio,
+  });
 
   return {
     status: "valid",
@@ -919,19 +1153,22 @@ export function evaluateRoadExposure(
     roadAttribution: OSM_ROAD_ATTRIBUTION,
     levelCm,
     excludedBridgesAndTunnels: excludeBridgesAndTunnels,
-    totalNetworkLengthMeters,
-    totalInterceptedLengthMeters,
-    totalInterceptedLengthKm: totalInterceptedLengthMeters / 1000,
-    identifiableInterceptedLengthMeters,
-    unnamedInterceptedLengthMeters,
+    hydraulicDomainKind: coverageDomain.kind,
+    totalNetworkLengthMeters: state.totalNetworkLengthMeters,
+    totalInterceptedLengthMeters: state.totalInterceptedLengthMeters,
+    totalInterceptedLengthKm: state.totalInterceptedLengthMeters / 1000,
+    identifiableInterceptedLengthMeters:
+      state.identifiableInterceptedLengthMeters,
+    unnamedInterceptedLengthMeters: state.unnamedInterceptedLengthMeters,
     unnamedInterceptedRatio,
     identifiableRoadCount: interceptedRoads.length,
-    interceptedSegmentCount,
-    interceptedFeatureCount,
-    lengthByCategoryGroupMeters,
+    interceptedSegmentCount: state.interceptedSegmentCount,
+    interceptedFeatureCount: state.interceptedFeatureCount,
+    lengthByCategoryGroupMeters: state.lengthByCategoryGroupMeters,
     roads: interceptedRoads,
-    elevatedOrSubsurfaceStructures: elevatedStructures,
-    elevatedStructuresInterceptedLengthMeters,
+    elevatedOrSubsurfaceStructures: state.elevatedStructures,
+    elevatedStructuresInterceptedLengthMeters:
+      state.elevatedStructuresInterceptedLengthMeters,
     publicUiEligible: publicUiBlockReasons.length === 0,
     publicUiBlockReasons,
     semanticGuardrails: SEMANTIC_GUARDRAILS,

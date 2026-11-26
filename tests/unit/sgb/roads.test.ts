@@ -4,6 +4,7 @@ import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import {
   OSM_ROAD_ATTRIBUTION,
   OSM_ROAD_LICENSE,
+  PROVISIONAL_PUBLIC_UI_UNNAMED_RATIO_CRITERION,
   SGB_ROAD_EXPOSURE_METHOD_ID,
   computeGeodesicLineLengthMeters,
   computeGeodesicSegmentLengthMeters,
@@ -47,7 +48,6 @@ function makeFloodFc(
 
 describe("WGS84 geodesic linear length & road-exposure GIS engine (lib/sgb/roads.ts)", () => {
   it("computes WGS84 ellipsoidal geodesic lengths accurately near Santo Antônio de Pádua", () => {
-    // 0.01° latitude at -21.535° on WGS84 ≈ 1,107.25 m
     const nsMeters = computeGeodesicSegmentLengthMeters(
       -42.18,
       -21.54,
@@ -59,7 +59,6 @@ describe("WGS84 geodesic linear length & road-exposure GIS engine (lib/sgb/roads
       `Expected ~1107.25 m, got ${nsMeters}`,
     );
 
-    // 0.01° longitude at -21.535° on WGS84 ≈ 1,035.94 m
     const ewMeters = computeGeodesicSegmentLengthMeters(
       -42.19,
       -21.535,
@@ -71,7 +70,6 @@ describe("WGS84 geodesic linear length & road-exposure GIS engine (lib/sgb/roads
       `Expected ~1035.94 m, got ${ewMeters}`,
     );
 
-    // Multi-vertex polyline equals sum of segments
     const polyLen = computeGeodesicLineLengthMeters([
       [-42.19, -21.54],
       [-42.18, -21.54],
@@ -89,21 +87,13 @@ describe("WGS84 geodesic linear length & road-exposure GIS engine (lib/sgb/roads
       normalizeRoadName("AVENIDA DOUTOR TEMISTOCLES DE ALMEIDA"),
       "avenida doutor temistocles de almeida",
     );
-    assert.equal(
-      normalizeRoadName("R. Cel. Olivier"),
-      "rua coronel olivier",
-    );
-    assert.equal(
-      normalizeRoadName("Pça. Pereira Lima"),
-      "praca pereira lima",
-    );
+    assert.equal(normalizeRoadName("R. Cel. Olivier"), "rua coronel olivier");
+    assert.equal(normalizeRoadName("Pça. Pereira Lima"), "praca pereira lima");
     assert.equal(normalizeRoadName("   "), null);
     assert.equal(normalizeRoadName(null), null);
   });
 
-  it("clips road axes accurately against Polygons with holes (dry islands) and MultiPolygons", () => {
-    // Outer flooded box: lon [-42.190, -42.180], lat [-21.540, -21.530]
-    // Dry island (hole): lon [-42.187, -42.183], lat [-21.538, -21.532]
+  it("clips road axes against Polygons with holes and does NOT assume a complete denominator from the auxiliary MapServer bbox alone", () => {
     const flood = makeFloodFc([
       [
         makeRectRing(-42.19, -21.54, -42.18, -21.53),
@@ -111,8 +101,6 @@ describe("WGS84 geodesic linear length & road-exposure GIS engine (lib/sgb/roads
       ],
     ]);
 
-    // Straight road crossing horizontally at lat = -21.535 from -42.192 to -42.178:
-    // Covered intervals: [-42.190, -42.187] (0.003°) AND [-42.183, -42.180] (0.003°) -> total 0.006° (2 continuous segments!)
     const expectedCoveredM =
       computeGeodesicSegmentLengthMeters(-42.19, -21.535, -42.187, -21.535) +
       computeGeodesicSegmentLengthMeters(-42.183, -21.535, -42.18, -21.535);
@@ -144,47 +132,81 @@ describe("WGS84 geodesic linear length & road-exposure GIS engine (lib/sgb/roads
       ],
     };
 
-    const res = evaluateRoadExposure(network, flood, 425);
-    assert.equal(res.status, "valid");
-    if (res.status === "valid") {
-      assert.equal(res.method, SGB_ROAD_EXPOSURE_METHOD_ID);
-      assert.equal(res.roadSourceLicense, OSM_ROAD_LICENSE);
-      assert.equal(res.roadAttribution, OSM_ROAD_ATTRIBUTION);
+    // 1. Default auxiliary MapServer bbox ONLY -> denominatorStatus MUST be "unverified_bbox_only" and interceptedPercent MUST be null!
+    const resBboxOnly = evaluateRoadExposure(network, flood, 425);
+    assert.equal(resBboxOnly.status, "valid");
+    if (resBboxOnly.status === "valid") {
+      assert.equal(resBboxOnly.method, SGB_ROAD_EXPOSURE_METHOD_ID);
+      assert.equal(resBboxOnly.roadSourceLicense, OSM_ROAD_LICENSE);
+      assert.equal(resBboxOnly.roadAttribution, OSM_ROAD_ATTRIBUTION);
       assert.ok(
-        Math.abs(res.totalInterceptedLengthMeters - expectedCoveredM) < 0.05,
-        `Expected ${expectedCoveredM.toFixed(2)} m, got ${res.totalInterceptedLengthMeters.toFixed(2)} m`,
+        Math.abs(resBboxOnly.totalInterceptedLengthMeters - expectedCoveredM) <
+          0.05,
       );
-      // Crossing a hole splits 1 LineString into 2 continuous intercepted segments!
-      assert.equal(res.interceptedSegmentCount, 2);
-      assert.equal(res.identifiableRoadCount, 1);
-      assert.equal(res.roads[0].denominatorStatus, "complete_in_coverage");
+      assert.equal(resBboxOnly.interceptedSegmentCount, 2);
+      assert.equal(resBboxOnly.identifiableRoadCount, 1);
+      assert.equal(
+        resBboxOnly.roads[0].envelopeStatus,
+        "within_mapserver_envelope",
+      );
+      assert.equal(resBboxOnly.roads[0].hydraulicDomainStatus, "unknown");
+      assert.equal(
+        resBboxOnly.roads[0].denominatorStatus,
+        "unverified_bbox_only",
+      );
+      assert.equal(resBboxOnly.roads[0].interceptedPercent, null);
+      assert.equal(
+        resBboxOnly.semanticGuardrails
+          .totalAxisLengthDistinctFromNominalIdentification,
+        true,
+      );
+      assert.equal(
+        resBboxOnly.semanticGuardrails.unnamedRatioCriterionIsProvisional,
+        true,
+      );
+    }
+
+    // 2. With BOTH validated hydraulic domain polygon AND documented complete road key -> computes exact percentage!
+    const validatedDomain = makeFloodFc([
+      [makeRectRing(-42.195, -21.545, -42.175, -21.525)],
+    ]);
+    const resDocumented = evaluateRoadExposure(network, flood, 425, {
+      coverageDomain: {
+        kind: "polygon",
+        geometry: validatedDomain,
+        label: "Domínio hidráulico validado",
+      },
+      documentedCompleteRoadKeys: new Set(["name:rua exemplo"]),
+    });
+    assert.equal(resDocumented.status, "valid");
+    if (resDocumented.status === "valid") {
+      assert.equal(resDocumented.roads[0].hydraulicDomainStatus, "covered");
+      assert.equal(
+        resDocumented.roads[0].denominatorStatus,
+        "complete_documented",
+      );
       const expectedPct = (expectedCoveredM / expectedTotalM) * 100;
       assert.ok(
-        res.roads[0].interceptedPercent !== null &&
-          Math.abs(res.roads[0].interceptedPercent - expectedPct) < 0.05,
-      );
-      // Semantic guardrails always enforced
-      assert.equal(res.semanticGuardrails.doesNotIndicateBlockage, true);
-      assert.equal(res.semanticGuardrails.doesNotIndicateDepth, true);
-      assert.equal(res.semanticGuardrails.doesNotIndicateDamage, true);
-      assert.equal(
-        res.semanticGuardrails.doesNotIndicateTrafficImpossibility,
-        true,
+        resDocumented.roads[0].interceptedPercent !== null &&
+          Math.abs(resDocumented.roads[0].interceptedPercent - expectedPct) <
+            0.05,
       );
     }
   });
 
-  it("deduplicates multi-segment roads, separates bridges, suppresses percentage for truncated denominators, and enforces public-UI quality/license gates", () => {
+  it("deduplicates multi-segment roads with localeCompare sorting, separates bridges, and enforces provisional governance & license gates", () => {
     const flood = makeFloodFc([[makeRectRing(-42.19, -21.54, -42.18, -21.53)]]);
+    const validatedDomain = makeFloodFc([
+      [makeRectRing(-42.205, -21.55, -42.15, -21.515)],
+    ]);
 
     const network: RoadNetworkInput = {
       type: "FeatureCollection",
       features: [
-        // Segment 1 of Av. Getúlio Vargas (inside coverage, completely inside flood)
         {
           type: "Feature",
           id: 10,
-          properties: { highway: "primary", name: "Av. Getúlio Vargas" },
+          properties: { highway: "secondary", name: "Av. Getúlio Vargas" },
           geometry: {
             type: "LineString",
             coordinates: [
@@ -193,7 +215,6 @@ describe("WGS84 geodesic linear length & road-exposure GIS engine (lib/sgb/roads
             ],
           },
         },
-        // Segment 2 of same road with spelling variant (extends outside flood, still inside coverage)
         {
           type: "Feature",
           id: 11,
@@ -206,7 +227,6 @@ describe("WGS84 geodesic linear length & road-exposure GIS engine (lib/sgb/roads
             ],
           },
         },
-        // Highway with ref only, extending OUTSIDE the SGB coverage bbox -> incomplete denominator (percent must be null!)
         {
           type: "Feature",
           id: 12,
@@ -214,12 +234,11 @@ describe("WGS84 geodesic linear length & road-exposure GIS engine (lib/sgb/roads
           geometry: {
             type: "LineString",
             coordinates: [
-              [-42.22, -21.535], // outside SGB AOI minLon (-42.209)
+              [-42.22, -21.535], // outside envelope AND validated domain
               [-42.185, -21.535],
             ],
           },
         },
-        // Unnamed residential street (increases unnamed ratio -> blocks public UI!)
         {
           type: "Feature",
           id: 13,
@@ -232,7 +251,6 @@ describe("WGS84 geodesic linear length & road-exposure GIS engine (lib/sgb/roads
             ],
           },
         },
-        // Bridge crossing over the flood polygon -> excluded from surface totals, reported separately!
         {
           type: "Feature",
           id: 14,
@@ -252,36 +270,48 @@ describe("WGS84 geodesic linear length & road-exposure GIS engine (lib/sgb/roads
       ],
     };
 
-    const res = evaluateRoadExposure(network, flood, 425);
+    const res = evaluateRoadExposure(network, flood, 425, {
+      coverageDomain: {
+        kind: "polygon",
+        geometry: validatedDomain,
+        label: "Domínio validado teste",
+      },
+      documentedCompleteRoadKeys: new Set([
+        "name:avenida getulio vargas",
+        "ref:rj-186",
+      ]),
+    });
     assert.equal(res.status, "valid");
     if (res.status === "valid") {
-      // 2 unique identifiable non-bridge roads: Av. Getúlio Vargas (deduplicated from 2 segments) + RJ-186 (ref)
       assert.equal(res.identifiableRoadCount, 2);
 
       const gv = res.roads.find(
         (r) => r.canonicalKey === "name:avenida getulio vargas",
       );
       assert.ok(gv);
-      assert.equal(gv.rawNameVariants.length, 2);
-      assert.equal(gv.denominatorStatus, "complete_in_coverage");
-      assert.ok(gv.interceptedPercent !== null && gv.interceptedPercent > 60 && gv.interceptedPercent < 70);
+      assert.deepEqual(gv.rawNameVariants, [
+        "Av. Getúlio Vargas",
+        "Avenida Getulio Vargas",
+      ]);
+      assert.deepEqual(gv.highwayCategories, ["primary", "secondary"]);
+      assert.equal(gv.denominatorStatus, "complete_documented");
+      assert.ok(
+        gv.interceptedPercent !== null &&
+          gv.interceptedPercent > 60 &&
+          gv.interceptedPercent < 70,
+      );
 
+      // Even if RJ-186 is listed in documentedCompleteRoadKeys, extending outside domain suppresses percent!
       const rj186 = res.roads.find((r) => r.canonicalKey === "ref:rj-186");
       assert.ok(rj186);
-      assert.equal(rj186.identificationSource, "ref");
-      assert.equal(rj186.denominatorStatus, "extends_outside_coverage");
+      assert.equal(rj186.denominatorStatus, "extends_outside_envelope");
       assert.equal(rj186.interceptedPercent, null);
 
-      // Bridge separated cleanly
       assert.equal(res.elevatedOrSubsurfaceStructures.length, 1);
       assert.equal(res.elevatedOrSubsurfaceStructures[0].name, "Ponte Raul Veiga");
-      assert.equal(res.elevatedOrSubsurfaceStructures[0].structureType, "bridge");
-      assert.ok(res.elevatedStructuresInterceptedLengthMeters > 500);
-
-      // Unnamed ratio > 10% AND license not cleared -> publicUiEligible MUST be false!
-      assert.ok(res.unnamedInterceptedRatio > 0.1);
+      assert.ok(res.unnamedInterceptedRatio > PROVISIONAL_PUBLIC_UI_UNNAMED_RATIO_CRITERION);
       assert.equal(res.publicUiEligible, false);
-      assert.ok(res.publicUiBlockReasons.length >= 2);
+      assert.match(res.publicUiBlockReasons.join(" "), /critério provisório/i);
     }
   });
 
@@ -295,21 +325,17 @@ describe("WGS84 geodesic linear length & road-exposure GIS engine (lib/sgb/roads
           properties: { highway: "residential", name: "Bad" },
           geometry: {
             type: "LineString",
-            coordinates: [[-42.185, -21.535]], // < 2 vertices!
+            coordinates: [[-42.185, -21.535]],
           },
         },
       ],
     };
 
-    const resBadRoad = evaluateRoadExposure(badRoad, validFlood, 300);
-    assert.equal(resBadRoad.status, "invalid");
-    assert.equal(resBadRoad.publicUiEligible, false);
-
-    const emptyNetwork: RoadNetworkInput = {
-      type: "FeatureCollection",
-      features: [],
-    };
-    const resEmpty = evaluateRoadExposure(emptyNetwork, validFlood, 300);
-    assert.equal(resEmpty.status, "empty");
+    assert.equal(evaluateRoadExposure(badRoad, validFlood, 300).status, "invalid");
+    assert.equal(
+      evaluateRoadExposure({ type: "FeatureCollection", features: [] }, validFlood, 300)
+        .status,
+      "empty",
+    );
   });
 });

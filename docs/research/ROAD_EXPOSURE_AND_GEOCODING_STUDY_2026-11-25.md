@@ -23,11 +23,12 @@
   - sobre a fronteira (anel externo ou contorno de buraco) dentro da tolerância métrica e não interior a outro polígono → `boundary`;
   - fora de todos os polígonos (ou dentro de um buraco/ilha seca) → `outside`;
   - geometria ausente, vazia, carregando, com erro de rede ou inválida → `unavailable`.
-- **Tratamento de fronteira:** projeção métrica local no plano tangente do elipsoide WGS84 (raios meridional $M(\phi)$ e primeiro vertical $N(\phi)$) com tolerância padrão de **`±0,5 m`** (`DEFAULT_BOUNDARY_TOLERANCE_METERS = 0.5`), escolhida bem abaixo da grade reamostrada do MDE do SGB (`10 m`) e do passo vetorial exportado (`~1 m`), garantindo robustez frente a arredondamento IEEE-754 em arestas diagonais.
-- **Distinção de cobertura do modelo:** usa a extensão publicada pelo serviço oficial SGB (`EPSG:4674` / `EPSG:4326`, registrada em `data/metadata/sources.json`):
-  - `minLon = -42.20900097927306`, `minLat = -21.553311556725685`
-  - `maxLon = -42.14556243623249`, `maxLat = -21.51245633890636`
-  - Fora dessa extensão (`outside_model_coverage`), a interface declara explicitamente que **ausência de interseção não indica ausência de possibilidade de inundação**. Dentro da cobertura, declara explicitamente que **ausência de interseção não declara imóvel seguro**.
+- **Tratamento de fronteira (`±0,5 m`):** projeção métrica local no plano tangente do elipsoide WGS84 (raios meridional $M(\phi)$ e primeiro vertical $N(\phi)$) com tolerância padrão de **`±0,5 m`** (`DEFAULT_BOUNDARY_TOLERANCE_METERS = 0.5`). Essa tolerância representa exclusivamente uma **faixa de proximidade geométrica** sobre o contorno vetorial SGB (para absorver arredondamento IEEE-754 em arestas diagonais e cliques na borda); **não representa precisão física nem limite exato da inundação**. Essa distinção é explicitada nos resultados individuais, na comparação A/B, na menor cota identificada e no resumo técnico copiado.
+- **Distinção de cobertura espacial (harmonizada com R02-F / PR `#55`):** o retângulo publicado pelo serviço oficial SGB (`EPSG:4674` / `EPSG:4326`, registrada em `data/metadata/sources.json`, `minLon = -42.20900097927306`, `minLat = -21.553311556725685`, `maxLon = -42.14556243623249`, `maxLat = -21.51245633890636`) é tratado estritamente como **envelope retangular auxiliar do MapServer** — **não comprova cobertura hidráulica integral no seu interior**. Os resultados separam ortogonalmente:
+  1. posição frente ao envelope auxiliar (`within_mapserver_envelope` vs. `outside_mapserver_envelope`);
+  2. domínio hidráulico validado (`unknown` por padrão dentro do bbox auxiliar, `outside_model_extent` fora do envelope e `covered` apenas quando fornecido polígono validado do domínio hidráulico);
+  3. relação geométrica estritamente com a geometria consultada (`inside`, `boundary`, `outside`, `unavailable`).
+  - Fora do envelope auxiliar (`outside_mapserver_envelope`), a interface declara que **ausência de interseção não indica ausência de possibilidade de inundação**. Dentro do envelope auxiliar (`hydraulicDomainStatus: "unknown"`), a consulta geométrica permanece funcional sem inferir cobertura hidráulica integral nem declarar imóvel seguro.
 - **Compatibilidade com comparação A/B:** avalia o ponto independentemente sobre os cenários A e B (`evaluatePointInComparison`), classificando `both` ($A \cap B$), `only_a` ($A \setminus B$), `only_b` ($B \setminus A$), `neither` ou `unavailable` (falha fechada se A ou B falhar), sem pressupor aninhamento e preservando o detalhe `interior` vs. `fronteira` em cada cenário.
 - **Consulta sob demanda nas 11 cotas (`300`–`550 cm`):**
   - **Zero requisições adicionais na abertura da aplicação** (apenas a cota ativa inicial é consultada).
@@ -118,9 +119,10 @@ O motor de cálculo linear foi implementado de forma determinística e desacopla
 - **Distância geodésica:** fórmula inversa de Vincenty sobre o elipsoide WGS84 (`computeGeodesicSegmentLengthMeters`).
 - **Recorte linear exato:** interseção paramétrica de cada segmento de `LineString`/`MultiLineString` contra todas as arestas de anéis externos e buracos de `Polygon`/`MultiPolygon`, seguida de classificação do ponto médio de cada subintervalo elementar e fusão de subsegmentos contíguos.
 - **Identificação e deduplicação:** normalização determinística (`normalizeRoadName`) com remoção de acentos NFD, caixa baixa, normalização de pontuação/espaços e expansão canônica de abreviações brasileiras (`r.` → `rua`, `av.` → `avenida`, `pça.` → `praca`, `dr.` → `doutor`, `cel.` → `coronel`, `pref.` → `prefeito`, etc.), usando `name` como chave primária (`name:<canon>`) e `ref` como fallback secundário (`ref:<canon>`), preservando `rawNameVariants`. Vias sem `name` e sem `ref` são somadas à extensão total e contabilizadas separadamente em `unnamedInterceptedLengthMeters` / `unnamedInterceptedRatio`, sem inflar `identifiableRoadCount`.
+- **Separação conceitual de métricas:** a **extensão total de eixos viários interceptados** (`totalInterceptedLengthMeters` / `Km`) e a **identificação nominal das ruas** (`identifiableRoadCount`, `unnamedInterceptedRatio`) são tratadas como **métricas distintas** — a primeira depende da geometria linear dos eixos viários (independentemente de nome), enquanto a segunda depende da completude e qualidade toponímica do cadastro.
 - **Separação de pontes e túneis:** excluídos dos totais de superfície por padrão (`excludeBridgesAndTunnels: true`) e reportados em bloco separado (`elevatedOrSubsurfaceStructures`).
-- **Regra de percentual por via:** `interceptedPercent` só é calculado quando `denominatorStatus === "complete_in_coverage"` (todos os vértices da via contidos na cobertura SGB documentada); caso contrário retorna estritamente `null`.
-- **Travamento para UI pública (`publicUiEligible`):** exige simultaneamente autorização de licença (`licenseClearedForPublicUi: true`) e razão de extensão sem nome `<= 10%` (`MAX_PUBLIC_UI_UNNAMED_RATIO = 0.10`), além de anexar `semanticGuardrails` obrigatórios proibindo interpretação como bloqueio, dano, profundidade ou impossibilidade de tráfego.
+- **Regra de percentual por via (harmonizada com R02-F / PR `#55`):** estar dentro do envelope retangular auxiliar do MapServer **não comprova denominador viário completo** nem cobertura hidráulica integral (`denominatorStatus: "unverified_bbox_only"` → `interceptedPercent: null`). O percentual por via (`denominatorStatus: "complete_documented"`) só é calculado quando são fornecidos explicitamente um polígono validado do domínio hidráulico e o conjunto documentado de vias com denominador completo.
+- **Critério provisório para UI pública (`publicUiEligible`):** exige autorização de licença (`licenseClearedForPublicUi: true`) e razão de extensão sem nome `<= 10%` (`PROVISIONAL_PUBLIC_UI_UNNAMED_RATIO_CRITERION = 0.10`), além de anexar `semanticGuardrails` obrigatórios proibindo interpretação como bloqueio, dano, profundidade ou impossibilidade de tráfego. **O limite de `10%` de extensão sem nome é um critério provisório de governança adotado nesta pesquisa, não uma exigência científica universal.** As métricas viárias permanecem desabilitadas na UI pública nesta rodada.
 
 ### 3.4 Validação numérica independente (`lib/sgb/roads.ts` vs. `shapely` + `pyproj.Geod`)
 
@@ -131,24 +133,24 @@ Comparação direta sobre os mesmos arquivos reais (`osm_sgb_aoi.json` × `COTA_
 | **`COTA_300cm`** | Extensão interceptada (excl. pontes) | `1,765 km` (`29` ways) | `1,765 km` (`29` feições / `76` subsegmentos) | `0,000 km` |
 | **`COTA_300cm`** | Pontes separadas (`bridge=yes`) | `0,853 km` (`5` ways) | `0,853 km` (`5` ways) | `0,000 km` |
 | **`COTA_300cm`** | Vias identificáveis (excl. pontes) | `17` | `17` | `0` |
-| **`COTA_300cm`** | Razão sem identificação (excl. pontes) | — | `61,0%` (`publicUiEligible: false`) | — |
-| **`COTA_300cm`** | *Av. Senar Frederico Rocha* (denominador completo) | `251,4 m / 373,8 m (67,3%)` | `251,4 m / 373,8 m (67,3%)` | `0,0 m` |
+| **`COTA_300cm`** | Razão sem identificação nominal (excl. pontes) | — | `61,0%` (`publicUiEligible: false`) | — |
+| **`COTA_300cm`** | *Av. Senar Frederico Rocha* (extensão no extrato OSM) | `251,4 m / 373,8 m` | `251,4 m` (`interceptedPercent: null` em bbox auxiliar) | `0,0 m` |
 | **`COTA_425cm`** | Extensão interceptada (excl. pontes) | `3,386 km` (`43` ways) | `3,386 km` (`43` feições / `101` subsegmentos) | `0,000 km` |
 | **`COTA_425cm`** | Pontes separadas (`bridge=yes`) | `0,868 km` (`5` ways) | `0,868 km` (`5` ways) | `0,000 km` |
 | **`COTA_425cm`** | Vias identificáveis (excl. pontes) | `23` | `23` | `0` |
-| **`COTA_425cm`** | Razão sem identificação (excl. pontes) | — | `53,4%` (`publicUiEligible: false`) | — |
-| **`COTA_425cm`** | *Rua Amilca R. Perlingeiro* (denominador completo) | `325,6 m / 544,4 m (59,8%)` | `325,6 m / 544,4 m (59,8%)` | `0,0 m` |
+| **`COTA_425cm`** | Razão sem identificação nominal (excl. pontes) | — | `53,4%` (`publicUiEligible: false`) | — |
+| **`COTA_425cm`** | *Rua Amilca R. Perlingeiro* (extensão no extrato OSM) | `325,6 m / 544,4 m` | `325,6 m` (`interceptedPercent: null` em bbox auxiliar) | `0,0 m` |
 | **`COTA_550cm`** | Extensão interceptada (excl. pontes) | `16,683 km` (`148` ways) | `16,683 km` (`148` feições / `320` subsegmentos) | `0,000 km` |
 | **`COTA_550cm`** | Pontes separadas (`bridge=yes`) | `0,873 km` (`5` ways) | `0,873 km` (`5` ways) | `0,000 km` |
 | **`COTA_550cm`** | Vias identificáveis (excl. pontes) | `70` | `70` | `0` |
-| **`COTA_550cm`** | Razão sem identificação (excl. pontes) | — | `38,2%` (`publicUiEligible: false`) | — |
-| **`COTA_550cm`** | *Av. Getúlio Vargas* (denominador completo) | `673,3 m / 792,3 m (85,0%)` | `673,3 m / 792,3 m (85,0%)` | `0,0 m` |
-| **`COTA_550cm`** | *RJ-186* (ultrapassa limite da AOI) | `1.336,0 m` (denominador incompleto) | `1.336,0 m` (`interceptedPercent: null`) | `0,0 m` |
+| **`COTA_550cm`** | Razão sem identificação nominal (excl. pontes) | — | `38,2%` (`publicUiEligible: false`) | — |
+| **`COTA_550cm`** | *Av. Getúlio Vargas* (extensão no extrato OSM) | `673,3 m / 792,3 m` | `673,3 m` (`interceptedPercent: null` em bbox auxiliar) | `0,0 m` |
+| **`COTA_550cm`** | *RJ-186* (ultrapassa envelope auxiliar) | `1.336,0 m` (denominador incompleto) | `1.336,0 m` (`interceptedPercent: null`) | `0,0 m` |
 
 > **Nota semântica obrigatória:** os números acima constituem evidência metodológica de pesquisa sobre interseção geométrica 2D entre eixos viários colaborativos e cenários estáticos SGB (2024). **Não representam bloqueio viário, dano estrutural, profundidade da lâmina d'água nem impossibilidade de tráfego.**
 
 ### 3.5 Pré-requisitos para futura promoção de métricas viárias à UI pública
 
-1. Completar auditoria/saneamento nominal dos eixos viários na AOI urbana (reduzindo a parcela sem identificação para `<= 10%`), com validação local de pontes, viadutos e acessos.
+1. Definir separadamente a governança para **extensão total de eixos interceptados** vs. **identificação nominal das vias**, auditando e saneando nomes/pontes/acessos (o patamar de `10%` adotado nesta etapa é apenas um critério provisório de governança, sujeito a revisão metodológica) e documentando denominadores completos sem presumi-los apenas pelo bbox auxiliar.
 2. Obter confirmação institucional da Prefeitura sobre uso/redistribuição da relação de logradouros (`Lei nº 4.135/2021`) e resolver a compatibilidade com `ODbL 1.0` (ou manter a camada viária estritamente sob `ODbL 1.0` sem fusão proprietária).
 3. Pré-processar offline os recortes por cota (com hashes SHA-256) ou executá-los em Web Worker dedicado, dado o tempo de `9,8–14,3 s` por cota na thread principal.

@@ -142,7 +142,12 @@ test("geographic point query: coordinates, boundary, hole, outside coverage, map
 
   const relationBox = page.getByTestId("location-relation-result");
   await expect(relationBox).toHaveAttribute("data-relation", "inside");
-  await expect(relationBox).toContainText("Interceptado pelo cenário selecionado");
+  await expect(relationBox).toHaveAttribute(
+    "data-envelope",
+    "within_mapserver_envelope",
+  );
+  await expect(relationBox).toHaveAttribute("data-hydraulic-domain", "unknown");
+  await expect(relationBox).toContainText("Interceptado pela geometria consultada");
   await expect
     .poll(() => lastQueryPointFeature(page))
     .toMatchObject({
@@ -150,29 +155,48 @@ test("geographic point query: coordinates, boundary, hole, outside coverage, map
       properties: { relation: "inside" },
     });
 
-  // 4. Boundary point on outer edge (-42.190, -21.535)
+  // 4. Boundary point on outer edge (-42.190, -21.535) -> explicit ±0.5 m geometric proximity band note!
   await latInput.fill("-21.5350");
   await lonInput.fill("-42.1900");
   await submitBtn.click();
   await expect(relationBox).toHaveAttribute("data-relation", "boundary");
-  await expect(relationBox).toContainText("Ponto na fronteira da mancha selecionada");
+  await expect(relationBox).toContainText(
+    "Ponto na faixa de proximidade da fronteira (±0,5 m)",
+  );
+  await expect(page.getByTestId("location-boundary-semantics")).toContainText(
+    /faixa de proximidade geométrica.*não representa precisão física/i,
+  );
 
-  // 5. Point inside internal hole (dry island: -42.182, -21.538) -> outside + non-safety caveat
+  // 5. Point inside internal hole (dry island: -42.182, -21.538) -> outside + unknown domain + non-safety caveat
   await latInput.fill("-21.5380");
   await lonInput.fill("-42.1820");
   await submitBtn.click();
   await expect(relationBox).toHaveAttribute("data-relation", "outside");
-  await expect(relationBox).toContainText("Sem interseção com o cenário selecionado");
+  await expect(relationBox).toContainText(
+    "Sem interseção com a geometria consultada",
+  );
   await expect(relationBox).toContainText("não declara imóvel seguro");
+  await expect(page.getByTestId("location-coverage-status")).toContainText(
+    "domínio hidráulico desconhecido",
+  );
 
-  // 6. Point outside known SGB model coverage -> explicit coverage caveat
+  // 6. Point outside auxiliary MapServer envelope -> explicit envelope & non-exclusion caveat
   await latInput.fill("-21.6200");
   await lonInput.fill("-42.3100");
   await submitBtn.click();
-  await expect(relationBox).toHaveAttribute("data-coverage", "outside_model_coverage");
-  await expect(relationBox).toContainText("Fora da cobertura conhecida do modelo SGB");
+  await expect(relationBox).toHaveAttribute(
+    "data-envelope",
+    "outside_mapserver_envelope",
+  );
+  await expect(relationBox).toHaveAttribute(
+    "data-hydraulic-domain",
+    "outside_model_extent",
+  );
   await expect(relationBox).toContainText(
-    "ausência de interseção não indica ausência de possibilidade de inundação",
+    "Fora do envelope auxiliar do MapServer SGB",
+  );
+  await expect(relationBox).toContainText(
+    /ausência de interseção.*não indica ausência de possibilidade de inundação/i,
   );
 
   // 7. A/B comparison mode compatibility (A = 425 cm inside secondPart, B = 450 cm outside secondPart -> only_a!)
@@ -190,6 +214,19 @@ test("geographic point query: coordinates, boundary, hole, outside coverage, map
   await expect(page.getByTestId("location-compare-relation-b")).toContainText(
     "Fora",
   );
+
+  // A/B comparison boundary proximity disclosure on outer edge (-42.190, -21.535)
+  await latInput.fill("-21.5350");
+  await lonInput.fill("-42.1900");
+  await submitBtn.click();
+  await expect(page.getByTestId("location-boundary-semantics")).toContainText(
+    /faixa de proximidade geométrica.*não representa precisão física/i,
+  );
+
+  // Switch back to secondPart point for failure & 11-stage non-nested test
+  await latInput.fill("-21.5330");
+  await lonInput.fill("-42.1740");
+  await submitBtn.click();
 
   // If Scenario B fails -> fail-closed unavailable in comparison mode
   failLevel525 = true;
@@ -234,7 +271,7 @@ test("geographic point query: coordinates, boundary, hole, outside coverage, map
   await expect(page.getByTestId("cross-stage-lowest")).toContainText(
     "abaixo de 300 cm",
   );
-  expect(requestedLevels.length).toBe(countBeforeCachedRun);
+  expect(requestedLevels).toHaveLength(countBeforeCachedRun);
 
   // Clicking a chip in the 11-stage matrix updates the active map stage
   await page.getByTestId("cross-stage-chip-300").click();
@@ -328,7 +365,11 @@ test("cross-stage query aborts and ignores out-of-order responses when user swit
 
   await expect(page.getByTestId("cross-stage-results")).toHaveCount(0);
   await expect(page.getByTestId("location-relation-result")).toHaveAttribute(
-    "data-coverage",
-    "outside_model_coverage",
+    "data-envelope",
+    "outside_mapserver_envelope",
+  );
+  await expect(page.getByTestId("location-relation-result")).toHaveAttribute(
+    "data-hydraulic-domain",
+    "outside_model_extent",
   );
 });

@@ -18,24 +18,35 @@ export const SGB_LOCATION_QUERY_METHOD_ID =
 
 /**
  * Default metric distance tolerance (in meters) used to classify points lying
- * on the boundary of an SGB vector polygon (outer ring or internal hole ring).
+ * in a geometric proximity band around an SGB vector polygon boundary (outer
+ * ring or internal hole ring).
  *
- * Chosen well below the 10 m SGB DEM resampling grid and 1 m vector export step,
- * while reliably catching IEEE-754 floating-point collinearity along edges.
+ * Scientific caveat: ±0.5 m is purely a geometric proximity band to absorb
+ * floating-point edge precision and map-click proximity; it does NOT represent
+ * physical flood accuracy or the exact real-world water edge.
  */
 export const DEFAULT_BOUNDARY_TOLERANCE_METERS = 0.5;
 
+export const BOUNDARY_PROXIMITY_SEMANTIC_NOTE =
+  "A tolerância de ±0,5 m representa apenas uma faixa de proximidade geométrica sobre o contorno vetorial SGB; não representa precisão física nem limite exato da inundação." as const;
+
 /**
- * Published spatial extent of the SGB MapServer group `MODELAGEM`
- * (`hidrologia/mancha_santo_antonio_de_padua`, CRS EPSG:4674 / EPSG:4326).
- * Source: data/metadata/sources.json (`areaOfInterest.bbox`).
+ * Envelope retangular auxiliar publicado pelo MapServer SGB (2024) em
+ * EPSG:4674 / WGS84 (`data/metadata/sources.json`).
+ *
+ * ATENÇÃO (harmonizado com R02-F / PR #55): trata-se exclusivamente de um
+ * envelope auxiliar do serviço GIS e NÃO comprova cobertura hidráulica
+ * integral no seu interior.
  */
-export const SGB_MODEL_COVERAGE_BBOX = {
+export const SGB_MAPSERVER_ENVELOPE_BBOX = {
   minLon: -42.20900097927306,
   minLat: -21.553311556725685,
   maxLon: -42.14556243623249,
   maxLat: -21.51245633890636,
 } as const;
+
+/** Backward-compatible alias for `SGB_MAPSERVER_ENVELOPE_BBOX`. */
+export const SGB_MODEL_COVERAGE_BBOX = SGB_MAPSERVER_ENVELOPE_BBOX;
 
 // WGS84 ellipsoid constants for local metric tangent-plane projection
 const WGS84_A = 6_378_137.0;
@@ -48,9 +59,50 @@ export type GeoPoint = {
   readonly lon: number;
 };
 
-export type ModelCoverageStatus =
-  | "within_model_coverage"
-  | "outside_model_coverage";
+/** Position strictly relative to the auxiliary MapServer rectangular envelope. */
+export type MapServerEnvelopeStatus =
+  | "within_mapserver_envelope"
+  | "outside_mapserver_envelope";
+
+/**
+ * Hydraulic model spatial domain coverage harmonized with R02-F (PR #55):
+ * - `"covered"`: point verified inside an explicitly supplied validated hydraulic domain polygon.
+ * - `"outside_model_extent"`: point lies outside the auxiliary MapServer envelope or validated domain polygon.
+ * - `"unknown"`: point is inside the auxiliary MapServer bbox (or no domain polygon was supplied),
+ *   so complete hydraulic coverage is NOT proven.
+ */
+export type HydraulicDomainStatus =
+  | "covered"
+  | "outside_model_extent"
+  | "unknown";
+
+export type PointModelCoverageDomain =
+  | {
+      readonly kind: "polygon";
+      readonly geometry: FloodAreaInput;
+      readonly label: string;
+    }
+  | {
+      readonly kind: "bbox";
+      readonly bbox: {
+        readonly minLon: number;
+        readonly minLat: number;
+        readonly maxLon: number;
+        readonly maxLat: number;
+      };
+      readonly label: string;
+    }
+  | {
+      readonly kind: "unknown";
+      readonly reason: string;
+    };
+
+export const DEFAULT_AUXILIARY_MAPSERVER_DOMAIN: PointModelCoverageDomain = {
+  kind: "bbox",
+  bbox: SGB_MAPSERVER_ENVELOPE_BBOX,
+  label:
+    "Envelope retangular auxiliar do MapServer SGB (2024) — não comprova cobertura hidráulica integral no seu interior.",
+};
 
 export type SpatialPointRelation =
   | "inside"
@@ -59,6 +111,11 @@ export type SpatialPointRelation =
   | "unavailable";
 
 export type EvaluatedPointRelation = Exclude<SpatialPointRelation, "unavailable">;
+
+export type PointCoverageAssessment = {
+  readonly envelopeStatus: MapServerEnvelopeStatus;
+  readonly hydraulicDomainStatus: HydraulicDomainStatus;
+};
 
 export type PointScenarioQueryResult =
   | {
@@ -70,10 +127,12 @@ export type PointScenarioQueryResult =
       readonly stationReference: typeof SGB_REFERENCE_STATION_LABEL;
       readonly levelCm: number;
       readonly point: GeoPoint;
-      readonly coverageStatus: ModelCoverageStatus;
+      readonly envelopeStatus: MapServerEnvelopeStatus;
+      readonly hydraulicDomainStatus: HydraulicDomainStatus;
       readonly relation: EvaluatedPointRelation;
       readonly isIntercepted: boolean;
       readonly boundaryToleranceMeters: number;
+      readonly boundarySemanticsNote: string;
       readonly safetyDisclaimer: string;
     }
   | {
@@ -85,10 +144,12 @@ export type PointScenarioQueryResult =
       readonly stationReference: typeof SGB_REFERENCE_STATION_LABEL;
       readonly levelCm: number;
       readonly point: GeoPoint | null;
-      readonly coverageStatus: ModelCoverageStatus | null;
+      readonly envelopeStatus: MapServerEnvelopeStatus | null;
+      readonly hydraulicDomainStatus: HydraulicDomainStatus | null;
       readonly relation: "unavailable";
       readonly isIntercepted: null;
       readonly boundaryToleranceMeters: number;
+      readonly boundarySemanticsNote: string;
       readonly reason: string;
       readonly safetyDisclaimer: string;
     };
@@ -110,11 +171,14 @@ export type PointComparisonQueryResult = {
   readonly levelACm: number;
   readonly levelBCm: number;
   readonly point: GeoPoint | null;
-  readonly coverageStatus: ModelCoverageStatus | null;
+  readonly envelopeStatus: MapServerEnvelopeStatus | null;
+  readonly hydraulicDomainStatus: HydraulicDomainStatus | null;
   readonly relationA: SpatialPointRelation;
   readonly relationB: SpatialPointRelation;
   readonly combinedRelation: ComparisonCombinedRelation;
+  readonly involvesBoundaryProximity: boolean;
   readonly boundaryToleranceMeters: number;
+  readonly boundarySemanticsNote: string;
   readonly reason: string | null;
   readonly safetyDisclaimer: string;
 };
@@ -142,7 +206,8 @@ export type CrossStagePointSummary = {
   readonly source: typeof SGB_AREA_SOURCE;
   readonly stationReference: typeof SGB_REFERENCE_STATION_LABEL;
   readonly point: GeoPoint;
-  readonly coverageStatus: ModelCoverageStatus;
+  readonly envelopeStatus: MapServerEnvelopeStatus;
+  readonly hydraulicDomainStatus: HydraulicDomainStatus;
   readonly totalStages: number;
   readonly evaluatedCount: number;
   readonly entries: readonly CrossStageEntry[];
@@ -152,9 +217,11 @@ export type CrossStagePointSummary = {
   readonly pendingLevelsCm: readonly SgbFloodLevelCm[];
   readonly isComplete: boolean;
   readonly lowestInterceptedLevelCm: SgbFloodLevelCm | null;
+  readonly lowestInterceptedRelation: EvaluatedPointRelation | null;
   readonly highestInterceptedLevelCm: SgbFloodLevelCm | null;
   readonly hasNonNestedPattern: boolean;
   readonly nonNestedTransitions: readonly NonNestedTransition[];
+  readonly boundarySemanticsNote: string;
   readonly lowestStageDistinctionNote: string;
   readonly safetyDisclaimer: string;
 };
@@ -176,26 +243,94 @@ export function isValidGeoPoint(point: unknown): point is GeoPoint {
   return isFiniteWgs84Position([candidate.lon, candidate.lat]);
 }
 
-export function getModelCoverageStatus(point: GeoPoint): ModelCoverageStatus {
-  const { minLon, minLat, maxLon, maxLat } = SGB_MODEL_COVERAGE_BBOX;
+export function getMapServerEnvelopeStatus(
+  point: GeoPoint,
+  bbox: {
+    readonly minLon: number;
+    readonly minLat: number;
+    readonly maxLon: number;
+    readonly maxLat: number;
+  } = SGB_MAPSERVER_ENVELOPE_BBOX,
+): MapServerEnvelopeStatus {
   if (
-    point.lon >= minLon &&
-    point.lon <= maxLon &&
-    point.lat >= minLat &&
-    point.lat <= maxLat
+    point.lon >= bbox.minLon &&
+    point.lon <= bbox.maxLon &&
+    point.lat >= bbox.minLat &&
+    point.lat <= bbox.maxLat
   ) {
-    return "within_model_coverage";
+    return "within_mapserver_envelope";
   }
-  return "outside_model_coverage";
+  return "outside_mapserver_envelope";
+}
+
+/**
+ * Assesses both the auxiliary MapServer rectangular envelope and the hydraulic
+ * model domain coverage without falsely inferring full hydraulic coverage from
+ * a rectangular bbox (harmonized with R02-F / PR #55).
+ */
+export function assessPointSpatialCoverage(
+  point: GeoPoint,
+  coverageDomain: PointModelCoverageDomain = DEFAULT_AUXILIARY_MAPSERVER_DOMAIN,
+  boundaryToleranceMeters: number = DEFAULT_BOUNDARY_TOLERANCE_METERS,
+): PointCoverageAssessment {
+  const envelopeStatus = getMapServerEnvelopeStatus(point);
+
+  if (coverageDomain.kind === "unknown") {
+    return { envelopeStatus, hydraulicDomainStatus: "unknown" };
+  }
+
+  if (coverageDomain.kind === "bbox") {
+    const insideCustomBbox =
+      getMapServerEnvelopeStatus(point, coverageDomain.bbox) ===
+      "within_mapserver_envelope";
+    return {
+      envelopeStatus,
+      // Inside an auxiliary bbox does NOT prove full hydraulic coverage -> "unknown"
+      hydraulicDomainStatus: insideCustomBbox
+        ? "unknown"
+        : "outside_model_extent",
+    };
+  }
+
+  const extracted = extractValidatedPolygons(coverageDomain.geometry);
+  if (extracted.status !== "valid") {
+    return { envelopeStatus, hydraulicDomainStatus: "unknown" };
+  }
+  const rel = classifyPointInValidatedPolygons(
+    point,
+    extracted.polygons,
+    boundaryToleranceMeters,
+  );
+  return {
+    envelopeStatus,
+    hydraulicDomainStatus:
+      rel === "inside" || rel === "boundary"
+        ? "covered"
+        : "outside_model_extent",
+  };
+}
+
+export function formatBoundaryProximityNote(
+  toleranceMeters: number = DEFAULT_BOUNDARY_TOLERANCE_METERS,
+): string {
+  const formatted = toleranceMeters.toFixed(1).replace(".", ",");
+  return `A tolerância de ±${formatted} m representa apenas uma faixa de proximidade geométrica sobre o contorno vetorial SGB; não representa precisão física nem limite exato da inundação.`;
 }
 
 export function getSafetyDisclaimer(
-  coverageStatus: ModelCoverageStatus | null,
+  envelopeStatus: MapServerEnvelopeStatus | null,
+  hydraulicDomainStatus: HydraulicDomainStatus | null,
 ): string {
-  if (coverageStatus === "outside_model_coverage") {
-    return "Ponto fora da cobertura conhecida do modelo SGB (2024): ausência de interseção não indica ausência de possibilidade de inundação nem declara o local seguro.";
+  if (
+    envelopeStatus === "outside_mapserver_envelope" ||
+    hydraulicDomainStatus === "outside_model_extent"
+  ) {
+    return "Ponto fora do envelope auxiliar do MapServer SGB (2024): ausência de interseção com a geometria consultada não indica ausência de possibilidade de inundação nem declara o local seguro.";
   }
-  return "Resultado derivado sobre cenário estático SGB (2024). Ausência de interseção não declara imóvel seguro, e interseção não indica profundidade, velocidade, dano ou alerta oficial.";
+  if (hydraulicDomainStatus === "unknown") {
+    return "Relação avaliada exclusivamente sobre a geometria consultada do SGB (2024). O envelope retangular do MapServer é auxiliar e não comprova cobertura hidráulica integral no seu interior (domínio hidráulico desconhecido); ausência de interseção não declara imóvel seguro, e interseção não indica profundidade, velocidade, dano ou alerta oficial.";
+  }
+  return "Resultado derivado sobre cenário estático SGB (2024) em domínio hidráulico validado. Ausência de interseção não declara imóvel seguro, e interseção não indica profundidade, velocidade, dano ou alerta oficial.";
 }
 
 function metersPerDegreeAtLat(latDeg: number): {
@@ -244,9 +379,8 @@ export function pointToSegmentDistanceMeters(
     return Math.hypot(ax, ay);
   }
 
-  let t = -(ax * dx + ay * dy) / lenSq;
-  if (t < 0) t = 0;
-  else if (t > 1) t = 1;
+  const rawT = -(ax * dx + ay * dy) / lenSq;
+  const t = Math.max(0, Math.min(1, rawT));
 
   const closestX = ax + t * dx;
   const closestY = ay + t * dy;
@@ -288,6 +422,28 @@ function isPointWithinExpandedRingBbox(
   );
 }
 
+function isPointNearSegment(
+  lon: number,
+  lat: number,
+  a: readonly [number, number],
+  b: readonly [number, number],
+  epsMeters: number,
+  padLonDeg: number,
+  padLatDeg: number,
+): boolean {
+  const [aLon, aLat] = a;
+  const [bLon, bLat] = b;
+  const segMinLon = Math.min(aLon, bLon);
+  const segMaxLon = Math.max(aLon, bLon);
+  if (lon < segMinLon - padLonDeg || lon > segMaxLon + padLonDeg) return false;
+
+  const segMinLat = Math.min(aLat, bLat);
+  const segMaxLat = Math.max(aLat, bLat);
+  if (lat < segMinLat - padLatDeg || lat > segMaxLat + padLatDeg) return false;
+
+  return pointToSegmentDistanceMeters(lon, lat, aLon, aLat, bLon, bLat) <= epsMeters;
+}
+
 function isPointOnRingBoundary(
   lon: number,
   lat: number,
@@ -301,17 +457,17 @@ function isPointOnRingBoundary(
   }
   const epsMeters = Math.max(toleranceMeters, 1e-9);
   for (let i = 0; i < ring.length - 1; i += 1) {
-    const [aLon, aLat] = ring[i];
-    const [bLon, bLat] = ring[i + 1];
-    // Fast per-segment bbox filter
-    const segMinLon = aLon < bLon ? aLon : bLon;
-    const segMaxLon = aLon > bLon ? aLon : bLon;
-    if (lon < segMinLon - padLonDeg || lon > segMaxLon + padLonDeg) continue;
-    const segMinLat = aLat < bLat ? aLat : bLat;
-    const segMaxLat = aLat > bLat ? aLat : bLat;
-    if (lat < segMinLat - padLatDeg || lat > segMaxLat + padLatDeg) continue;
-
-    if (pointToSegmentDistanceMeters(lon, lat, aLon, aLat, bLon, bLat) <= epsMeters) {
+    if (
+      isPointNearSegment(
+        lon,
+        lat,
+        ring[i],
+        ring[i + 1],
+        epsMeters,
+        padLonDeg,
+        padLatDeg,
+      )
+    ) {
       return true;
     }
   }
@@ -320,7 +476,7 @@ function isPointOnRingBoundary(
 
 /**
  * Even-odd ray-casting test for strict containment in a closed linear ring.
- * Boundary points should be checked via `isPointOnRingBoundary` beforehand.
+ * Boundary proximity should be checked via `isPointOnRingBoundary` beforehand.
  */
 function isPointStrictlyInsideRing(
   lon: number,
@@ -363,7 +519,6 @@ function classifyPointInSinglePolygon(
     return "outside";
   }
 
-  // Point is strictly inside the outer ring: verify internal holes (islands).
   for (let h = 1; h < polygon.length; h += 1) {
     const hole = polygon[h];
     if (!isPointWithinExpandedRingBbox(lon, lat, hole, padLonDeg, padLatDeg)) {
@@ -385,7 +540,7 @@ function classifyPointInSinglePolygon(
 /**
  * Evaluates a point against a collection of validated polygons (union semantics):
  * - If strictly `inside` any polygon -> `"inside"`
- * - Else if on `boundary` of any polygon (outer ring or hole ring) -> `"boundary"`
+ * - Else if within the geometric proximity band of any boundary -> `"boundary"`
  * - Else -> `"outside"`
  */
 export function classifyPointInValidatedPolygons(
@@ -398,7 +553,6 @@ export function classifyPointInValidatedPolygons(
       ? toleranceMeters
       : DEFAULT_BOUNDARY_TOLERANCE_METERS;
   const { mPerDegLon, mPerDegLat } = metersPerDegreeAtLat(point.lat);
-  // Add small angular safety margin for bbox pre-filtering
   const padLatDeg = safeTolerance / mPerDegLat + 1e-7;
   const padLonDeg = safeTolerance / mPerDegLon + 1e-7;
 
@@ -433,10 +587,18 @@ export function evaluatePointAgainstFloodScenario(
   point: GeoPoint | null | undefined,
   input: FloodAreaInput | null | undefined,
   levelCm: number,
-  options: { readonly boundaryToleranceMeters?: number } = {},
+  options: {
+    readonly boundaryToleranceMeters?: number;
+    readonly coverageDomain?: PointModelCoverageDomain;
+  } = {},
 ): PointScenarioQueryResult {
   const boundaryToleranceMeters =
     options.boundaryToleranceMeters ?? DEFAULT_BOUNDARY_TOLERANCE_METERS;
+  const boundarySemanticsNote = formatBoundaryProximityNote(
+    boundaryToleranceMeters,
+  );
+  const coverageDomain =
+    options.coverageDomain ?? DEFAULT_AUXILIARY_MAPSERVER_DOMAIN;
 
   if (!isValidGeoPoint(point)) {
     return {
@@ -448,17 +610,26 @@ export function evaluatePointAgainstFloodScenario(
       stationReference: SGB_REFERENCE_STATION_LABEL,
       levelCm,
       point: null,
-      coverageStatus: null,
+      envelopeStatus: null,
+      hydraulicDomainStatus: null,
       relation: "unavailable",
       isIntercepted: null,
       boundaryToleranceMeters,
+      boundarySemanticsNote,
       reason: "Coordenadas inválidas ou fora dos limites WGS84.",
-      safetyDisclaimer: getSafetyDisclaimer(null),
+      safetyDisclaimer: getSafetyDisclaimer(null, null),
     };
   }
 
-  const coverageStatus = getModelCoverageStatus(point);
-  const safetyDisclaimer = getSafetyDisclaimer(coverageStatus);
+  const { envelopeStatus, hydraulicDomainStatus } = assessPointSpatialCoverage(
+    point,
+    coverageDomain,
+    boundaryToleranceMeters,
+  );
+  const safetyDisclaimer = getSafetyDisclaimer(
+    envelopeStatus,
+    hydraulicDomainStatus,
+  );
   const extracted = extractValidatedPolygons(input);
 
   if (extracted.status !== "valid") {
@@ -471,10 +642,12 @@ export function evaluatePointAgainstFloodScenario(
       stationReference: SGB_REFERENCE_STATION_LABEL,
       levelCm,
       point,
-      coverageStatus,
+      envelopeStatus,
+      hydraulicDomainStatus,
       relation: "unavailable",
       isIntercepted: null,
       boundaryToleranceMeters,
+      boundarySemanticsNote,
       reason: extracted.reason,
       safetyDisclaimer,
     };
@@ -495,10 +668,12 @@ export function evaluatePointAgainstFloodScenario(
     stationReference: SGB_REFERENCE_STATION_LABEL,
     levelCm,
     point,
-    coverageStatus,
+    envelopeStatus,
+    hydraulicDomainStatus,
     relation,
     isIntercepted: relation === "inside" || relation === "boundary",
     boundaryToleranceMeters,
+    boundarySemanticsNote,
     safetyDisclaimer,
   };
 }
@@ -516,17 +691,19 @@ export function evaluatePointInComparison(
   levelACm: number,
   inputB: FloodAreaInput | null | undefined,
   levelBCm: number,
-  options: { readonly boundaryToleranceMeters?: number } = {},
+  options: {
+    readonly boundaryToleranceMeters?: number;
+    readonly coverageDomain?: PointModelCoverageDomain;
+  } = {},
 ): PointComparisonQueryResult {
   const boundaryToleranceMeters =
     options.boundaryToleranceMeters ?? DEFAULT_BOUNDARY_TOLERANCE_METERS;
+  const boundarySemanticsNote = formatBoundaryProximityNote(
+    boundaryToleranceMeters,
+  );
 
-  const resA = evaluatePointAgainstFloodScenario(point, inputA, levelACm, {
-    boundaryToleranceMeters,
-  });
-  const resB = evaluatePointAgainstFloodScenario(point, inputB, levelBCm, {
-    boundaryToleranceMeters,
-  });
+  const resA = evaluatePointAgainstFloodScenario(point, inputA, levelACm, options);
+  const resB = evaluatePointAgainstFloodScenario(point, inputB, levelBCm, options);
 
   if (resA.status !== "valid" || resB.status !== "valid") {
     const reasons: string[] = [];
@@ -537,7 +714,13 @@ export function evaluatePointInComparison(
       reasons.push(`Cenário B (${levelBCm} cm): ${resB.reason}`);
     }
     const validPoint = isValidGeoPoint(point) ? point : null;
-    const coverageStatus = validPoint ? getModelCoverageStatus(validPoint) : null;
+    const coverage = validPoint
+      ? assessPointSpatialCoverage(
+          validPoint,
+          options.coverageDomain ?? DEFAULT_AUXILIARY_MAPSERVER_DOMAIN,
+          boundaryToleranceMeters,
+        )
+      : null;
     return {
       status: "unavailable",
       classification: "derived",
@@ -548,13 +731,20 @@ export function evaluatePointInComparison(
       levelACm,
       levelBCm,
       point: validPoint,
-      coverageStatus,
+      envelopeStatus: coverage?.envelopeStatus ?? null,
+      hydraulicDomainStatus: coverage?.hydraulicDomainStatus ?? null,
       relationA: resA.relation,
       relationB: resB.relation,
       combinedRelation: "unavailable",
+      involvesBoundaryProximity:
+        resA.relation === "boundary" || resB.relation === "boundary",
       boundaryToleranceMeters,
+      boundarySemanticsNote,
       reason: reasons.join(" | "),
-      safetyDisclaimer: getSafetyDisclaimer(coverageStatus),
+      safetyDisclaimer: getSafetyDisclaimer(
+        coverage?.envelopeStatus ?? null,
+        coverage?.hydraulicDomainStatus ?? null,
+      ),
     };
   }
 
@@ -579,27 +769,129 @@ export function evaluatePointInComparison(
     levelACm,
     levelBCm,
     point: resA.point,
-    coverageStatus: resA.coverageStatus,
+    envelopeStatus: resA.envelopeStatus,
+    hydraulicDomainStatus: resA.hydraulicDomainStatus,
     relationA: resA.relation,
     relationB: resB.relation,
     combinedRelation,
+    involvesBoundaryProximity:
+      resA.relation === "boundary" || resB.relation === "boundary",
     boundaryToleranceMeters,
+    boundarySemanticsNote,
     reason: null,
     safetyDisclaimer: resA.safetyDisclaimer,
   };
 }
 
+function buildCrossStageEntry(
+  levelCm: SgbFloodLevelCm,
+  raw:
+    | {
+        readonly status: CrossStageEntryStatus;
+        readonly relation: SpatialPointRelation;
+        readonly reason?: string;
+      }
+    | undefined,
+): CrossStageEntry {
+  const orthometricElevationM = SGB_STAGE_ELEVATIONS[levelCm];
+  if (!raw || raw.status === "pending") {
+    return {
+      levelCm,
+      orthometricElevationM,
+      status: "pending",
+      relation: "unavailable",
+      isIntercepted: null,
+    };
+  }
+  if (raw.status === "error" || raw.relation === "unavailable") {
+    return {
+      levelCm,
+      orthometricElevationM,
+      status: "error",
+      relation: "unavailable",
+      isIntercepted: null,
+      reason: raw.reason ?? "Cenário indisponível.",
+    };
+  }
+  return {
+    levelCm,
+    orthometricElevationM,
+    status: "evaluated",
+    relation: raw.relation,
+    isIntercepted: raw.relation === "inside" || raw.relation === "boundary",
+  };
+}
+
+function detectNonNestedTransitions(
+  evaluatedEntries: readonly CrossStageEntry[],
+): readonly NonNestedTransition[] {
+  const transitions: NonNestedTransition[] = [];
+  for (let i = 0; i < evaluatedEntries.length; i += 1) {
+    const lower = evaluatedEntries[i];
+    if (!lower.isIntercepted) continue;
+    const higherOutside = evaluatedEntries
+      .slice(i + 1)
+      .find((candidate) => candidate.isIntercepted === false);
+    if (higherOutside) {
+      transitions.push({
+        lowerInterceptedCm: lower.levelCm,
+        higherOutsideCm: higherOutside.levelCm,
+      });
+    }
+  }
+  return transitions;
+}
+
+function buildLowestStageDistinctionNote(params: {
+  readonly envelopeStatus: MapServerEnvelopeStatus;
+  readonly hydraulicDomainStatus: HydraulicDomainStatus;
+  readonly lowestInterceptedLevelCm: SgbFloodLevelCm | null;
+  readonly lowestInterceptedRelation: EvaluatedPointRelation | null;
+  readonly boundaryLevelsCm: readonly SgbFloodLevelCm[];
+  readonly isComplete: boolean;
+  readonly boundaryToleranceMeters: number;
+}): string {
+  const tolFormatted = params.boundaryToleranceMeters
+    .toFixed(1)
+    .replace(".", ",");
+
+  if (
+    params.envelopeStatus === "outside_mapserver_envelope" ||
+    params.hydraulicDomainStatus === "outside_model_extent"
+  ) {
+    return "O ponto está fora do envelope auxiliar do MapServer SGB (3,00–5,50 m). Ausência de interseção com as geometrias consultadas não indica ausência de possibilidade de inundação.";
+  }
+
+  if (params.lowestInterceptedLevelCm !== null) {
+    const meters = (params.lowestInterceptedLevelCm / 100)
+      .toFixed(2)
+      .replace(".", ",");
+    const base =
+      params.lowestInterceptedLevelCm === 300
+        ? "3,00 m (300 cm) é a menor cota publicada pelo SGB (2024). Essa menor cota identificada entre os cenários consultados não corresponde necessariamente ao início real de inundação, pois não há cenários oficiais abaixo de 300 cm."
+        : `${meters} m (${params.lowestInterceptedLevelCm} cm) é a menor cota identificada entre os cenários SGB consultados (passo discreto de 25 cm, sem interpolação). Não corresponde necessariamente ao início real de inundação no local.`;
+    const boundarySuffix =
+      params.lowestInterceptedRelation === "boundary"
+        ? ` A identificação nessa cota ocorre na faixa de proximidade geométrica de ±${tolFormatted} m sobre o contorno vetorial, o que não representa precisão física da inundação.`
+        : params.boundaryLevelsCm.length > 0
+          ? ` Cenários marcados como fronteira utilizam faixa de proximidade geométrica de ±${tolFormatted} m (não precisão física da inundação).`
+          : "";
+    const partialSuffix = params.isComplete
+      ? ""
+      : " Há cenários não verificados/com falha; cotas inferiores indisponíveis não foram descartadas.";
+    return `${base}${boundarySuffix}${partialSuffix}`;
+  }
+
+  if (!params.isComplete) {
+    return "Nenhuma interseção identificada entre os cenários verificados até o momento; como há cotas indisponíveis ou pendentes, o resultado é incompleto.";
+  }
+
+  return "Nenhuma das 11 geometrias oficiais consultadas (3,00–5,50 m) intercepta o ponto. O envelope do MapServer é auxiliar e não comprova cobertura hidráulica integral; isso não declara o imóvel seguro nem descarta cheias acima de 5,50 m ou alagamentos locais.";
+}
+
 /**
  * Summarizes an explicit multi-stage point analysis across all 11 official SGB
  * scenarios (300–550 cm, step 25 cm).
- *
- * Scientific rules:
- * - Never interpolates between stages.
- * - Never assumes nesting between stages (evaluates every stage independently
- *   and flags any non-nested transition where a lower stage intercepts while a
- *   higher stage does not).
- * - Explicitly distinguishes the lowest identified stage among consulted SGB
- *   scenarios from the actual onset of flooding at the location.
  */
 export function summarizeCrossStagePointQuery(
   point: GeoPoint,
@@ -615,43 +907,31 @@ export function summarizeCrossStagePointQuery(
       >
     >
   >,
+  options: {
+    readonly boundaryToleranceMeters?: number;
+    readonly coverageDomain?: PointModelCoverageDomain;
+  } = {},
 ): CrossStagePointSummary {
-  const coverageStatus = getModelCoverageStatus(point);
-  const entries: CrossStageEntry[] = SGB_FLOOD_LEVELS_CM.map((levelCm) => {
-    const raw = resultsByLevel[levelCm];
-    if (!raw || raw.status === "pending") {
-      return {
-        levelCm,
-        orthometricElevationM: SGB_STAGE_ELEVATIONS[levelCm],
-        status: "pending",
-        relation: "unavailable",
-        isIntercepted: null,
-      };
-    }
-    if (raw.status === "error" || raw.relation === "unavailable") {
-      return {
-        levelCm,
-        orthometricElevationM: SGB_STAGE_ELEVATIONS[levelCm],
-        status: "error",
-        relation: "unavailable",
-        isIntercepted: null,
-        reason: raw.reason ?? "Cenário indisponível.",
-      };
-    }
-    const isIntercepted = raw.relation === "inside" || raw.relation === "boundary";
-    return {
-      levelCm,
-      orthometricElevationM: SGB_STAGE_ELEVATIONS[levelCm],
-      status: "evaluated",
-      relation: raw.relation,
-      isIntercepted,
-    };
-  });
+  const boundaryToleranceMeters =
+    options.boundaryToleranceMeters ?? DEFAULT_BOUNDARY_TOLERANCE_METERS;
+  const boundarySemanticsNote = formatBoundaryProximityNote(
+    boundaryToleranceMeters,
+  );
+  const { envelopeStatus, hydraulicDomainStatus } = assessPointSpatialCoverage(
+    point,
+    options.coverageDomain ?? DEFAULT_AUXILIARY_MAPSERVER_DOMAIN,
+    boundaryToleranceMeters,
+  );
+
+  const entries: CrossStageEntry[] = SGB_FLOOD_LEVELS_CM.map((levelCm) =>
+    buildCrossStageEntry(levelCm, resultsByLevel[levelCm]),
+  );
 
   const evaluatedEntries = entries.filter((e) => e.status === "evaluated");
-  const interceptedLevelsCm = evaluatedEntries
-    .filter((e) => e.isIntercepted === true)
-    .map((e) => e.levelCm);
+  const interceptedEntries = evaluatedEntries.filter(
+    (e) => e.isIntercepted === true,
+  );
+  const interceptedLevelsCm = interceptedEntries.map((e) => e.levelCm);
   const boundaryLevelsCm = evaluatedEntries
     .filter((e) => e.relation === "boundary")
     .map((e) => e.levelCm);
@@ -662,52 +942,27 @@ export function summarizeCrossStagePointQuery(
     .filter((e) => e.status === "pending")
     .map((e) => e.levelCm);
 
-  const lowestInterceptedLevelCm =
-    interceptedLevelsCm.length > 0 ? interceptedLevelsCm[0] : null;
-  const highestInterceptedLevelCm =
-    interceptedLevelsCm.length > 0
-      ? interceptedLevelsCm[interceptedLevelsCm.length - 1]
+  const lowestEntry = interceptedEntries.at(0) ?? null;
+  const highestEntry = interceptedEntries.at(-1) ?? null;
+  const lowestInterceptedLevelCm = lowestEntry?.levelCm ?? null;
+  const lowestInterceptedRelation =
+    lowestEntry && lowestEntry.relation !== "unavailable"
+      ? lowestEntry.relation
       : null;
+  const highestInterceptedLevelCm = highestEntry?.levelCm ?? null;
 
-  // Detect any non-nested pattern without assuming monotonicity across stages
-  const nonNestedTransitions: NonNestedTransition[] = [];
-  for (let i = 0; i < evaluatedEntries.length; i += 1) {
-    const lower = evaluatedEntries[i];
-    if (!lower.isIntercepted) continue;
-    for (let j = i + 1; j < evaluatedEntries.length; j += 1) {
-      const higher = evaluatedEntries[j];
-      if (higher.isIntercepted === false) {
-        nonNestedTransitions.push({
-          lowerInterceptedCm: lower.levelCm,
-          higherOutsideCm: higher.levelCm,
-        });
-        break;
-      }
-    }
-  }
-
+  const nonNestedTransitions = detectNonNestedTransitions(evaluatedEntries);
   const isComplete = failedLevelsCm.length === 0 && pendingLevelsCm.length === 0;
 
-  let lowestStageDistinctionNote: string;
-  if (coverageStatus === "outside_model_coverage") {
-    lowestStageDistinctionNote =
-      "O ponto está fora da cobertura conhecida do modelo SGB (3,00–5,50 m). Ausência de interseção nos cenários consultados não indica ausência de possibilidade de inundação.";
-  } else if (lowestInterceptedLevelCm === 300) {
-    lowestStageDistinctionNote =
-      "3,00 m (300 cm) é a menor cota publicada pelo SGB (2024). Essa menor cota identificada entre os cenários consultados não corresponde necessariamente ao início real de inundação, pois não há cenários oficiais abaixo de 300 cm.";
-  } else if (lowestInterceptedLevelCm !== null) {
-    const meters = (lowestInterceptedLevelCm / 100).toFixed(2).replace(".", ",");
-    const partialCaveat = !isComplete
-      ? " Há cenários não verificados/com falha; cotas inferiores indisponíveis não foram descartadas."
-      : "";
-    lowestStageDistinctionNote = `${meters} m (${lowestInterceptedLevelCm} cm) é a menor cota identificada entre os cenários SGB consultados (passo discreto de 25 cm, sem interpolação). Não corresponde necessariamente ao início real de inundação no local.${partialCaveat}`;
-  } else if (!isComplete) {
-    lowestStageDistinctionNote =
-      "Nenhuma interseção identificada entre os cenários verificados até o momento; como há cotas indisponíveis ou pendentes, o resultado é incompleto.";
-  } else {
-    lowestStageDistinctionNote =
-      "Nenhuma das 11 cotas oficiais consultadas (3,00–5,50 m) intercepta o ponto. Isso não declara o imóvel seguro nem descarta cheias acima de 5,50 m ou alagamentos de drenagem local.";
-  }
+  const lowestStageDistinctionNote = buildLowestStageDistinctionNote({
+    envelopeStatus,
+    hydraulicDomainStatus,
+    lowestInterceptedLevelCm,
+    lowestInterceptedRelation,
+    boundaryLevelsCm,
+    isComplete,
+    boundaryToleranceMeters,
+  });
 
   return {
     classification: "derived",
@@ -716,7 +971,8 @@ export function summarizeCrossStagePointQuery(
     source: SGB_AREA_SOURCE,
     stationReference: SGB_REFERENCE_STATION_LABEL,
     point,
-    coverageStatus,
+    envelopeStatus,
+    hydraulicDomainStatus,
     totalStages: SGB_FLOOD_LEVELS_CM.length,
     evaluatedCount: evaluatedEntries.length,
     entries,
@@ -726,18 +982,19 @@ export function summarizeCrossStagePointQuery(
     pendingLevelsCm,
     isComplete,
     lowestInterceptedLevelCm,
+    lowestInterceptedRelation,
     highestInterceptedLevelCm,
     hasNonNestedPattern: nonNestedTransitions.length > 0,
     nonNestedTransitions,
+    boundarySemanticsNote,
     lowestStageDistinctionNote,
-    safetyDisclaimer: getSafetyDisclaimer(coverageStatus),
+    safetyDisclaimer: getSafetyDisclaimer(envelopeStatus, hydraulicDomainStatus),
   };
 }
 
 function parseSingleDecimalNumber(raw: string): number | null {
   const cleaned = raw.trim().replace(/\s+/g, "");
   if (!cleaned) return null;
-  // Allow Brazilian comma decimal only when there is no dot, e.g. "-21,539"
   const normalized =
     cleaned.includes(",") && !cleaned.includes(".")
       ? cleaned.replace(",", ".")
@@ -852,6 +1109,11 @@ export function formatCoordPtBr(value: number, decimals = 5): string {
 /**
  * Formats a privacy-safe technical summary for sharing a point query without
  * including any personal address or personally identifiable information.
+ *
+ * Explicitly documents:
+ * - auxiliary MapServer envelope vs. unknown hydraulic domain coverage;
+ * - ±0.5 m boundary tolerance as a geometric proximity band (not physical flood accuracy);
+ * - distinction between lowest identified stage and actual flood onset.
  */
 export function formatLocationTechnicalSummary(params: {
   readonly point: GeoPoint;
@@ -859,7 +1121,11 @@ export function formatLocationTechnicalSummary(params: {
   readonly levelACm: number;
   readonly levelBCm?: number;
   readonly relationLabel: string;
+  readonly envelopeStatus?: MapServerEnvelopeStatus | null;
+  readonly hydraulicDomainStatus?: HydraulicDomainStatus | null;
   readonly lowestInterceptedLevelCm?: SgbFloodLevelCm | null;
+  readonly lowestInterceptedRelation?: EvaluatedPointRelation | null;
+  readonly boundaryToleranceMeters?: number;
   readonly consultedDateIso?: string;
   readonly appVersion?: string;
 }): string {
@@ -868,23 +1134,56 @@ export function formatLocationTechnicalSummary(params: {
     10,
   );
   const version = params.appVersion ?? "0.2.0-academic";
+  const tolMeters =
+    params.boundaryToleranceMeters ?? DEFAULT_BOUNDARY_TOLERANCE_METERS;
   const fmtMeters = (cm: number) => (cm / 100).toFixed(2).replace(".", ",");
+
+  const coverage =
+    params.envelopeStatus && params.hydraulicDomainStatus
+      ? {
+          envelopeStatus: params.envelopeStatus,
+          hydraulicDomainStatus: params.hydraulicDomainStatus,
+        }
+      : assessPointSpatialCoverage(params.point);
+
+  const envelopeLabel =
+    coverage.envelopeStatus === "within_mapserver_envelope"
+      ? "Dentro do envelope auxiliar do MapServer SGB"
+      : "Fora do envelope auxiliar do MapServer SGB";
+
+  let domainLabel: string;
+  if (coverage.hydraulicDomainStatus === "covered") {
+    domainLabel = "Domínio hidráulico validado";
+  } else if (coverage.hydraulicDomainStatus === "outside_model_extent") {
+    domainLabel = "Fora do domínio conhecido do modelo";
+  } else {
+    domainLabel = "Domínio hidráulico desconhecido (bbox não comprova cobertura integral)";
+  }
+
   const scenarioLine =
     params.mode === "compare" && params.levelBCm !== undefined
       ? `Comparação A ${fmtMeters(params.levelACm)} m (${params.levelACm} cm) × B ${fmtMeters(params.levelBCm)} m (${params.levelBCm} cm)`
       : `Cota ${fmtMeters(params.levelACm)} m (${params.levelACm} cm)`;
+
+  const lowestBoundarySuffix =
+    params.lowestInterceptedRelation === "boundary"
+      ? " (faixa de proximidade geométrica ±0,5 m)"
+      : "";
+
   const lowestLine =
     params.lowestInterceptedLevelCm !== undefined &&
     params.lowestInterceptedLevelCm !== null
-      ? `\nMenor cota identificada entre os cenários consultados: ${fmtMeters(params.lowestInterceptedLevelCm)} m (${params.lowestInterceptedLevelCm} cm) — não equivale ao início real de inundação.`
+      ? `\nMenor cota identificada entre os cenários consultados: ${fmtMeters(params.lowestInterceptedLevelCm)} m (${params.lowestInterceptedLevelCm} cm)${lowestBoundarySuffix} — não equivale ao início real de inundação.`
       : "";
 
   return [
     `Pádua FloodSim (${version}) — Consulta geográfica derivada`,
     `Coordenadas (WGS84 / EPSG:4326): ${params.point.lat.toFixed(5)}, ${params.point.lon.toFixed(5)}`,
+    `Cobertura espacial: ${envelopeLabel} | ${domainLabel}`,
     `Cenário SGB: ${scenarioLine}`,
     `Estação de referência: ${SGB_REFERENCE_STATION_LABEL}`,
-    `Resultado espacial: ${params.relationLabel}${lowestLine}`,
+    `Relação com a geometria consultada: ${params.relationLabel}${lowestLine}`,
+    `Fronteira: ${formatBoundaryProximityNote(tolMeters)}`,
     `Fonte das manchas: ${SGB_AREA_SOURCE} | Método: ${SGB_LOCATION_QUERY_METHOD_ID} | Data: ${dateStr}`,
     `Aviso: resultado acadêmico derivado sobre cenário estático; não declara imóvel seguro nem substitui alertas oficiais.`,
   ].join("\n");

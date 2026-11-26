@@ -2,13 +2,14 @@
 
 import { useEffect, useState, type FormEvent, type ClipboardEvent } from "react";
 import {
-  DEFAULT_BOUNDARY_TOLERANCE_METERS,
   formatCoordPtBr,
   formatLocationTechnicalSummary,
   parseCoordinatePairText,
   parseLatLonFields,
   type CrossStagePointSummary,
   type GeoPoint,
+  type HydraulicDomainStatus,
+  type MapServerEnvelopeStatus,
   type PointComparisonQueryResult,
   type PointScenarioQueryResult,
   type SpatialPointRelation,
@@ -48,7 +49,7 @@ function relationShortLabel(relation: SpatialPointRelation): string {
     case "inside":
       return "Interior";
     case "boundary":
-      return "Fronteira";
+      return "Fronteira (±0,5 m)";
     case "outside":
       return "Fora";
     default:
@@ -56,14 +57,27 @@ function relationShortLabel(relation: SpatialPointRelation): string {
   }
 }
 
+function relationChipLabel(relation: SpatialPointRelation): string {
+  switch (relation) {
+    case "inside":
+      return "Interior";
+    case "boundary":
+      return "Fronteira";
+    case "outside":
+      return "Fora";
+    default:
+      return "Indisp.";
+  }
+}
+
 function relationCssClass(
   relation: SpatialPointRelation,
-  outsideCoverage = false,
+  outsideEnvelope = false,
 ): string {
   if (relation === "inside") return "is-inside";
   if (relation === "boundary") return "is-boundary";
   if (relation === "outside") {
-    return outsideCoverage ? "is-outside-coverage" : "is-outside";
+    return outsideEnvelope ? "is-outside-coverage" : "is-outside";
   }
   return "is-unavailable";
 }
@@ -73,15 +87,15 @@ function singleResultHeadline(result: PointScenarioQueryResult): string {
     return "Informação indisponível";
   }
   if (result.relation === "inside") {
-    return "Interceptado pelo cenário selecionado";
+    return "Interceptado pela geometria consultada";
   }
   if (result.relation === "boundary") {
-    return "Ponto na fronteira da mancha selecionada";
+    return "Ponto na faixa de proximidade da fronteira (±0,5 m)";
   }
-  if (result.coverageStatus === "outside_model_coverage") {
-    return "Fora da cobertura conhecida do modelo SGB";
+  if (result.envelopeStatus === "outside_mapserver_envelope") {
+    return "Fora do envelope auxiliar do MapServer SGB";
   }
-  return "Sem interseção com o cenário selecionado";
+  return "Sem interseção com a geometria consultada";
 }
 
 function compareResultHeadline(result: PointComparisonQueryResult): string {
@@ -92,16 +106,345 @@ function compareResultHeadline(result: PointComparisonQueryResult): string {
     case "both":
       return "Interceptado por A e B (A ∩ B)";
     case "only_a":
-      return "Interceptado apenas por A (A \\ B)";
+      return String.raw`Interceptado apenas por A (A \ B)`;
     case "only_b":
-      return "Interceptado apenas por B (B \\ A)";
+      return String.raw`Interceptado apenas por B (B \ A)`;
     case "neither":
-      return result.coverageStatus === "outside_model_coverage"
-        ? "Fora da cobertura conhecida do modelo SGB"
-        : "Sem interseção nos cenários A e B";
+      return result.envelopeStatus === "outside_mapserver_envelope"
+        ? "Fora do envelope auxiliar do MapServer SGB"
+        : "Sem interseção nas geometrias A e B";
     default:
       return "Informação indisponível na comparação";
   }
+}
+
+function getCompareBoxClass(
+  result: PointComparisonQueryResult,
+  outsideEnvelope: boolean,
+): string {
+  if (result.status !== "valid") return "is-unavailable";
+  if (result.combinedRelation === "neither") {
+    return outsideEnvelope ? "is-outside-coverage" : "is-outside";
+  }
+  if (
+    result.relationA !== "inside" &&
+    result.relationB !== "inside" &&
+    result.involvesBoundaryProximity
+  ) {
+    return "is-boundary";
+  }
+  return "is-inside";
+}
+
+function getCoveragePillText(
+  envelopeStatus: MapServerEnvelopeStatus | null,
+  hydraulicDomainStatus: HydraulicDomainStatus | null,
+): string {
+  if (envelopeStatus === "outside_mapserver_envelope") {
+    return "Fora do envelope auxiliar do MapServer SGB";
+  }
+  if (hydraulicDomainStatus === "covered") {
+    return "Dentro do domínio hidráulico validado";
+  }
+  return "Dentro do envelope auxiliar do MapServer · domínio hidráulico desconhecido";
+}
+
+function getCrossStageButtonLabel(
+  status: "idle" | "running" | "completed",
+  summary: CrossStagePointSummary | null,
+): string {
+  if (status !== "completed") {
+    return "Analisar nas 11 cotas";
+  }
+  if (summary && summary.failedLevelsCm.length > 0) {
+    return "Tentar cenários pendentes";
+  }
+  return "Reanalisar 11 cotas";
+}
+
+function SingleScenarioRelationBox({
+  result,
+  outsideEnvelope,
+}: Readonly<{
+  result: PointScenarioQueryResult;
+  outsideEnvelope: boolean;
+}>) {
+  const elevation = SGB_STAGE_ELEVATIONS[result.levelCm as SgbFloodLevelCm];
+  return (
+    <div
+      className={`location-relation-box ${relationCssClass(
+        result.relation,
+        outsideEnvelope,
+      )}`}
+      data-testid="location-relation-result"
+      data-relation={result.relation}
+      data-envelope={result.envelopeStatus ?? "unknown"}
+      data-hydraulic-domain={result.hydraulicDomainStatus ?? "unknown"}
+    >
+      <div className="location-relation-head">
+        <strong>{singleResultHeadline(result)}</strong>
+        <span className="location-relation-tag">
+          {relationShortLabel(result.relation)}
+        </span>
+      </div>
+
+      <p className="location-relation-meta">
+        {SGB_REFERENCE_STATION_LABEL} · Cota {formatMetersFromCm(result.levelCm)}{" "}
+        m ({result.levelCm} cm)
+        {elevation ? ` · Alt. ${elevation.toFixed(2).replace(".", ",")} m` : ""}.
+      </p>
+
+      {result.status === "valid" && result.relation === "boundary" && (
+        <p
+          className="location-relation-detail"
+          data-testid="location-boundary-semantics"
+        >
+          {result.boundarySemanticsNote}
+        </p>
+      )}
+
+      {result.status === "unavailable" && (
+        <p className="location-relation-detail">{result.reason}</p>
+      )}
+
+      <p className="location-safety-note">{result.safetyDisclaimer}</p>
+    </div>
+  );
+}
+
+function CompareScenarioRelationBox({
+  result,
+  outsideEnvelope,
+}: Readonly<{
+  result: PointComparisonQueryResult;
+  outsideEnvelope: boolean;
+}>) {
+  return (
+    <div
+      className={`location-relation-box ${getCompareBoxClass(
+        result,
+        outsideEnvelope,
+      )}`}
+      data-testid="location-relation-result"
+      data-combined-relation={result.combinedRelation}
+      data-envelope={result.envelopeStatus ?? "unknown"}
+      data-hydraulic-domain={result.hydraulicDomainStatus ?? "unknown"}
+    >
+      <div className="location-relation-head">
+        <strong>{compareResultHeadline(result)}</strong>
+      </div>
+
+      <div className="location-compare-chips">
+        <span
+          className={`location-stage-pill ${relationCssClass(
+            result.relationA,
+            outsideEnvelope,
+          )}`}
+          data-testid="location-compare-relation-a"
+        >
+          A ({formatMetersFromCm(result.levelACm)} m):{" "}
+          {relationShortLabel(result.relationA)}
+        </span>
+        <span
+          className={`location-stage-pill ${relationCssClass(
+            result.relationB,
+            outsideEnvelope,
+          )}`}
+          data-testid="location-compare-relation-b"
+        >
+          B ({formatMetersFromCm(result.levelBCm)} m):{" "}
+          {relationShortLabel(result.relationB)}
+        </span>
+      </div>
+
+      {result.involvesBoundaryProximity && (
+        <p
+          className="location-relation-detail"
+          data-testid="location-boundary-semantics"
+        >
+          {result.boundarySemanticsNote}
+        </p>
+      )}
+
+      {result.reason && (
+        <p className="location-relation-detail">{result.reason}</p>
+      )}
+
+      <p className="location-safety-note">{result.safetyDisclaimer}</p>
+    </div>
+  );
+}
+
+function CrossStageAnalysisSection({
+  status,
+  completed,
+  total,
+  cachedHits,
+  summary,
+  outsideEnvelope,
+  onAnalyzeAllStages,
+  onCancelAllStages,
+  onSelectStageFromMatrix,
+}: Readonly<{
+  status: "idle" | "running" | "completed";
+  completed: number;
+  total: number;
+  cachedHits: number;
+  summary: CrossStagePointSummary | null;
+  outsideEnvelope: boolean;
+  onAnalyzeAllStages: () => void;
+  onCancelAllStages: () => void;
+  onSelectStageFromMatrix: (levelMeters: number) => void;
+}>) {
+  const lowestLabel =
+    summary?.lowestInterceptedLevelCm === null || !summary
+      ? "Nenhuma interseção identificada"
+      : `${formatMetersFromCm(summary.lowestInterceptedLevelCm)} m (${summary.lowestInterceptedLevelCm} cm)${
+          summary.lowestInterceptedRelation === "boundary"
+            ? " · fronteira (±0,5 m)"
+            : ""
+        }`;
+
+  return (
+    <div className="cross-stage-section">
+      <div className="cross-stage-header">
+        <strong>Consulta entre as 11 cotas oficiais</strong>
+        {status === "running" ? (
+          <button
+            type="button"
+            className="location-inline-btn danger"
+            onClick={onCancelAllStages}
+          >
+            Cancelar
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="cross-stage-run-btn"
+            onClick={onAnalyzeAllStages}
+            data-testid="analyze-all-stages-btn"
+          >
+            {getCrossStageButtonLabel(status, summary)}
+          </button>
+        )}
+      </div>
+
+      {status === "idle" && (
+        <p className="cross-stage-hint">
+          Executa somente sob solicitação (com cache local e concorrência
+          limitada), verificando cada cota de 3,00 m a 5,50 m sem interpolação e
+          sem presumir aninhamento.
+        </p>
+      )}
+
+      {status === "running" && (
+        <output
+          className="cross-stage-progress"
+          aria-live="polite"
+          data-testid="cross-stage-progress"
+        >
+          <div className="cross-stage-progress-text">
+            <span>
+              Consultando cenários SGB: {completed}/{total}
+            </span>
+            {cachedHits > 0 && <span>({cachedHits} em cache)</span>}
+          </div>
+          <div className="cross-stage-progress-track" aria-hidden="true">
+            <div
+              className="cross-stage-progress-fill"
+              style={{
+                width: `${Math.round((completed / Math.max(1, total)) * 100)}%`,
+              }}
+            />
+          </div>
+        </output>
+      )}
+
+      {summary && (
+        <div className="cross-stage-results" data-testid="cross-stage-results">
+          <div
+            className="cross-stage-lowest-box"
+            data-testid="cross-stage-lowest"
+          >
+            <span className="cross-stage-lowest-label">
+              Menor cota identificada entre os cenários consultados
+            </span>
+            <strong>{lowestLabel}</strong>
+            <p className="cross-stage-distinction-note">
+              {summary.lowestStageDistinctionNote}
+            </p>
+          </div>
+
+          {summary.hasNonNestedPattern && (
+            <output
+              className="location-feedback-box warning"
+              data-testid="cross-stage-non-nested-warning"
+            >
+              <strong>Padrão não aninhado identificado:</strong> o ponto é
+              interceptado em{" "}
+              {summary.nonNestedTransitions
+                .map(
+                  (t) =>
+                    `${formatMetersFromCm(t.lowerInterceptedCm)} m (e fora em ${formatMetersFromCm(t.higherOutsideCm)} m)`,
+                )
+                .join("; ")}
+              . Por isso todas as 11 cotas são verificadas independentemente.
+            </output>
+          )}
+
+          {summary.failedLevelsCm.length > 0 && (
+            <div
+              className="location-feedback-box error"
+              role="alert"
+              data-testid="cross-stage-partial-error"
+            >
+              {summary.failedLevelsCm.length} de {summary.totalStages}{" "}
+              cenário(s) indisponível(is) (
+              {summary.failedLevelsCm
+                .map((cm) => `${formatMetersFromCm(cm)} m`)
+                .join(", ")}
+              ). Cenários com falha não são tratados como ausência de
+              interseção.
+            </div>
+          )}
+
+          <ul
+            className="cross-stage-matrix"
+            aria-label="Resultado do ponto nas 11 cotas oficiais SGB"
+          >
+            {summary.entries.map((entry) => {
+              const cls =
+                entry.status === "pending"
+                  ? "is-pending"
+                  : relationCssClass(entry.relation, outsideEnvelope);
+              return (
+                <li key={entry.levelCm}>
+                  <button
+                    type="button"
+                    className={`cross-stage-chip ${cls}`}
+                    data-testid={`cross-stage-chip-${entry.levelCm}`}
+                    data-relation={entry.relation}
+                    data-status={entry.status}
+                    onClick={() => onSelectStageFromMatrix(entry.levelCm / 100)}
+                    title={`Abrir cota ${formatMetersFromCm(
+                      entry.levelCm,
+                    )} m no mapa — ${relationShortLabel(entry.relation)}`}
+                  >
+                    <b>{formatMetersFromCm(entry.levelCm)} m</b>
+                    <span>
+                      {entry.status === "pending"
+                        ? "..."
+                        : relationChipLabel(entry.relation)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function LocationQueryCard({
@@ -130,11 +473,8 @@ export function LocationQueryCard({
   const [swappedHint, setSwappedHint] = useState<GeoPoint | null>(null);
   const [copyFeedback, setCopyFeedback] = useState(false);
 
-  // Sync inputs when user clicks directly on the map
   useEffect(() => {
-    if (!selectedPoint) {
-      return;
-    }
+    if (!selectedPoint) return;
     setLatInput(selectedPoint.lat.toFixed(5));
     setLonInput(selectedPoint.lon.toFixed(5));
     setInputError(null);
@@ -143,8 +483,10 @@ export function LocationQueryCard({
   const handleLatPaste = (event: ClipboardEvent<HTMLInputElement>) => {
     const pasted = event.clipboardData.getData("text");
     if (!pasted) return;
-    // Detect pasted coordinate pair like "-21.5390, -42.1800" or "-21,5390; -42,1800"
-    if (/[;\s]/.test(pasted.trim()) || (pasted.includes(",") && pasted.includes("."))) {
+    if (
+      /[;\s]/.test(pasted.trim()) ||
+      (pasted.includes(",") && pasted.includes("."))
+    ) {
       const parsed = parseCoordinatePairText(pasted);
       if (parsed.ok) {
         event.preventDefault();
@@ -159,7 +501,6 @@ export function LocationQueryCard({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setCopyFeedback(false);
-    // Also support pasting a pair into latInput while leaving lonInput empty
     const parsed =
       lonInput.trim() === "" && latInput.trim() !== ""
         ? parseCoordinatePairText(latInput)
@@ -195,16 +536,27 @@ export function LocationQueryCard({
     onClearPoint();
   };
 
+  const activeEnvelopeStatus: MapServerEnvelopeStatus | null =
+    mode === "compare"
+      ? (compareResult?.envelopeStatus ?? null)
+      : (singleResult?.envelopeStatus ?? null);
+
+  const activeHydraulicDomainStatus: HydraulicDomainStatus | null =
+    mode === "compare"
+      ? (compareResult?.hydraulicDomainStatus ?? null)
+      : (singleResult?.hydraulicDomainStatus ?? null);
+
+  const outsideEnvelope =
+    activeEnvelopeStatus === "outside_mapserver_envelope";
+
   const handleCopySummary = async () => {
     if (!selectedPoint) return;
-    const relationLabel =
-      mode === "compare"
-        ? compareResult
-          ? compareResultHeadline(compareResult)
-          : "Indisponível"
-        : singleResult
-          ? singleResultHeadline(singleResult)
-          : "Indisponível";
+    let relationLabel = "Indisponível";
+    if (mode === "compare" && compareResult) {
+      relationLabel = compareResultHeadline(compareResult);
+    } else if (mode === "single" && singleResult) {
+      relationLabel = singleResultHeadline(singleResult);
+    }
 
     const text = formatLocationTechnicalSummary({
       point: selectedPoint,
@@ -212,8 +564,12 @@ export function LocationQueryCard({
       levelACm,
       levelBCm: mode === "compare" ? levelBCm : undefined,
       relationLabel,
+      envelopeStatus: activeEnvelopeStatus,
+      hydraulicDomainStatus: activeHydraulicDomainStatus,
       lowestInterceptedLevelCm:
         crossStageSummary?.lowestInterceptedLevelCm ?? undefined,
+      lowestInterceptedRelation:
+        crossStageSummary?.lowestInterceptedRelation ?? undefined,
     });
 
     try {
@@ -224,19 +580,6 @@ export function LocationQueryCard({
       setCopyFeedback(false);
     }
   };
-
-  const activeCoverageStatus =
-    mode === "compare"
-      ? compareResult?.coverageStatus ?? null
-      : singleResult?.coverageStatus ?? null;
-
-  const activeOutsideCoverage =
-    activeCoverageStatus === "outside_model_coverage";
-
-  const singleHeadline = singleResult ? singleResultHeadline(singleResult) : null;
-  const compareHeadline = compareResult
-    ? compareResultHeadline(compareResult)
-    : null;
 
   return (
     <article
@@ -256,8 +599,8 @@ export function LocationQueryCard({
 
       <p className="location-query-lead">
         Clique em qualquer ponto do mapa ou informe coordenadas{" "}
-        <strong>WGS84 (EPSG:4326)</strong> para verificar a interseção com os
-        cenários oficiais SGB.
+        <strong>WGS84 (EPSG:4326)</strong> para verificar a relação com a
+        geometria oficial consultada do SGB.
       </p>
 
       <form
@@ -324,7 +667,7 @@ export function LocationQueryCard({
       )}
 
       {swappedHint && (
-        <div className="location-feedback-box warning" role="status">
+        <output className="location-feedback-box warning">
           <span>
             As coordenadas informadas parecem ter latitude e longitude invertidas
             para Santo Antônio de Pádua. Nenhuma troca automática foi feita.
@@ -336,19 +679,11 @@ export function LocationQueryCard({
           >
             Inverter lat/lon
           </button>
-        </div>
+        </output>
       )}
 
-      {!selectedPoint ? (
-        <p className="location-geocoder-note">
-          <strong>Busca por endereço:</strong> não habilitada nesta etapa devido
-          aos limites de uso de geocodificadores públicos (proibição de
-          autocomplete e taxa global compartilhada) e à baixa cobertura de nomes
-          e números prediais no OSM local.
-        </p>
-      ) : (
+      {selectedPoint ? (
         <div className="location-result-stack">
-          {/* Selected point header & actions */}
           <div
             className="location-selected-meta"
             data-testid="location-selected-coords"
@@ -366,13 +701,14 @@ export function LocationQueryCard({
             <div className="location-coverage-row">
               <span
                 className={`location-coverage-pill ${
-                  activeOutsideCoverage ? "outside" : "within"
+                  outsideEnvelope ? "outside" : "within"
                 }`}
                 data-testid="location-coverage-status"
               >
-                {activeOutsideCoverage
-                  ? "Fora da cobertura conhecida do modelo SGB"
-                  : "Dentro da extensão coberta pelo modelo SGB"}
+                {getCoveragePillText(
+                  activeEnvelopeStatus,
+                  activeHydraulicDomainStatus,
+                )}
               </span>
             </div>
 
@@ -388,290 +724,46 @@ export function LocationQueryCard({
                 type="button"
                 className="location-inline-btn"
                 onClick={() => void handleCopySummary()}
-                title="Copiar resumo técnico com coordenadas, cota, estação e fonte (sem endereço pessoal)"
+                title="Copiar resumo técnico com coordenadas, cota, estação, fronteira e fonte (sem endereço pessoal)"
               >
                 {copyFeedback ? "Resumo copiado" : "Copiar resumo técnico"}
               </button>
             </div>
           </div>
 
-          {/* Active scenario spatial relation (Single OR Comparison A/B) */}
-          {mode === "single" && singleResult && singleHeadline && (
-            <div
-              className={`location-relation-box ${relationCssClass(
-                singleResult.relation,
-                activeOutsideCoverage,
-              )}`}
-              data-testid="location-relation-result"
-              data-relation={singleResult.relation}
-              data-coverage={singleResult.coverageStatus ?? "unknown"}
-            >
-              <div className="location-relation-head">
-                <strong>{singleHeadline}</strong>
-                <span className="location-relation-tag">
-                  {relationShortLabel(singleResult.relation)}
-                </span>
-              </div>
-
-              <p className="location-relation-meta">
-                {SGB_REFERENCE_STATION_LABEL} · Cota{" "}
-                {formatMetersFromCm(singleResult.levelCm)} m (
-                {singleResult.levelCm} cm)
-                {SGB_STAGE_ELEVATIONS[singleResult.levelCm as SgbFloodLevelCm]
-                  ? ` · Alt. ${SGB_STAGE_ELEVATIONS[
-                      singleResult.levelCm as SgbFloodLevelCm
-                    ]
-                      .toFixed(2)
-                      .replace(".", ",")} m`
-                  : ""}
-                .
-              </p>
-
-              {singleResult.status === "valid" &&
-                singleResult.relation === "boundary" && (
-                  <p className="location-relation-detail">
-                    Ponto localizado sobre o contorno vetorial SGB (tolerância
-                    métrica de ±
-                    {DEFAULT_BOUNDARY_TOLERANCE_METERS.toFixed(1).replace(
-                      ".",
-                      ",",
-                    )}{" "}
-                    m sobre anel externo ou interno).
-                  </p>
-                )}
-
-              {singleResult.status === "unavailable" && (
-                <p className="location-relation-detail">
-                  {singleResult.reason}
-                </p>
-              )}
-
-              <p className="location-safety-note">
-                {singleResult.safetyDisclaimer}
-              </p>
-            </div>
+          {mode === "single" && singleResult && (
+            <SingleScenarioRelationBox
+              result={singleResult}
+              outsideEnvelope={outsideEnvelope}
+            />
           )}
 
-          {mode === "compare" && compareResult && compareHeadline && (
-            <div
-              className={`location-relation-box ${
-                compareResult.status !== "valid"
-                  ? "is-unavailable"
-                  : compareResult.combinedRelation === "neither"
-                    ? activeOutsideCoverage
-                      ? "is-outside-coverage"
-                      : "is-outside"
-                    : "is-inside"
-              }`}
-              data-testid="location-relation-result"
-              data-combined-relation={compareResult.combinedRelation}
-              data-coverage={compareResult.coverageStatus ?? "unknown"}
-            >
-              <div className="location-relation-head">
-                <strong>{compareHeadline}</strong>
-              </div>
-
-              <div className="location-compare-chips">
-                <span
-                  className={`location-stage-pill ${relationCssClass(
-                    compareResult.relationA,
-                    activeOutsideCoverage,
-                  )}`}
-                  data-testid="location-compare-relation-a"
-                >
-                  A ({formatMetersFromCm(compareResult.levelACm)} m):{" "}
-                  {relationShortLabel(compareResult.relationA)}
-                </span>
-                <span
-                  className={`location-stage-pill ${relationCssClass(
-                    compareResult.relationB,
-                    activeOutsideCoverage,
-                  )}`}
-                  data-testid="location-compare-relation-b"
-                >
-                  B ({formatMetersFromCm(compareResult.levelBCm)} m):{" "}
-                  {relationShortLabel(compareResult.relationB)}
-                </span>
-              </div>
-
-              {compareResult.reason && (
-                <p className="location-relation-detail">
-                  {compareResult.reason}
-                </p>
-              )}
-
-              <p className="location-safety-note">
-                {compareResult.safetyDisclaimer}
-              </p>
-            </div>
+          {mode === "compare" && compareResult && (
+            <CompareScenarioRelationBox
+              result={compareResult}
+              outsideEnvelope={outsideEnvelope}
+            />
           )}
 
-          {/* Cross-stage 11-scenario on-demand analysis */}
-          <div className="cross-stage-section">
-            <div className="cross-stage-header">
-              <strong>Consulta entre as 11 cotas oficiais</strong>
-              {crossStageStatus === "running" ? (
-                <button
-                  type="button"
-                  className="location-inline-btn danger"
-                  onClick={onCancelAllStages}
-                >
-                  Cancelar
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="cross-stage-run-btn"
-                  onClick={onAnalyzeAllStages}
-                  data-testid="analyze-all-stages-btn"
-                >
-                  {crossStageStatus === "completed"
-                    ? crossStageSummary &&
-                      crossStageSummary.failedLevelsCm.length > 0
-                      ? "Tentar cenários pendentes"
-                      : "Reanalisar 11 cotas"
-                    : "Analisar nas 11 cotas"}
-                </button>
-              )}
-            </div>
-
-            {crossStageStatus === "idle" && (
-              <p className="cross-stage-hint">
-                Executa somente sob solicitação (com cache local e concorrência
-                limitada), verificando cada cota de 3,00 m a 5,50 m sem
-                interpolação e sem presumir aninhamento.
-              </p>
-            )}
-
-            {crossStageStatus === "running" && (
-              <div
-                className="cross-stage-progress"
-                role="status"
-                aria-live="polite"
-                data-testid="cross-stage-progress"
-              >
-                <div className="cross-stage-progress-text">
-                  <span>
-                    Consultando cenários SGB: {crossStageCompleted}/
-                    {crossStageTotal}
-                  </span>
-                  {crossStageCachedHits > 0 && (
-                    <span>({crossStageCachedHits} em cache)</span>
-                  )}
-                </div>
-                <div className="cross-stage-progress-track" aria-hidden="true">
-                  <div
-                    className="cross-stage-progress-fill"
-                    style={{
-                      width: `${Math.round(
-                        (crossStageCompleted / Math.max(1, crossStageTotal)) *
-                          100,
-                      )}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {crossStageSummary && (
-              <div
-                className="cross-stage-results"
-                data-testid="cross-stage-results"
-              >
-                <div
-                  className="cross-stage-lowest-box"
-                  data-testid="cross-stage-lowest"
-                >
-                  <span className="cross-stage-lowest-label">
-                    Menor cota identificada entre os cenários consultados
-                  </span>
-                  <strong>
-                    {crossStageSummary.lowestInterceptedLevelCm !== null
-                      ? `${formatMetersFromCm(
-                          crossStageSummary.lowestInterceptedLevelCm,
-                        )} m (${crossStageSummary.lowestInterceptedLevelCm} cm)`
-                      : "Nenhuma interseção identificada"}
-                  </strong>
-                  <p className="cross-stage-distinction-note">
-                    {crossStageSummary.lowestStageDistinctionNote}
-                  </p>
-                </div>
-
-                {crossStageSummary.hasNonNestedPattern && (
-                  <div
-                    className="location-feedback-box warning"
-                    role="status"
-                    data-testid="cross-stage-non-nested-warning"
-                  >
-                    <strong>Padrão não aninhado identificado:</strong> o ponto é
-                    interceptado em{" "}
-                    {crossStageSummary.nonNestedTransitions
-                      .map(
-                        (t) =>
-                          `${formatMetersFromCm(t.lowerInterceptedCm)} m (e fora em ${formatMetersFromCm(t.higherOutsideCm)} m)`,
-                      )
-                      .join("; ")}
-                    . Por isso todas as 11 cotas são verificadas
-                    independentemente.
-                  </div>
-                )}
-
-                {crossStageSummary.failedLevelsCm.length > 0 && (
-                  <div
-                    className="location-feedback-box error"
-                    role="alert"
-                    data-testid="cross-stage-partial-error"
-                  >
-                    {crossStageSummary.failedLevelsCm.length} de{" "}
-                    {crossStageSummary.totalStages} cenário(s) indisponível(is) (
-                    {crossStageSummary.failedLevelsCm
-                      .map((cm) => `${formatMetersFromCm(cm)} m`)
-                      .join(", ")}
-                    ). Cenários com falha não são tratados como ausência de
-                    interseção.
-                  </div>
-                )}
-
-                <div
-                  className="cross-stage-matrix"
-                  role="list"
-                  aria-label="Resultado do ponto nas 11 cotas oficiais SGB"
-                >
-                  {crossStageSummary.entries.map((entry) => {
-                    const cls =
-                      entry.status === "pending"
-                        ? "is-pending"
-                        : relationCssClass(entry.relation, activeOutsideCoverage);
-                    return (
-                      <button
-                        key={entry.levelCm}
-                        type="button"
-                        role="listitem"
-                        className={`cross-stage-chip ${cls}`}
-                        data-testid={`cross-stage-chip-${entry.levelCm}`}
-                        data-relation={entry.relation}
-                        data-status={entry.status}
-                        onClick={() =>
-                          onSelectStageFromMatrix(entry.levelCm / 100)
-                        }
-                        title={`Abrir cota ${formatMetersFromCm(
-                          entry.levelCm,
-                        )} m no mapa — ${relationShortLabel(entry.relation)}`}
-                      >
-                        <b>{formatMetersFromCm(entry.levelCm)} m</b>
-                        <span>
-                          {entry.status === "pending"
-                            ? "..."
-                            : relationShortLabel(entry.relation)}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
+          <CrossStageAnalysisSection
+            status={crossStageStatus}
+            completed={crossStageCompleted}
+            total={crossStageTotal}
+            cachedHits={crossStageCachedHits}
+            summary={crossStageSummary}
+            outsideEnvelope={outsideEnvelope}
+            onAnalyzeAllStages={onAnalyzeAllStages}
+            onCancelAllStages={onCancelAllStages}
+            onSelectStageFromMatrix={onSelectStageFromMatrix}
+          />
         </div>
+      ) : (
+        <p className="location-geocoder-note">
+          <strong>Busca por endereço:</strong> não habilitada nesta etapa devido
+          aos limites de uso de geocodificadores públicos (proibição de
+          autocomplete e taxa global compartilhada) e à baixa cobertura de nomes
+          e números prediais no OSM local.
+        </p>
       )}
     </article>
   );

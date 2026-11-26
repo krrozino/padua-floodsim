@@ -230,57 +230,56 @@ export async function runCrossStagePointAnalysis(params: {
   emitProgress();
 
   // 2. Fetch remaining stages with bounded concurrency
-  let cursor = 0;
-  const worker = async () => {
-    while (cursor < queue.length) {
+  const processQueuedStage = async (
+    levelCm: SgbFloodLevelCm,
+  ): Promise<void> => {
+    try {
+      const geojson = await fetchStagePayload(
+        levelCm,
+        fetcher,
+        signal,
+        timeoutMs,
+      );
       if (signal?.aborted) return;
-      const idx = cursor;
-      cursor += 1;
-      const levelCm = queue[idx];
-
-      try {
-        const geojson = await fetchStagePayload(
-          levelCm,
-          fetcher,
-          signal,
-          timeoutMs,
-        );
-        if (signal?.aborted) return;
-        // Validate geometry before caching so invalid payloads are never cached
-        const res = evaluatePointAgainstFloodScenario(point, geojson, levelCm, {
-          boundaryToleranceMeters,
-        });
-        if (res.status === "valid") {
-          cache.set(levelCm, geojson);
-          fetchedCount += 1;
-          records[levelCm] = {
-            status: "evaluated",
-            relation: res.relation,
-          };
-        } else {
-          failedCount += 1;
-          records[levelCm] = {
-            status: "error",
-            relation: "unavailable",
-            reason: res.reason,
-          };
-        }
-        completed += 1;
-        emitProgress();
-      } catch (error) {
-        if (signal?.aborted) return;
+      const res = evaluatePointAgainstFloodScenario(point, geojson, levelCm, {
+        boundaryToleranceMeters,
+      });
+      if (res.status === "valid") {
+        cache.set(levelCm, geojson);
+        fetchedCount += 1;
+        records[levelCm] = { status: "evaluated", relation: res.relation };
+      } else {
         failedCount += 1;
         records[levelCm] = {
           status: "error",
           relation: "unavailable",
-          reason:
-            error instanceof Error
-              ? error.message
-              : `Falha ao consultar cota ${levelCm} cm.`,
+          reason: res.reason,
         };
-        completed += 1;
-        emitProgress();
       }
+      completed += 1;
+      emitProgress();
+    } catch (error) {
+      if (signal?.aborted) return;
+      failedCount += 1;
+      records[levelCm] = {
+        status: "error",
+        relation: "unavailable",
+        reason:
+          error instanceof Error
+            ? error.message
+            : `Falha ao consultar cota ${levelCm} cm.`,
+      };
+      completed += 1;
+      emitProgress();
+    }
+  };
+
+  let cursor = 0;
+  const worker = async () => {
+    while (cursor < queue.length && !signal?.aborted) {
+      const idx = cursor;
+      cursor += 1;
+      await processQueuedStage(queue[idx]);
     }
   };
 

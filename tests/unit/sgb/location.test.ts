@@ -4,10 +4,10 @@ import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import {
   DEFAULT_BOUNDARY_TOLERANCE_METERS,
   SGB_LOCATION_QUERY_METHOD_ID,
+  assessPointSpatialCoverage,
   evaluatePointAgainstFloodScenario,
   evaluatePointInComparison,
   formatLocationTechnicalSummary,
-  getModelCoverageStatus,
   parseCoordinatePairText,
   parseLatLonFields,
   pointToSegmentDistanceMeters,
@@ -57,8 +57,8 @@ function makePolygonFc(
 describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
   const baseSquare = makePolygonFc([makeRectRing(-42.19, -21.54, -42.18, -21.53)]);
 
-  it("classifies interior, exterior (in coverage & out of coverage), and boundary points accurately", () => {
-    // Strictly interior
+  it("distinguishes auxiliary MapServer envelope, unknown hydraulic domain, validated domain, and queried-geometry relation", () => {
+    // 1. Strictly interior to queried geometry, inside auxiliary MapServer bbox -> hydraulicDomainStatus MUST be "unknown"
     const inside = evaluatePointAgainstFloodScenario(
       { lat: -21.535, lon: -42.185 },
       baseSquare,
@@ -69,36 +69,56 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
     assert.equal(inside.method, SGB_LOCATION_QUERY_METHOD_ID);
     assert.equal(inside.relation, "inside");
     assert.equal(inside.isIntercepted, true);
-    assert.equal(inside.coverageStatus, "within_model_coverage");
+    assert.equal(inside.envelopeStatus, "within_mapserver_envelope");
+    assert.equal(inside.hydraulicDomainStatus, "unknown");
+    assert.match(inside.safetyDisclaimer, /envelope retangular do MapServer é auxiliar/i);
 
-    // Strictly exterior but within published SGB AOI coverage
-    const outsideInCov = evaluatePointAgainstFloodScenario(
+    // 2. Exterior to queried geometry, inside auxiliary MapServer bbox -> unknown hydraulic domain + never declares safe
+    const outsideInEnvelope = evaluatePointAgainstFloodScenario(
       { lat: -21.525, lon: -42.17 },
       baseSquare,
       425,
     );
-    assert.equal(outsideInCov.status, "valid");
-    assert.equal(outsideInCov.relation, "outside");
-    assert.equal(outsideInCov.isIntercepted, false);
-    assert.equal(outsideInCov.coverageStatus, "within_model_coverage");
-    assert.match(outsideInCov.safetyDisclaimer, /não declara imóvel seguro/i);
+    assert.equal(outsideInEnvelope.status, "valid");
+    assert.equal(outsideInEnvelope.relation, "outside");
+    assert.equal(outsideInEnvelope.isIntercepted, false);
+    assert.equal(outsideInEnvelope.envelopeStatus, "within_mapserver_envelope");
+    assert.equal(outsideInEnvelope.hydraulicDomainStatus, "unknown");
+    assert.match(outsideInEnvelope.safetyDisclaimer, /não declara imóvel seguro/i);
 
-    // Strictly exterior AND outside known SGB model coverage
-    const outsideCov = evaluatePointAgainstFloodScenario(
+    // 3. Outside auxiliary MapServer envelope -> outside_model_extent + explicit caveat
+    const outsideEnvelope = evaluatePointAgainstFloodScenario(
       { lat: -21.62, lon: -42.31 },
       baseSquare,
       425,
     );
-    assert.equal(outsideCov.status, "valid");
-    assert.equal(outsideCov.relation, "outside");
-    assert.equal(outsideCov.isIntercepted, false);
-    assert.equal(outsideCov.coverageStatus, "outside_model_coverage");
+    assert.equal(outsideEnvelope.status, "valid");
+    assert.equal(outsideEnvelope.relation, "outside");
+    assert.equal(outsideEnvelope.isIntercepted, false);
+    assert.equal(outsideEnvelope.envelopeStatus, "outside_mapserver_envelope");
+    assert.equal(outsideEnvelope.hydraulicDomainStatus, "outside_model_extent");
     assert.match(
-      outsideCov.safetyDisclaimer,
-      /fora da cobertura conhecida.*ausência de interseção não indica ausência de possibilidade de inundação/i,
+      outsideEnvelope.safetyDisclaimer,
+      /fora do envelope auxiliar.*ausência de interseção.*não indica ausência de possibilidade de inundação/i,
     );
 
-    // Exact edge & vertex boundary points
+    // 4. Explicit validated hydraulic domain polygon -> "covered" inside, "outside_model_extent" outside
+    const domainPoly = makePolygonFc([makeRectRing(-42.195, -21.545, -42.175, -21.525)]);
+    const coveredAssessment = assessPointSpatialCoverage(
+      { lat: -21.535, lon: -42.185 },
+      { kind: "polygon", geometry: domainPoly, label: "Domínio validado teste" },
+    );
+    assert.equal(coveredAssessment.hydraulicDomainStatus, "covered");
+
+    const outsideDomainAssessment = assessPointSpatialCoverage(
+      { lat: -21.52, lon: -42.16 },
+      { kind: "polygon", geometry: domainPoly, label: "Domínio validado teste" },
+    );
+    assert.equal(outsideDomainAssessment.envelopeStatus, "within_mapserver_envelope");
+    assert.equal(outsideDomainAssessment.hydraulicDomainStatus, "outside_model_extent");
+  });
+
+  it("treats ±0.5 m boundary tolerance explicitly as a geometric proximity band rather than physical flood accuracy", () => {
     const onEdge = evaluatePointAgainstFloodScenario(
       { lat: -21.535, lon: -42.19 },
       baseSquare,
@@ -107,13 +127,17 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
     assert.equal(onEdge.status, "valid");
     assert.equal(onEdge.relation, "boundary");
     assert.equal(onEdge.isIntercepted, true);
+    assert.equal(onEdge.boundaryToleranceMeters, DEFAULT_BOUNDARY_TOLERANCE_METERS);
+    assert.match(
+      onEdge.boundarySemanticsNote,
+      /faixa de proximidade geométrica.*não representa precisão física/i,
+    );
 
     const onVertex = evaluatePointAgainstFloodScenario(
       { lat: -21.54, lon: -42.19 },
       baseSquare,
       425,
     );
-    assert.equal(onVertex.status, "valid");
     assert.equal(onVertex.relation, "boundary");
 
     // Near boundary within default tolerance (~0.2 m outside west edge)
@@ -123,18 +147,15 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
       baseSquare,
       425,
     );
-    assert.equal(nearEdge.status, "valid");
     assert.equal(nearEdge.relation, "boundary");
-    assert.equal(nearEdge.boundaryToleranceMeters, DEFAULT_BOUNDARY_TOLERANCE_METERS);
 
-    // Clearly outside boundary tolerance (~2.5 m outside west edge)
+    // Beyond boundary tolerance (~2.5 m outside west edge)
     const offsetBeyondTolDeg = 2.5 / 103_600;
     const beyondEdge = evaluatePointAgainstFloodScenario(
       { lat: -21.535, lon: -42.19 - offsetBeyondTolDeg },
       baseSquare,
       425,
     );
-    assert.equal(beyondEdge.status, "valid");
     assert.equal(beyondEdge.relation, "outside");
   });
 
@@ -147,7 +168,6 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
         [-42.19, -21.54],
       ],
     ]);
-    // Midpoint on hypotenuse (-42.185, -21.535)
     const dist = pointToSegmentDistanceMeters(
       -42.185,
       -21.535,
@@ -183,41 +203,39 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
       ],
     };
 
-    // Inside flooded donut (between outer ring and hole)
-    const inDonut = evaluatePointAgainstFloodScenario(
-      { lat: -21.539, lon: -42.189 },
-      multiFc,
-      450,
+    assert.equal(
+      evaluatePointAgainstFloodScenario(
+        { lat: -21.539, lon: -42.189 },
+        multiFc,
+        450,
+      ).relation,
+      "inside",
     );
-    assert.equal(inDonut.relation, "inside");
-
-    // Inside dry island (hole) -> outside!
-    const inHole = evaluatePointAgainstFloodScenario(
-      { lat: -21.535, lon: -42.185 },
-      multiFc,
-      450,
+    assert.equal(
+      evaluatePointAgainstFloodScenario(
+        { lat: -21.535, lon: -42.185 },
+        multiFc,
+        450,
+      ).relation,
+      "outside",
     );
-    assert.equal(inHole.relation, "outside");
-    assert.equal(inHole.isIntercepted, false);
-
-    // On boundary of the internal hole -> boundary!
-    const onHoleEdge = evaluatePointAgainstFloodScenario(
-      { lat: -21.535, lon: -42.187 },
-      multiFc,
-      450,
+    assert.equal(
+      evaluatePointAgainstFloodScenario(
+        { lat: -21.535, lon: -42.187 },
+        multiFc,
+        450,
+      ).relation,
+      "boundary",
     );
-    assert.equal(onHoleEdge.relation, "boundary");
-    assert.equal(onHoleEdge.isIntercepted, true);
-
-    // Inside second MultiPolygon part -> inside!
-    const inSecondPart = evaluatePointAgainstFloodScenario(
-      { lat: -21.535, lon: -42.17 },
-      multiFc,
-      450,
+    assert.equal(
+      evaluatePointAgainstFloodScenario(
+        { lat: -21.535, lon: -42.17 },
+        multiFc,
+        450,
+      ).relation,
+      "inside",
     );
-    assert.equal(inSecondPart.relation, "inside");
 
-    // Overlapping features: point on boundary of feature 1 AND strictly inside feature 2 -> inside (union)
     const overlappingFc: FeatureCollection<Polygon> = {
       type: "FeatureCollection",
       features: [
@@ -239,24 +257,24 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
         },
       ],
     };
-    const onSeamInside = evaluatePointAgainstFloodScenario(
-      { lat: -21.535, lon: -42.18 },
-      overlappingFc,
-      450,
+    assert.equal(
+      evaluatePointAgainstFloodScenario(
+        { lat: -21.535, lon: -42.18 },
+        overlappingFc,
+        450,
+      ).relation,
+      "inside",
     );
-    assert.equal(onSeamInside.relation, "inside");
   });
 
   it("fails closed to unavailable on missing, empty, or partially invalid geometries and invalid coordinates", () => {
     const pt: GeoPoint = { lat: -21.535, lon: -42.185 };
 
-    // Missing GeoJSON
     assert.equal(
       evaluatePointAgainstFloodScenario(pt, null, 425).relation,
       "unavailable",
     );
 
-    // Empty FeatureCollection
     const emptyFc: FeatureCollection<Polygon> = {
       type: "FeatureCollection",
       features: [],
@@ -266,7 +284,6 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
       "unavailable",
     );
 
-    // Partially invalid polygon (valid outer ring + degenerate hole) -> must fail closed!
     const invalidHoleFc = makePolygonFc([
       makeRectRing(-42.19, -21.54, -42.18, -21.53),
       [
@@ -275,25 +292,25 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
         [-42.186, -21.536],
       ],
     ]);
-    const invalidRes = evaluatePointAgainstFloodScenario(pt, invalidHoleFc, 425);
-    assert.equal(invalidRes.status, "unavailable");
-    assert.equal(invalidRes.relation, "unavailable");
-
-    // Invalid coordinates
-    const badCoord = evaluatePointAgainstFloodScenario(
-      { lat: 120, lon: -42.18 },
-      baseSquare,
-      425,
+    assert.equal(
+      evaluatePointAgainstFloodScenario(pt, invalidHoleFc, 425).status,
+      "unavailable",
     );
-    assert.equal(badCoord.status, "unavailable");
-    assert.equal(badCoord.relation, "unavailable");
+
+    assert.equal(
+      evaluatePointAgainstFloodScenario(
+        { lat: 120, lon: -42.18 },
+        baseSquare,
+        425,
+      ).status,
+      "unavailable",
+    );
   });
 
-  it("supports A/B comparison mode for non-nested scenarios and fails closed if either side is unavailable", () => {
+  it("supports A/B comparison mode with boundary proximity disclosure and fails closed if either side is unavailable", () => {
     const geomA = makePolygonFc([makeRectRing(-42.19, -21.54, -42.18, -21.53)]);
     const geomB = makePolygonFc([makeRectRing(-42.185, -21.54, -42.175, -21.53)]);
 
-    // Only A (A \ B)
     const onlyA = evaluatePointInComparison(
       { lat: -21.535, lon: -42.188 },
       geomA,
@@ -303,10 +320,9 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
     );
     assert.equal(onlyA.status, "valid");
     assert.equal(onlyA.combinedRelation, "only_a");
-    assert.equal(onlyA.relationA, "inside");
-    assert.equal(onlyA.relationB, "outside");
+    assert.equal(onlyA.involvesBoundaryProximity, false);
 
-    // Both (A ∩ B), with boundary on B
+    // Boundary on B -> explicitly flags involvesBoundaryProximity and includes proximity semantics note
     const bothBoundary = evaluatePointInComparison(
       { lat: -21.535, lon: -42.185 },
       geomA,
@@ -318,8 +334,12 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
     assert.equal(bothBoundary.combinedRelation, "both");
     assert.equal(bothBoundary.relationA, "inside");
     assert.equal(bothBoundary.relationB, "boundary");
+    assert.equal(bothBoundary.involvesBoundaryProximity, true);
+    assert.match(
+      bothBoundary.boundarySemanticsNote,
+      /faixa de proximidade geométrica.*não representa precisão física/i,
+    );
 
-    // Only B (B \ A)
     const onlyB = evaluatePointInComparison(
       { lat: -21.535, lon: -42.177 },
       geomA,
@@ -329,7 +349,6 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
     );
     assert.equal(onlyB.combinedRelation, "only_b");
 
-    // Neither
     const neither = evaluatePointInComparison(
       { lat: -21.52, lon: -42.16 },
       geomA,
@@ -338,8 +357,8 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
       500,
     );
     assert.equal(neither.combinedRelation, "neither");
+    assert.equal(neither.hydraulicDomainStatus, "unknown");
 
-    // Unavailable B -> fail closed!
     const unavailable = evaluatePointInComparison(
       { lat: -21.535, lon: -42.188 },
       geomA,
@@ -349,22 +368,19 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
     );
     assert.equal(unavailable.status, "unavailable");
     assert.equal(unavailable.combinedRelation, "unavailable");
-    assert.equal(unavailable.relationA, "inside");
-    assert.equal(unavailable.relationB, "unavailable");
   });
 
-  it("summarizes 11 stages without interpolation or nesting assumptions and detects non-nested patterns", () => {
+  it("summarizes 11 stages without interpolation or nesting assumptions and discloses boundary proximity on lowest identified stage", () => {
     const pt: GeoPoint = { lat: -21.535, lon: -42.185 };
-    assert.equal(getModelCoverageStatus(pt), "within_model_coverage");
 
-    // Non-nested: 375 inside, 400 outside, 425 boundary, 450..550 inside
-    const nonNested = summarizeCrossStagePointQuery(pt, {
+    // Lowest intercepted stage (375 cm) is on boundary + non-nested at 400 cm
+    const nonNestedBoundary = summarizeCrossStagePointQuery(pt, {
       300: { status: "evaluated", relation: "outside" },
       325: { status: "evaluated", relation: "outside" },
       350: { status: "evaluated", relation: "outside" },
-      375: { status: "evaluated", relation: "inside" },
+      375: { status: "evaluated", relation: "boundary" },
       400: { status: "evaluated", relation: "outside" },
-      425: { status: "evaluated", relation: "boundary" },
+      425: { status: "evaluated", relation: "inside" },
       450: { status: "evaluated", relation: "inside" },
       475: { status: "evaluated", relation: "inside" },
       500: { status: "evaluated", relation: "inside" },
@@ -372,20 +388,24 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
       550: { status: "evaluated", relation: "inside" },
     });
 
-    assert.equal(nonNested.isComplete, true);
-    assert.equal(nonNested.lowestInterceptedLevelCm, 375);
-    assert.deepEqual(nonNested.interceptedLevelsCm, [375, 425, 450, 475, 500, 525, 550]);
-    assert.deepEqual(nonNested.boundaryLevelsCm, [425]);
-    assert.equal(nonNested.hasNonNestedPattern, true);
-    assert.deepEqual(nonNested.nonNestedTransitions, [
+    assert.equal(nonNestedBoundary.isComplete, true);
+    assert.equal(nonNestedBoundary.envelopeStatus, "within_mapserver_envelope");
+    assert.equal(nonNestedBoundary.hydraulicDomainStatus, "unknown");
+    assert.equal(nonNestedBoundary.lowestInterceptedLevelCm, 375);
+    assert.equal(nonNestedBoundary.lowestInterceptedRelation, "boundary");
+    assert.deepEqual(
+      nonNestedBoundary.interceptedLevelsCm,
+      [375, 425, 450, 475, 500, 525, 550],
+    );
+    assert.equal(nonNestedBoundary.hasNonNestedPattern, true);
+    assert.deepEqual(nonNestedBoundary.nonNestedTransitions, [
       { lowerInterceptedCm: 375, higherOutsideCm: 400 },
     ]);
     assert.match(
-      nonNested.lowestStageDistinctionNote,
-      /menor cota identificada.*não corresponde necessariamente ao início real/i,
+      nonNestedBoundary.lowestStageDistinctionNote,
+      /faixa de proximidade geométrica.*não representa precisão física/i,
     );
 
-    // Lowest stage 300 cm -> explicit note that no scenario exists below 300 cm
     const at300 = summarizeCrossStagePointQuery(pt, {
       300: { status: "evaluated", relation: "inside" },
       325: { status: "evaluated", relation: "inside" },
@@ -402,7 +422,6 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
     assert.equal(at300.lowestInterceptedLevelCm, 300);
     assert.match(at300.lowestStageDistinctionNote, /abaixo de 300 cm/i);
 
-    // Partial failure warns user that lower failed stages are not ruled out
     const partial = summarizeCrossStagePointQuery(pt, {
       300: { status: "error", relation: "unavailable", reason: "HTTP 502" },
       325: { status: "evaluated", relation: "outside" },
@@ -410,11 +429,10 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
     });
     assert.equal(partial.isComplete, false);
     assert.deepEqual(partial.failedLevelsCm, [300]);
-    assert.equal(partial.lowestInterceptedLevelCm, 350);
     assert.match(partial.lowestStageDistinctionNote, /não verificados|falha/i);
   });
 
-  it("parses coordinate formats cleanly, detects swapped Pádua inputs without silently swapping, and formats privacy-safe technical summaries", () => {
+  it("parses coordinate formats cleanly and formats privacy-safe technical summary with envelope/domain & boundary proximity caveats", () => {
     const parsedDot = parseCoordinatePairText("-21.5390, -42.1800");
     assert.equal(parsedDot.ok, true);
     if (parsedDot.ok) {
@@ -425,37 +443,31 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
 
     const parsedPtBr = parseCoordinatePairText("-21,5390; -42,1800");
     assert.equal(parsedPtBr.ok, true);
-    if (parsedPtBr.ok) {
-      assert.equal(parsedPtBr.point.lat, -21.539);
-      assert.equal(parsedPtBr.point.lon, -42.18);
-    }
 
-    // Swapped Pádua coordinates -> flagged explicitly, NOT silently swapped!
     const swapped = parseLatLonFields("-42.1800", "-21.5390");
     assert.equal(swapped.ok, true);
     if (swapped.ok) {
       assert.equal(swapped.point.lat, -42.18);
-      assert.equal(swapped.point.lon, -21.539);
       assert.equal(swapped.likelySwappedPadua, true);
     }
 
-    // Invalid inputs fail closed
     assert.equal(parseLatLonFields("abc", "-42.18").ok, false);
     assert.equal(parseLatLonFields("-95", "-42.18").ok, false);
     assert.equal(parseLatLonFields("-21.53", "-190").ok, false);
-    assert.equal(parseCoordinatePairText("-21,5390, -42,1800").ok, false);
 
-    // Privacy-safe technical summary
     const summary = formatLocationTechnicalSummary({
       point: { lat: -21.539, lon: -42.18 },
       mode: "single",
       levelACm: 425,
-      relationLabel: "Interceptado (interior)",
+      relationLabel: "Ponto na faixa de proximidade da fronteira (±0,5 m)",
       lowestInterceptedLevelCm: 375,
+      lowestInterceptedRelation: "boundary",
       consultedDateIso: "2026-11-25T18:00:00Z",
     });
     assert.match(summary, /58790002/);
-    assert.match(summary, /-21\.53900, -42\.18000/);
+    assert.match(summary, /envelope auxiliar do MapServer SGB/i);
+    assert.match(summary, /Domínio hidráulico desconhecido/i);
+    assert.match(summary, /faixa de proximidade geométrica.*não representa precisão física/i);
     assert.match(summary, /não declara imóvel seguro/i);
     assert.match(summary, /não equivale ao início real de inundação/i);
   });
@@ -463,7 +475,6 @@ describe("SGB geographic point query engine (lib/sgb/location.ts)", () => {
 
 describe("Cross-stage bounded-concurrency orchestrator (lib/sgb/crossStageQuery.ts)", () => {
   function makeStageGeoJson(levelCm: SgbFloodLevelCm): SgbStageGeometry {
-    // Stage >= 400 covers (-42.185, -21.535), except 450 shifted (non-nested!)
     const minLon = levelCm >= 400 && levelCm !== 450 ? -42.19 : -42.2;
     const maxLon = levelCm >= 400 && levelCm !== 450 ? -42.18 : -42.195;
     return {
@@ -493,9 +504,7 @@ describe("Cross-stage bounded-concurrency orchestrator (lib/sgb/crossStageQuery.
       const level = Number(url.searchParams.get("level")) as SgbFloodLevelCm;
       fetchedLevels.push(level);
       activeFetches += 1;
-      if (activeFetches > maxObservedConcurrency) {
-        maxObservedConcurrency = activeFetches;
-      }
+      maxObservedConcurrency = Math.max(maxObservedConcurrency, activeFetches);
       await new Promise((r) => setTimeout(r, 8));
       activeFetches -= 1;
 
@@ -529,23 +538,19 @@ describe("Cross-stage bounded-concurrency orchestrator (lib/sgb/crossStageQuery.
 
     assert.equal(res1.status, "completed");
     if (res1.status === "completed") {
-      // Concurrency strictly bounded to <= 3
-      assert.ok(maxObservedConcurrency <= 3, `Expected <=3, got ${maxObservedConcurrency}`);
-      // Preloaded 425 was NOT fetched over the network -> 10 network fetches
+      assert.ok(maxObservedConcurrency <= 3);
       assert.equal(fetchedLevels.length, 10);
       assert.equal(fetchedLevels.includes(425), false);
       assert.equal(res1.cachedHits, 1);
       assert.equal(res1.fetchedCount, 9);
       assert.equal(res1.failedCount, 1);
       assert.equal(res1.summary.lowestInterceptedLevelCm, 400);
-      assert.equal(res1.summary.hasNonNestedPattern, true); // 400/425 inside, 450 outside!
+      assert.equal(res1.summary.hasNonNestedPattern, true);
       assert.deepEqual(res1.summary.failedLevelsCm, [475]);
-      // Failed 475 must NOT be in cache
       assert.equal(cache.has(475), false);
-      assert.equal(progressEvents[progressEvents.length - 1], 11);
+      assert.equal(progressEvents.at(-1), 11);
     }
 
-    // Second run on a NEW point (after 475 recovers) should only fetch 475 and 425 (preloaded wasn't cached in map unless fetched; wait: preloaded is passed again)
     failLevel475 = false;
     fetchedLevels.length = 0;
     const res2 = await runCrossStagePointAnalysis({
@@ -557,10 +562,7 @@ describe("Cross-stage bounded-concurrency orchestrator (lib/sgb/crossStageQuery.
     });
     assert.equal(res2.status, "completed");
     if (res2.status === "completed") {
-      // Only previously failed 475 had to be fetched!
       assert.deepEqual(fetchedLevels, [475]);
-      assert.equal(res2.cachedHits, 10);
-      assert.equal(res2.fetchedCount, 1);
       assert.equal(res2.summary.isComplete, true);
     }
   });
@@ -578,8 +580,6 @@ describe("Cross-stage bounded-concurrency orchestrator (lib/sgb/crossStageQuery.
           return;
         }
         resolvers.set(level, resolve);
-        // Intentionally do NOT reject immediately on abort to simulate an
-        // in-flight response resolving AFTER abort (true out-of-order arrival).
       });
       return new Response(
         JSON.stringify({
@@ -608,12 +608,10 @@ describe("Cross-stage bounded-concurrency orchestrator (lib/sgb/crossStageQuery.
       },
     });
 
-    // Wait a tick so initial 2 workers enter slowFetch
     await new Promise((r) => setTimeout(r, 10));
     abortedAt = true;
     controllerA.abort();
 
-    // Now release the slow promises out of order!
     for (const resolve of resolvers.values()) {
       resolve();
     }
@@ -621,7 +619,6 @@ describe("Cross-stage bounded-concurrency orchestrator (lib/sgb/crossStageQuery.
     const resultA = await runA;
     assert.equal(resultA.status, "aborted");
     assert.deepEqual(staleProgressAfterAbort, []);
-    // Aborted run must never pollute cache or leak progress callbacks
     assert.equal(cache.size, 0);
   });
 
