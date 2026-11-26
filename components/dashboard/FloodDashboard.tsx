@@ -5,6 +5,10 @@ import {
   FloodMap,
   type FloodLayerStatus,
 } from "@/components/map/FloodMap";
+import {
+  LocationQueryCard,
+  type LocationPointOrigin,
+} from "@/components/dashboard/LocationQueryCard";
 import { MethodologyModal } from "@/components/dashboard/MethodologyModal";
 import {
   AboutMethodologySection,
@@ -18,6 +22,7 @@ import { useHydroMonitoring } from "@/lib/hydro/useHydroMonitoring";
 import {
   formatFloodArea,
   type DerivedFloodAreaResult,
+  type FloodAreaInput,
 } from "@/lib/sgb/area";
 import {
   SGB_REFERENCE_STATION_LABEL,
@@ -26,10 +31,18 @@ import {
 } from "@/lib/sgb/areaCatalog";
 import type { ScenarioComparisonResult } from "@/lib/sgb/compare";
 import {
+  evaluatePointAgainstFloodScenario,
+  evaluatePointInComparison,
+  type GeoPoint,
+  type SpatialPointRelation,
+} from "@/lib/sgb/location";
+import {
   SGB_FLOOD_LEVELS_CM,
   SGB_STAGE_ELEVATIONS,
   type SgbFloodLevelCm,
 } from "@/lib/sgb/stages";
+import { useCrossStagePointQuery } from "@/lib/sgb/useCrossStagePointQuery";
+import type { FloodGeometry } from "@/lib/sgb/useSgbFlood";
 
 export type PlatformSection = "mapa" | "monitoramento" | "fontes" | "sobre";
 export type MapScenarioMode = "single" | "compare";
@@ -70,6 +83,20 @@ export function FloodDashboard() {
   const [retryToken, setRetryToken] = useState(0);
   const [retryTokenB, setRetryTokenB] = useState(0);
 
+  const [selectedPoint, setSelectedPoint] = useState<GeoPoint | null>(null);
+  const [pointOrigin, setPointOrigin] = useState<LocationPointOrigin | null>(
+    null,
+  );
+  const [flyToPointToken, setFlyToPointToken] = useState(0);
+  const [scenarioAGeom, setScenarioAGeom] = useState<{
+    readonly levelCm: number;
+    readonly geojson: FloodGeometry | null;
+  }>({ levelCm: 425, geojson: null });
+  const [scenarioBGeom, setScenarioBGeom] = useState<{
+    readonly levelCm: number;
+    readonly geojson: FloodGeometry | null;
+  }>({ levelCm: 550, geojson: null });
+
   const monitoring = useHydroMonitoring();
   const mapPanelRef = useRef<HTMLElement | null>(null);
   const realtimeCardRef = useRef<HTMLElement | null>(null);
@@ -81,6 +108,129 @@ export function FloodDashboard() {
     SGB_STAGE_ELEVATIONS[levelBCm as SgbFloodLevelCm];
   const minLevel = SGB_FLOOD_LEVELS_CM[0] / 100;
   const maxLevel = SGB_FLOOD_LEVELS_CM[SGB_FLOOD_LEVELS_CM.length - 1] / 100;
+
+  const handleScenarioAGeometryChange = useCallback(
+    (geojson: FloodGeometry | null, geomLevelCm: number) => {
+      setScenarioAGeom({ levelCm: geomLevelCm, geojson });
+    },
+    [],
+  );
+
+  const handleScenarioBGeometryChange = useCallback(
+    (geojson: FloodGeometry | null, geomLevelCm: number) => {
+      setScenarioBGeom({ levelCm: geomLevelCm, geojson });
+    },
+    [],
+  );
+
+  const handleMapPointSelect = useCallback((point: GeoPoint) => {
+    setSelectedPoint(point);
+    setPointOrigin("map_click");
+  }, []);
+
+  const handleSubmitCoordinates = useCallback((point: GeoPoint) => {
+    setSelectedPoint(point);
+    setPointOrigin("coordinates");
+    setFlyToPointToken((prev) => prev + 1);
+  }, []);
+
+  const handleClearPoint = useCallback(() => {
+    setSelectedPoint(null);
+    setPointOrigin(null);
+  }, []);
+
+  const handleFocusPoint = useCallback(() => {
+    setFlyToPointToken((prev) => prev + 1);
+  }, []);
+
+  const handleSelectStageFromMatrix = useCallback((nextLevel: number) => {
+    setMapMode("single");
+    setLevel(nextLevel);
+  }, []);
+
+  const activeScenarioAGeojson =
+    layerStatus.state === "official" &&
+    layerStatus.levelCm === levelCm &&
+    scenarioAGeom.levelCm === levelCm
+      ? scenarioAGeom.geojson
+      : null;
+
+  const activeScenarioBGeojson =
+    mapMode === "compare" &&
+    layerStatusB?.state === "official" &&
+    layerStatusB.levelCm === levelBCm &&
+    scenarioBGeom.levelCm === levelBCm
+      ? scenarioBGeom.geojson
+      : null;
+
+  const singlePointResult = useMemo(() => {
+    if (!selectedPoint || mapMode !== "single") return null;
+    return evaluatePointAgainstFloodScenario(
+      selectedPoint,
+      activeScenarioAGeojson,
+      levelCm,
+    );
+  }, [selectedPoint, mapMode, activeScenarioAGeojson, levelCm]);
+
+  const comparePointResult = useMemo(() => {
+    if (!selectedPoint || mapMode !== "compare") return null;
+    return evaluatePointInComparison(
+      selectedPoint,
+      activeScenarioAGeojson,
+      levelCm,
+      activeScenarioBGeojson,
+      levelBCm,
+    );
+  }, [
+    selectedPoint,
+    mapMode,
+    activeScenarioAGeojson,
+    levelCm,
+    activeScenarioBGeojson,
+    levelBCm,
+  ]);
+
+  const markerRelation: SpatialPointRelation = useMemo(() => {
+    if (!selectedPoint) return "unavailable";
+    if (mapMode === "single") {
+      return singlePointResult?.relation ?? "unavailable";
+    }
+    if (!comparePointResult || comparePointResult.status !== "valid") {
+      return "unavailable";
+    }
+    if (comparePointResult.combinedRelation === "neither") {
+      return "outside";
+    }
+    if (
+      comparePointResult.relationA === "inside" ||
+      comparePointResult.relationB === "inside"
+    ) {
+      return "inside";
+    }
+    if (
+      comparePointResult.relationA === "boundary" ||
+      comparePointResult.relationB === "boundary"
+    ) {
+      return "boundary";
+    }
+    return "outside";
+  }, [selectedPoint, mapMode, singlePointResult, comparePointResult]);
+
+  const preloadedStagesForCrossQuery = useMemo(() => {
+    const map: Partial<Record<SgbFloodLevelCm, FloodAreaInput>> = {};
+    if (activeScenarioAGeojson) {
+      map[levelCm as SgbFloodLevelCm] = activeScenarioAGeojson;
+    }
+    if (activeScenarioBGeojson) {
+      map[levelBCm as SgbFloodLevelCm] = activeScenarioBGeojson;
+    }
+    return map;
+  }, [activeScenarioAGeojson, levelCm, activeScenarioBGeojson, levelBCm]);
+
+  const crossStage = useCrossStagePointQuery(
+    selectedPoint,
+    preloadedStagesForCrossQuery,
+  );
 
   const handleRetry = useCallback(() => {
     setRetryToken((prev) => prev + 1);
@@ -308,6 +458,12 @@ export function FloodDashboard() {
               level={level}
               mode={mapMode}
               compareLevelB={compareLevelB}
+              selectedPoint={selectedPoint}
+              selectedPointRelation={markerRelation}
+              flyToPointToken={flyToPointToken}
+              onMapPointSelect={handleMapPointSelect}
+              onScenarioAGeometryChange={handleScenarioAGeometryChange}
+              onScenarioBGeometryChange={handleScenarioBGeometryChange}
               onStatusChange={setLayerStatus}
               onStatusBChange={setLayerStatusB}
               onDerivedAreaChange={setDerivedArea}
@@ -679,6 +835,28 @@ export function FloodDashboard() {
               )
             )}
 
+            {/* Geographic Point Query & 11-Stage On-Demand Analysis */}
+            <LocationQueryCard
+              mode={mapMode}
+              levelACm={levelCm}
+              levelBCm={levelBCm}
+              selectedPoint={selectedPoint}
+              pointOrigin={pointOrigin}
+              singleResult={singlePointResult}
+              compareResult={comparePointResult}
+              crossStageStatus={crossStage.status}
+              crossStageCompleted={crossStage.completed}
+              crossStageTotal={crossStage.total}
+              crossStageCachedHits={crossStage.cachedHits}
+              crossStageSummary={crossStage.summary}
+              onSubmitCoordinates={handleSubmitCoordinates}
+              onClearPoint={handleClearPoint}
+              onFocusPoint={handleFocusPoint}
+              onAnalyzeAllStages={crossStage.analyzeAllStages}
+              onCancelAllStages={crossStage.cancelAnalysis}
+              onSelectStageFromMatrix={handleSelectStageFromMatrix}
+            />
+
             {/* Interactive 11-stage Area Chart (Cataloged Snapshot, 0 extra SGB fetches) */}
             <ScenarioAreaChart
               mode={mapMode}
@@ -752,6 +930,18 @@ export function FloodDashboard() {
                     </div>
                   </div>
                 )}
+
+                <div className="official-layer-legend">
+                  <i className="legend-swatch-query-point" aria-hidden="true" />
+                  <div>
+                    <strong>Ponto consultado (WGS84)</strong>
+                    <small>
+                      Marcador georreferenciado selecionado por clique ou
+                      coordenadas: vermelho (interior), âmbar (fronteira), azul
+                      escuro (sem interseção) ou cinza (indisponível).
+                    </small>
+                  </div>
+                </div>
 
                 <div className="official-layer-legend">
                   <i className="legend-swatch-station" aria-hidden="true" />

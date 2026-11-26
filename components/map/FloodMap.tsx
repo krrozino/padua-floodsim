@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import type { FeatureCollection, Point } from "geojson";
 import * as maplibregl from "maplibre-gl";
 import { buildHydroStationsGeoJSON } from "@/lib/hydro/stations";
 import type { DerivedFloodAreaResult } from "@/lib/sgb/area";
@@ -8,6 +9,7 @@ import {
   compareFloodScenarios,
   type ScenarioComparisonResult,
 } from "@/lib/sgb/compare";
+import type { GeoPoint, SpatialPointRelation } from "@/lib/sgb/location";
 import {
   useSgbFlood,
   EMPTY_FLOOD,
@@ -16,6 +18,11 @@ import {
 } from "@/lib/sgb/useSgbFlood";
 
 export type { FloodLayerStatus } from "@/lib/sgb/useSgbFlood";
+
+const EMPTY_POINTS: FeatureCollection<Point> = {
+  type: "FeatureCollection",
+  features: [],
+};
 
 export const PADUA_CENTER: [number, number] = [-42.18, -21.539];
 
@@ -237,10 +244,78 @@ function ensureHydroStationLayers(map: maplibregl.Map) {
   }
 }
 
+function ensureQueryLocationLayers(map: maplibregl.Map) {
+  if (!map.getSource("query-location-point")) {
+    map.addSource("query-location-point", {
+      type: "geojson",
+      data: EMPTY_POINTS,
+    });
+  }
+
+  if (!map.getLayer("query-location-halo")) {
+    map.addLayer({
+      id: "query-location-halo",
+      type: "circle",
+      source: "query-location-point",
+      paint: {
+        "circle-radius": 16,
+        "circle-color": [
+          "match",
+          ["get", "relation"],
+          "inside",
+          "#dc2626",
+          "boundary",
+          "#d97706",
+          "outside",
+          "#1e3a8a",
+          "#64748b",
+        ],
+        "circle-opacity": 0.24,
+      },
+    });
+  }
+
+  if (!map.getLayer("query-location-dot")) {
+    map.addLayer({
+      id: "query-location-dot",
+      type: "circle",
+      source: "query-location-point",
+      paint: {
+        "circle-radius": 7.5,
+        "circle-color": [
+          "match",
+          ["get", "relation"],
+          "inside",
+          "#dc2626",
+          "boundary",
+          "#d97706",
+          "outside",
+          "#1e3a8a",
+          "#64748b",
+        ],
+        "circle-stroke-width": 2.5,
+        "circle-stroke-color": "#ffffff",
+      },
+    });
+  }
+}
+
 export type FloodMapProps = {
   level: number;
   mode?: "single" | "compare";
   compareLevelB?: number;
+  selectedPoint?: GeoPoint | null;
+  selectedPointRelation?: SpatialPointRelation;
+  flyToPointToken?: number;
+  onMapPointSelect?: (point: GeoPoint) => void;
+  onScenarioAGeometryChange?: (
+    geojson: FloodGeometry | null,
+    levelCm: number,
+  ) => void;
+  onScenarioBGeometryChange?: (
+    geojson: FloodGeometry | null,
+    levelCm: number,
+  ) => void;
   onStatusChange?: (status: FloodLayerStatus) => void;
   onStatusBChange?: (status: FloodLayerStatus | null) => void;
   onDerivedAreaChange?: (area: DerivedFloodAreaResult | null) => void;
@@ -255,6 +330,12 @@ export function FloodMap({
   level,
   mode = "single",
   compareLevelB = 5.5,
+  selectedPoint = null,
+  selectedPointRelation = "unavailable",
+  flyToPointToken = 0,
+  onMapPointSelect,
+  onScenarioAGeometryChange,
+  onScenarioBGeometryChange,
   onStatusChange,
   onStatusBChange,
   onDerivedAreaChange,
@@ -267,11 +348,15 @@ export function FloodMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const popupRef = useRef<maplibregl.Popup | null>(null);
+  const onMapPointSelectRef = useRef(onMapPointSelect);
+  const onScenarioAGeometryChangeRef = useRef(onScenarioAGeometryChange);
+  const onScenarioBGeometryChangeRef = useRef(onScenarioBGeometryChange);
   const onStatusChangeRef = useRef(onStatusChange);
   const onStatusBChangeRef = useRef(onStatusBChange);
   const onDerivedAreaChangeRef = useRef(onDerivedAreaChange);
   const onDerivedAreaBChangeRef = useRef(onDerivedAreaBChange);
   const onComparisonChangeRef = useRef(onComparisonChange);
+  const lastFlyTokenRef = useRef(flyToPointToken);
 
   const [renderedData, setRenderedData] = useState<FloodGeometry | null>(null);
   const [renderedComparison, setRenderedComparison] =
@@ -314,6 +399,18 @@ export function FloodMap({
   ]);
 
   useEffect(() => {
+    onMapPointSelectRef.current = onMapPointSelect;
+  }, [onMapPointSelect]);
+
+  useEffect(() => {
+    onScenarioAGeometryChangeRef.current = onScenarioAGeometryChange;
+  }, [onScenarioAGeometryChange]);
+
+  useEffect(() => {
+    onScenarioBGeometryChangeRef.current = onScenarioBGeometryChange;
+  }, [onScenarioBGeometryChange]);
+
+  useEffect(() => {
     onStatusChangeRef.current = onStatusChange;
   }, [onStatusChange]);
 
@@ -338,10 +435,26 @@ export function FloodMap({
   }, [scenarioA.status]);
 
   useEffect(() => {
+    onScenarioAGeometryChangeRef.current?.(
+      scenarioA.status.state === "official" ? scenarioA.geojson : null,
+      scenarioA.status.levelCm,
+    );
+  }, [scenarioA.status.state, scenarioA.status.levelCm, scenarioA.geojson]);
+
+  useEffect(() => {
     onStatusBChangeRef.current?.(
       mode === "compare" ? scenarioB.status : null,
     );
   }, [mode, scenarioB.status]);
+
+  useEffect(() => {
+    onScenarioBGeometryChangeRef.current?.(
+      mode === "compare" && scenarioB.status.state === "official"
+        ? scenarioB.geojson
+        : null,
+      scenarioB.status.levelCm,
+    );
+  }, [mode, scenarioB.status.state, scenarioB.status.levelCm, scenarioB.geojson]);
 
   useEffect(() => {
     onDerivedAreaChangeRef.current?.(scenarioA.derivedArea);
@@ -400,6 +513,7 @@ export function FloodMap({
         ensureFloodLayers(map);
         ensureComparisonLayers(map);
         ensureHydroStationLayers(map);
+        ensureQueryLocationLayers(map);
         setReadyMap(map);
       } catch {
         setMapError(
@@ -461,6 +575,22 @@ export function FloodMap({
         .addTo(map);
     };
 
+    const onMapClick = (event: maplibregl.MapMouseEvent) => {
+      // Preserve hydrological station marker clicks without dropping a query marker on top
+      if (map.getLayer("hydro-stations-circle")) {
+        const stationHits = map.queryRenderedFeatures(event.point, {
+          layers: ["hydro-stations-circle"],
+        });
+        if (stationHits.length > 0) {
+          return;
+        }
+      }
+      onMapPointSelectRef.current?.({
+        lat: event.lngLat.lat,
+        lon: event.lngLat.lng,
+      });
+    };
+
     const onEnter = () => {
       map.getCanvas().style.cursor = "pointer";
     };
@@ -471,6 +601,7 @@ export function FloodMap({
     map.on("error", onError);
     map.on("style.load", initLayers);
     map.on("click", "hydro-stations-circle", onStationClick);
+    map.on("click", onMapClick);
     map.on("mouseenter", "hydro-stations-circle", onEnter);
     map.on("mouseleave", "hydro-stations-circle", onLeave);
 
@@ -480,6 +611,7 @@ export function FloodMap({
       map.off("error", onError);
       map.off("style.load", initLayers);
       map.off("click", "hydro-stations-circle", onStationClick);
+      map.off("click", onMapClick);
       map.off("mouseenter", "hydro-stations-circle", onEnter);
       map.off("mouseleave", "hydro-stations-circle", onLeave);
       mapRef.current = null;
@@ -505,6 +637,51 @@ export function FloodMap({
       active = false;
     };
   }, [readyMap, scenarioA.geojson]);
+
+  // Georeferenced queried location marker update
+  useEffect(() => {
+    if (!readyMap || readyMap !== mapRef.current) return;
+    const source = readyMap.getSource(
+      "query-location-point",
+    ) as maplibregl.GeoJSONSource | undefined;
+    if (!source) return;
+
+    const pointData: FeatureCollection<Point> = selectedPoint
+      ? {
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              properties: {
+                relation: selectedPointRelation,
+              },
+              geometry: {
+                type: "Point",
+                coordinates: [selectedPoint.lon, selectedPoint.lat],
+              },
+            },
+          ],
+        }
+      : EMPTY_POINTS;
+
+    void source.setData(pointData).catch(() => {
+      // Non-fatal marker redraw error
+    });
+  }, [readyMap, selectedPoint, selectedPointRelation]);
+
+  // Smooth pan/zoom to queried coordinates when explicitly requested
+  useEffect(() => {
+    if (flyToPointToken === lastFlyTokenRef.current) return;
+    lastFlyTokenRef.current = flyToPointToken;
+    const map = mapRef.current;
+    if (!map || !selectedPoint) return;
+    const currentZoom = map.getZoom();
+    map.flyTo({
+      center: [selectedPoint.lon, selectedPoint.lat],
+      zoom: Math.max(currentZoom, 14.2),
+      essential: false,
+    });
+  }, [flyToPointToken, selectedPoint]);
 
   // Topological comparison sources update (A ∩ B, A \ B, B \ A)
   useEffect(() => {

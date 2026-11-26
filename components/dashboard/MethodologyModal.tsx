@@ -197,6 +197,20 @@ export function MethodologyModal({
                 consultada (áreas equivalentes não comprovam geometrias idênticas).
               </li>
               <li>
+                <strong>Consulta geográfica e consulta entre cotas (dado derivado):</strong>{" "}
+                A verificação de ponto por clique no mapa ou coordenadas (WGS84 / EPSG:4326)
+                avalia interseção real ponto × polígono (suportando <code>Polygon</code>,{" "}
+                <code>MultiPolygon</code> e anéis internos/buracos), distinguindo interior,
+                fronteira (tolerância métrica de ±0,5 m), ausência de interseção, ponto fora da
+                cobertura conhecida do modelo SGB e informação indisponível. A consulta sob
+                demanda nas 11 cotas oficiais verifica cada cenário independentemente (sem
+                interpolar cotas nem presumir aninhamento) e distingue a menor cota identificada
+                entre os cenários consultados do início real de inundação. Busca por endereço
+                público e métricas viárias OSM permanecem fora da interface pública por limites
+                de termos de uso, cobertura incompleta de logradouros/números e pendências de
+                licença/precisão.
+              </li>
+              <li>
                 <strong>Régua INEA vs. Cota de referência SGB — Pádua II (58790002):</strong> O
                 monitoramento do INEA (estação 213042120 / ANA FLU 58774000, ~6 km a montante do
                 centro) não aciona nem altera automaticamente a mancha SGB (estação 58790002), pois
