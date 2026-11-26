@@ -383,6 +383,44 @@ export function DataSourcesSection({
               </div>
             </dl>
           </article>
+
+          <article className="card">
+            <div className="card-heading">
+              <strong>5. Histórico de enchentes e acervo documental (2012–2026)</strong>
+              <span
+                className="data-origin-badge observed"
+                data-classification="observed"
+              >
+                Acervo auditado
+              </span>
+            </div>
+            <p className="section-lead">
+              Catálogo determinístico de 13 eventos hidrológicos e cheias urbanas
+              em Santo Antônio de Pádua, consolidado a partir dos manifestos
+              auditados (EXP-2026-001), relatórios anuais SAH-Pomba (2022–2024),
+              acervo telemétrico INEA e decretos municipais.
+            </p>
+            <dl className="meta-list">
+              <div>
+                <dt>Separação de classes e referências</dt>
+                <dd>
+                  Distingue 6 inundações urbanas documentadas de 7 pulsos
+                  hidrológicos elevados, preservando independência entre RHN
+                  58790002, INEA 213042120, Barra do Braúna, Cataguases e Ponte
+                  Paraoquena.
+                </dd>
+              </div>
+              <div>
+                <dt>Séries contínuas e direitos de terceiros</dt>
+                <dd>
+                  Arquivos brutos permanecem fora do Git (
+                  <code>BLOCKED_LOCAL_DATA</code> / autorizações #6, #37 e #46);
+                  fotografias de terceiros são referenciadas apenas por link
+                  externo com autoria, data e localização verificadas.
+                </dd>
+              </div>
+            </dl>
+          </article>
         </div>
 
         <article className="card table-card">

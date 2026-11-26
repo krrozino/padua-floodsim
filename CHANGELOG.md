@@ -2,9 +2,15 @@
 
 Todas as mudanças relevantes do Pádua FloodSim serão registradas neste arquivo.
 
-## [Unreleased] — v0.2.0-academic (candidata — não publicada) — 2026-11-25
+## [Unreleased] — v0.2.0-academic (candidata — não publicada) — 2026-11-26
 
-Consolidação na `main` dos PRs #41, #42, #43, #44, #45 e #48, correção do Quality Gate de segurança (#38) e preparação da candidata `v0.2.0-academic` (#47). Nenhuma tag, release publicada, depósito Zenodo ou deploy em produção foi executado nesta etapa.
+Consolidação na `main` dos PRs #41–#45, #48, #49, #54, #55 e #56, e entrega do módulo de histórico hidrológico e acervo de enchentes (**R02-E — #52**). Nenhuma tag, release publicada, depósito Zenodo ou deploy em produção foi executado nesta etapa.
+
+### Histórico hidrológico e acervo de enchentes (R02-E — #52)
+
+- **Domínio histórico desacoplado (`lib/history/contract.ts`, `normalize.ts`, `catalog.ts`, `analysis.ts`, `hydrograph.ts`, `controlPoints.ts`):** cataloga 13 eventos verificados (2012–2026) separando **6 inundações urbanas documentadas** (`HIST-2012-01-04`, `HIST-2020-01-25`, `HIST-2022-01-08`, `HIST-2022-02-04`, `HIST-2023-01-08`, `HIST-2026-02-25`) de **7 eventos hidrológicos elevados** (incluindo `HIST-2020-02-13` `408 cm`, `HIST-2023-01-21` `337 cm` e pulsos de Alerta de fev–mar/2026), preservando independência entre `RHN 58790002`, `INEA 213042120`, `RHN 58788600`, `RHN 58770000` e `INEA 58789000`, sem preencher lacunas com zero.
+- **Módulo público `Histórico` (`components/history/`):** linha do tempo filtrável por ano, estação com medição verificada e classe documental; painel detalhado com timestamps originais, notas de fuso/horário de verão (`BRST UTC−2` em jan/2012 e comprovação documental de `GMT = UTC+0` via Decreto nº `025/2026`), divergências (`428` vs. `431 cm` em jan/2023; apagão INEA `01–18/01/2023`; flatlines de Barra do Braúna), comparação controlada na mesma estação e acervo documental/fotográfico com SHA-256 e links externos para imagens protegidas por direitos autorais.
+- **Associação ao mapa histórico e pontos de controle (`resolveHistoricalMapAssociation`, `HISTORICAL_CONTROL_POINTS`):** vincula cenários SGB somente para `RHN 58790002` com continuidade altimétrica verificada (`300–550 cm`), distinguindo inundação observada, extensão oficial modelada, representação derivada (`A × B`) e cenário aproximado com banner contextual no mapa; estrutura 10 pontos de controle sem coordenadas inventadas e motor de hidrogramas/replay com preservação de lacunas (`BLOCKED_LOCAL_DATA` explícito no ambiente cloud; ver [`docs/research/HISTORICAL_FLOOD_CATALOG.md`](docs/research/HISTORICAL_FLOOD_CATALOG.md)).
 
 ### Comparação interativa de cenários SGB e curva cota × área (R02-C — #50)
 
