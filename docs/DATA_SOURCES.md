@@ -282,6 +282,14 @@ Auditoria na AOI urbana (`2026-11-25`, API v0.6 `bbox=-42.22,-21.56,-42.15,-21.5
 - **`13` nós pontuais `place=suburb`**, dos quais `11` correspondem a bairros da PGV e `2` são denominações populares sem correspondência na Lei nº 3.864/2017 (`Gerador` e `São José`), estando ausentes até mesmo como ponto `Centro`, `Farol` e `Mirante`;
 - eixos viários, praças e pontes apresentam incerteza planimétrica não aferida localmente (típica de digitalização sobre imagens orbitais `Bing/IBGE`), exigindo validação manual em estruturas críticas (ex.: projeção 2D de manchas sobre tabuleiros elevados das pontes Raul Veiga e Alberíades Gabry).
 
+### Auditoria viária e de geocodificação na AOI SGB (`2026-11-25` — R02-D / `#51`)
+
+- **Extrato auditado (API v0.6):** `https://api.openstreetmap.org/api/0.6/map.json?bbox=-42.209001,-21.553312,-42.145562,-21.512456` (extensão publicada das manchas SGB, `EPSG:4326`), `1.657.243` bytes, SHA-256 `42ad615234c8ca2ddc218825df1a474bb2d1c2aff46939a67b82c6e64c9951ee` (mantido fora do Git).
+- **Cobertura viária:** `591` vias `highway=*` (`187,089 km`), sendo **`55,7%` (`329/591`) sem `name` nem `ref`** (`52,7%` das vias `residential` sem nome; apenas `186` logradouros/rodovias identificáveis contra `1.065` registros tabulares na Lei Municipal nº `4.135/2021`, PDF digitalizado de `934.409` bytes, SHA-256 `7d0482d79a0b8cca038b340f51abae42f0448b2ecd93386b355bc17fba9081a2`).
+- **Pontes elevadas e cobertura:** `5` pontes (`bridge=yes`) atravessam o canal do Rio Pomba em 2D (`0,853–0,873 km`, equivalente a `32,6%` do total bruto interceptado em `COTA_300cm`) e `34` vias ultrapassam o envelope auxiliar do MapServer; além disso, estar dentro do bbox auxiliar não comprova denominador viário completo nem cobertura hidráulica integral (harmonizado com R02-F / PR `#55`).
+- **Endereços para geocodificação:** apenas `25` elementos com `addr:housenumber` e `37` com `addr:street` na AOI urbana do SGB (`< 0,1%` dos `25.749` endereços do CNEFE 2022).
+- **Decisão R02-D:** extensão total de eixos interceptados e identificação nominal das ruas são tratadas como métricas distintas (o limite de `10%` sem nome é critério provisório de governança, não exigência científica universal). Motor GIS linear validado em `lib/sgb/roads.ts` (`0,000 km` de divergência frente a `shapely`/`pyproj.Geod` em `300`, `425` e `550` cm), mantido **`NO-GO` para métricas viárias e geocodificação externa na UI pública**; estudo metodológico completo em `docs/research/ROAD_EXPOSURE_AND_GEOCODING_STUDY_2026-11-25.md`.
+
 ---
 
 ## 7. INEA — Alerta de Cheias

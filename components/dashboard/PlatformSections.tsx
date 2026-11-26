@@ -353,10 +353,32 @@ export function DataSourcesSection({
                 </dd>
               </div>
               <div>
-                <dt>Bairros e ruas</dt>
+                <dt>Consulta geográfica e 11 cotas</dt>
                 <dd>
-                  Métricas por bairro e rua permanecem indisponíveis até obtenção
-                  de polígonos municipais validados e interseção GIS verificada.
+                  Verificação ponto × polígono em WGS84 (suporte a buracos e{" "}
+                  <code>MultiPolygon</code>, faixa de proximidade geométrica de
+                  fronteira de ±0,5 m — que não representa precisão física da
+                  inundação —, comparação A/B e análise sob demanda nas 11 cotas
+                  sem interpolação nem pressuposição de aninhamento). O bbox do
+                  MapServer SGB é um envelope auxiliar e não comprova cobertura
+                  hidráulica integral; fora do envelope, ausência de interseção
+                  não indica ausência de possibilidade de inundação.
+                </dd>
+              </div>
+              <div>
+                <dt>Bairros, vias OSM e geocodificação</dt>
+                <dd>
+                  Métricas públicas por bairro e por malha viária OSM (ODbL 1.0)
+                  permanecem desativadas nesta etapa: os limites municipais de
+                  bairros seguem pendentes e, embora extensão total de eixos
+                  interceptados e identificação nominal das ruas sejam métricas
+                  distintas, a auditoria viária local mostrou 55,7% das vias OSM
+                  sem nome, 5 pontes elevadas interceptando o canal 2D,
+                  denominadores não comprovados apenas pelo bbox auxiliar e
+                  pendência de compatibilidade legal com a Lei Municipal nº
+                  4.135/2021. Busca por endereço público também não está
+                  habilitada pelos limites de uso dos provedores e baixa
+                  cobertura de numeração predial.
                 </dd>
               </div>
             </dl>

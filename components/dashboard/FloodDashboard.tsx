@@ -5,6 +5,10 @@ import {
   FloodMap,
   type FloodLayerStatus,
 } from "@/components/map/FloodMap";
+import {
+  LocationQueryCard,
+  type LocationPointOrigin,
+} from "@/components/dashboard/LocationQueryCard";
 import { MethodologyModal } from "@/components/dashboard/MethodologyModal";
 import {
   AboutMethodologySection,
@@ -18,6 +22,7 @@ import { useHydroMonitoring } from "@/lib/hydro/useHydroMonitoring";
 import {
   formatFloodArea,
   type DerivedFloodAreaResult,
+  type FloodAreaInput,
 } from "@/lib/sgb/area";
 import {
   SGB_REFERENCE_STATION_LABEL,
@@ -26,16 +31,116 @@ import {
 } from "@/lib/sgb/areaCatalog";
 import type { ScenarioComparisonResult } from "@/lib/sgb/compare";
 import {
+  evaluatePointAgainstFloodScenario,
+  evaluatePointInComparison,
+  type GeoPoint,
+  type PointComparisonQueryResult,
+  type PointScenarioQueryResult,
+  type SpatialPointRelation,
+} from "@/lib/sgb/location";
+import {
   SGB_FLOOD_LEVELS_CM,
   SGB_STAGE_ELEVATIONS,
   type SgbFloodLevelCm,
 } from "@/lib/sgb/stages";
+import { useCrossStagePointQuery } from "@/lib/sgb/useCrossStagePointQuery";
+import type { FloodGeometry } from "@/lib/sgb/useSgbFlood";
 
 export type PlatformSection = "mapa" | "monitoramento" | "fontes" | "sobre";
 export type MapScenarioMode = "single" | "compare";
 
 function formatMetersFromCm(levelCm: number) {
   return (levelCm / 100).toFixed(2).replace(".", ",");
+}
+
+function resolveMarkerRelation(
+  selectedPoint: GeoPoint | null,
+  mapMode: MapScenarioMode,
+  singlePointResult: PointScenarioQueryResult | null,
+  comparePointResult: PointComparisonQueryResult | null,
+): SpatialPointRelation {
+  if (!selectedPoint) return "unavailable";
+  if (mapMode === "single") {
+    return singlePointResult?.relation ?? "unavailable";
+  }
+  if (comparePointResult?.status !== "valid") {
+    return "unavailable";
+  }
+  if (comparePointResult.combinedRelation === "neither") {
+    return "outside";
+  }
+  if (
+    comparePointResult.relationA === "inside" ||
+    comparePointResult.relationB === "inside"
+  ) {
+    return "inside";
+  }
+  if (
+    comparePointResult.relationA === "boundary" ||
+    comparePointResult.relationB === "boundary"
+  ) {
+    return "boundary";
+  }
+  return "outside";
+}
+
+function resolveBadgeVisualState(
+  mapMode: MapScenarioMode,
+  layerStatus: FloodLayerStatus,
+  layerStatusB: FloodLayerStatus | null,
+  levelCm: number,
+  levelBCm: number,
+): FloodLayerStatus["state"] {
+  if (mapMode === "single") {
+    return layerStatus.levelCm === levelCm ? layerStatus.state : "loading";
+  }
+  const aCurrent = layerStatus.levelCm === levelCm ? layerStatus.state : "loading";
+  const bCurrent =
+    layerStatusB?.levelCm === levelBCm ? layerStatusB.state : "loading";
+
+  if (aCurrent === "error" || bCurrent === "error") return "error";
+  if (aCurrent === "empty" || bCurrent === "empty") return "empty";
+  if (aCurrent === "official" && bCurrent === "official") return "official";
+  return "loading";
+}
+
+function resolveMapBadgeText(
+  mapMode: MapScenarioMode,
+  badgeVisualState: FloodLayerStatus["state"],
+  layerStatus: FloodLayerStatus,
+  ortometricElevation: number | undefined,
+  levelCm: number,
+  levelBCm: number,
+): string {
+  if (mapMode === "compare") {
+    if (badgeVisualState === "official") {
+      return `Comparação A ${formatMetersFromCm(levelCm)} m × B ${formatMetersFromCm(levelBCm)} m`;
+    }
+    if (badgeVisualState === "error") {
+      return "Falha ao carregar camada(s) SGB · comparação pausada";
+    }
+    if (badgeVisualState === "empty") {
+      return "SGB retornou camada vazia · comparação indisponível";
+    }
+    return `Carregando cenários SGB (${formatMetersFromCm(levelCm)} m e ${formatMetersFromCm(levelBCm)} m)...`;
+  }
+
+  if (layerStatus.levelCm !== levelCm) {
+    return "Carregando cenário oficial do SGB...";
+  }
+  if (layerStatus.state === "official") {
+    const orthoLabel = ortometricElevation
+      ? ` (${ortometricElevation.toFixed(2).replace(".", ",")} m ortométrica)`
+      : "";
+    return `Cota ${formatMetersFromCm(layerStatus.levelCm)} m${orthoLabel}`;
+  }
+  if (layerStatus.state === "error") {
+    return "Mancha SGB indisponível · nenhuma extensão exibida";
+  }
+  if (layerStatus.state === "empty") {
+    return "SGB retornou camada vazia · nenhuma extensão exibida";
+  }
+  return "Carregando cenário oficial do SGB...";
 }
 
 const NAV_ITEMS: readonly { readonly id: PlatformSection; readonly label: string }[] = [
@@ -70,6 +175,20 @@ export function FloodDashboard() {
   const [retryToken, setRetryToken] = useState(0);
   const [retryTokenB, setRetryTokenB] = useState(0);
 
+  const [selectedPoint, setSelectedPoint] = useState<GeoPoint | null>(null);
+  const [pointOrigin, setPointOrigin] = useState<LocationPointOrigin | null>(
+    null,
+  );
+  const [flyToPointToken, setFlyToPointToken] = useState(0);
+  const [scenarioAGeom, setScenarioAGeom] = useState<{
+    readonly levelCm: number;
+    readonly geojson: FloodGeometry | null;
+  }>({ levelCm: 425, geojson: null });
+  const [scenarioBGeom, setScenarioBGeom] = useState<{
+    readonly levelCm: number;
+    readonly geojson: FloodGeometry | null;
+  }>({ levelCm: 550, geojson: null });
+
   const monitoring = useHydroMonitoring();
   const mapPanelRef = useRef<HTMLElement | null>(null);
   const realtimeCardRef = useRef<HTMLElement | null>(null);
@@ -81,6 +200,114 @@ export function FloodDashboard() {
     SGB_STAGE_ELEVATIONS[levelBCm as SgbFloodLevelCm];
   const minLevel = SGB_FLOOD_LEVELS_CM[0] / 100;
   const maxLevel = SGB_FLOOD_LEVELS_CM[SGB_FLOOD_LEVELS_CM.length - 1] / 100;
+
+  const handleScenarioAGeometryChange = useCallback(
+    (geojson: FloodGeometry | null, geomLevelCm: number) => {
+      setScenarioAGeom({ levelCm: geomLevelCm, geojson });
+    },
+    [],
+  );
+
+  const handleScenarioBGeometryChange = useCallback(
+    (geojson: FloodGeometry | null, geomLevelCm: number) => {
+      setScenarioBGeom({ levelCm: geomLevelCm, geojson });
+    },
+    [],
+  );
+
+  const handleMapPointSelect = useCallback((point: GeoPoint) => {
+    setSelectedPoint(point);
+    setPointOrigin("map_click");
+  }, []);
+
+  const handleSubmitCoordinates = useCallback((point: GeoPoint) => {
+    setSelectedPoint(point);
+    setPointOrigin("coordinates");
+    setFlyToPointToken((prev) => prev + 1);
+  }, []);
+
+  const handleClearPoint = useCallback(() => {
+    setSelectedPoint(null);
+    setPointOrigin(null);
+  }, []);
+
+  const handleFocusPoint = useCallback(() => {
+    setFlyToPointToken((prev) => prev + 1);
+  }, []);
+
+  const handleSelectStageFromMatrix = useCallback((nextLevel: number) => {
+    setMapMode("single");
+    setLevel(nextLevel);
+  }, []);
+
+  const activeScenarioAGeojson =
+    layerStatus.state === "official" &&
+    layerStatus.levelCm === levelCm &&
+    scenarioAGeom.levelCm === levelCm
+      ? scenarioAGeom.geojson
+      : null;
+
+  const activeScenarioBGeojson =
+    mapMode === "compare" &&
+    layerStatusB?.state === "official" &&
+    layerStatusB.levelCm === levelBCm &&
+    scenarioBGeom.levelCm === levelBCm
+      ? scenarioBGeom.geojson
+      : null;
+
+  const singlePointResult = useMemo(() => {
+    if (!selectedPoint || mapMode !== "single") return null;
+    return evaluatePointAgainstFloodScenario(
+      selectedPoint,
+      activeScenarioAGeojson,
+      levelCm,
+    );
+  }, [selectedPoint, mapMode, activeScenarioAGeojson, levelCm]);
+
+  const comparePointResult = useMemo(() => {
+    if (!selectedPoint || mapMode !== "compare") return null;
+    return evaluatePointInComparison(
+      selectedPoint,
+      activeScenarioAGeojson,
+      levelCm,
+      activeScenarioBGeojson,
+      levelBCm,
+    );
+  }, [
+    selectedPoint,
+    mapMode,
+    activeScenarioAGeojson,
+    levelCm,
+    activeScenarioBGeojson,
+    levelBCm,
+  ]);
+
+  const markerRelation: SpatialPointRelation = useMemo(
+    () =>
+      resolveMarkerRelation(
+        selectedPoint,
+        mapMode,
+        singlePointResult,
+        comparePointResult,
+      ),
+    [selectedPoint, mapMode, singlePointResult, comparePointResult],
+  );
+
+  const preloadedStagesForCrossQuery = useMemo(() => {
+    const map: Partial<Record<SgbFloodLevelCm, FloodAreaInput>> = {};
+    if (activeScenarioAGeojson) {
+      map[levelCm as SgbFloodLevelCm] = activeScenarioAGeojson;
+    }
+    if (activeScenarioBGeojson) {
+      map[levelBCm as SgbFloodLevelCm] = activeScenarioBGeojson;
+    }
+    return map;
+  }, [activeScenarioAGeojson, levelCm, activeScenarioBGeojson, levelBCm]);
+
+  const crossStage = useCrossStagePointQuery(
+    selectedPoint,
+    preloadedStagesForCrossQuery,
+  );
 
   const handleRetry = useCallback(() => {
     setRetryToken((prev) => prev + 1);
@@ -165,61 +392,37 @@ export function FloodDashboard() {
     [],
   );
 
-  const badgeVisualState = useMemo((): FloodLayerStatus["state"] => {
-    if (mapMode === "single") {
-      return layerStatus.levelCm === levelCm ? layerStatus.state : "loading";
-    }
-    const aCurrent = layerStatus.levelCm === levelCm ? layerStatus.state : "loading";
-    const bCurrent =
-      layerStatusB && layerStatusB.levelCm === levelBCm
-        ? layerStatusB.state
-        : "loading";
+  const badgeVisualState = useMemo(
+    () =>
+      resolveBadgeVisualState(
+        mapMode,
+        layerStatus,
+        layerStatusB,
+        levelCm,
+        levelBCm,
+      ),
+    [mapMode, layerStatus, layerStatusB, levelCm, levelBCm],
+  );
 
-    if (aCurrent === "error" || bCurrent === "error") return "error";
-    if (aCurrent === "empty" || bCurrent === "empty") return "empty";
-    if (aCurrent === "official" && bCurrent === "official") return "official";
-    return "loading";
-  }, [mapMode, layerStatus, layerStatusB, levelCm, levelBCm]);
-
-  const mapBadge = useMemo(() => {
-    if (mapMode === "compare") {
-      if (badgeVisualState === "official") {
-        return `Comparação A ${formatMetersFromCm(levelCm)} m × B ${formatMetersFromCm(levelBCm)} m`;
-      }
-      if (badgeVisualState === "error") {
-        return "Falha ao carregar camada(s) SGB · comparação pausada";
-      }
-      if (badgeVisualState === "empty") {
-        return "SGB retornou camada vazia · comparação indisponível";
-      }
-      return `Carregando cenários SGB (${formatMetersFromCm(levelCm)} m e ${formatMetersFromCm(levelBCm)} m)...`;
-    }
-
-    if (layerStatus.levelCm !== levelCm) {
-      return "Carregando cenário oficial do SGB...";
-    }
-    if (layerStatus.state === "official") {
-      return `Cota ${formatMetersFromCm(layerStatus.levelCm)} m${
-        ortometricElevation
-          ? ` (${ortometricElevation.toFixed(2).replace(".", ",")} m ortométrica)`
-          : ""
-      }`;
-    }
-    if (layerStatus.state === "error") {
-      return "Mancha SGB indisponível · nenhuma extensão exibida";
-    }
-    if (layerStatus.state === "empty") {
-      return "SGB retornou camada vazia · nenhuma extensão exibida";
-    }
-    return "Carregando cenário oficial do SGB...";
-  }, [
-    mapMode,
-    badgeVisualState,
-    layerStatus,
-    ortometricElevation,
-    levelCm,
-    levelBCm,
-  ]);
+  const mapBadge = useMemo(
+    () =>
+      resolveMapBadgeText(
+        mapMode,
+        badgeVisualState,
+        layerStatus,
+        ortometricElevation,
+        levelCm,
+        levelBCm,
+      ),
+    [
+      mapMode,
+      badgeVisualState,
+      layerStatus,
+      ortometricElevation,
+      levelCm,
+      levelBCm,
+    ],
+  );
 
   const validDerivedArea =
     layerStatus.state === "official" &&
@@ -308,6 +511,12 @@ export function FloodDashboard() {
               level={level}
               mode={mapMode}
               compareLevelB={compareLevelB}
+              selectedPoint={selectedPoint}
+              selectedPointRelation={markerRelation}
+              flyToPointToken={flyToPointToken}
+              onMapPointSelect={handleMapPointSelect}
+              onScenarioAGeometryChange={handleScenarioAGeometryChange}
+              onScenarioBGeometryChange={handleScenarioBGeometryChange}
               onStatusChange={setLayerStatus}
               onStatusBChange={setLayerStatusB}
               onDerivedAreaChange={setDerivedArea}
@@ -679,6 +888,28 @@ export function FloodDashboard() {
               )
             )}
 
+            {/* Geographic Point Query & 11-Stage On-Demand Analysis */}
+            <LocationQueryCard
+              mode={mapMode}
+              levelACm={levelCm}
+              levelBCm={levelBCm}
+              selectedPoint={selectedPoint}
+              pointOrigin={pointOrigin}
+              singleResult={singlePointResult}
+              compareResult={comparePointResult}
+              crossStageStatus={crossStage.status}
+              crossStageCompleted={crossStage.completed}
+              crossStageTotal={crossStage.total}
+              crossStageCachedHits={crossStage.cachedHits}
+              crossStageSummary={crossStage.summary}
+              onSubmitCoordinates={handleSubmitCoordinates}
+              onClearPoint={handleClearPoint}
+              onFocusPoint={handleFocusPoint}
+              onAnalyzeAllStages={crossStage.analyzeAllStages}
+              onCancelAllStages={crossStage.cancelAnalysis}
+              onSelectStageFromMatrix={handleSelectStageFromMatrix}
+            />
+
             {/* Interactive 11-stage Area Chart (Cataloged Snapshot, 0 extra SGB fetches) */}
             <ScenarioAreaChart
               mode={mapMode}
@@ -752,6 +983,18 @@ export function FloodDashboard() {
                     </div>
                   </div>
                 )}
+
+                <div className="official-layer-legend">
+                  <i className="legend-swatch-query-point" aria-hidden="true" />
+                  <div>
+                    <strong>Ponto consultado (WGS84)</strong>
+                    <small>
+                      Marcador georreferenciado selecionado por clique ou
+                      coordenadas: vermelho (interior), âmbar (fronteira), azul
+                      escuro (sem interseção) ou cinza (indisponível).
+                    </small>
+                  </div>
+                </div>
 
                 <div className="official-layer-legend">
                   <i className="legend-swatch-station" aria-hidden="true" />

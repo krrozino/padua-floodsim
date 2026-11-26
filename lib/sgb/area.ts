@@ -74,7 +74,7 @@ export type DerivedFloodAreaResult =
       readonly reason: string;
     };
 
-function isFinitePosition(pos: unknown): pos is [number, number] {
+export function isFiniteWgs84Position(pos: unknown): pos is [number, number] {
   if (!Array.isArray(pos) || pos.length < 2) return false;
   const lon = pos[0];
   const lat = pos[1];
@@ -89,6 +89,8 @@ function isFinitePosition(pos: unknown): pos is [number, number] {
     lat <= 90
   );
 }
+
+const isFinitePosition = isFiniteWgs84Position;
 
 /**
  * Computes an unsigned numerical approximation of the ellipsoidal surface area (in m²)
@@ -267,9 +269,57 @@ function extractClipPolygons(input: FloodAreaInput): {
   return { polygons, invalidReason };
 }
 
-export type { ClipMultiPolygon, ClipPolygon };
+export type { ClipMultiPolygon, ClipPolygon, ClipRing };
 
 export const MAX_PLAUSIBLE_FLOOD_AREA_M2 = MAX_PLAUSIBLE_SCENARIO_AREA_M2;
+
+export type ValidatedPolygonsResult =
+  | {
+      readonly status: "valid";
+      readonly polygons: readonly ClipPolygon[];
+    }
+  | {
+      readonly status: "empty" | "invalid";
+      readonly polygons: null;
+      readonly reason: string;
+    };
+
+/**
+ * Extracts and validates (fail-closed) all Polygon/MultiPolygon parts and holes
+ * from a GeoJSON input without executing a topological union. Suitable for exact
+ * point-in-polygon and polyline-clipping queries that operate over the union
+ * semantics directly without double-counting area.
+ */
+export function extractValidatedPolygons(
+  input: FloodAreaInput | null | undefined,
+): ValidatedPolygonsResult {
+  if (!input || typeof input !== "object") {
+    return {
+      status: "invalid",
+      polygons: null,
+      reason: "Entrada GeoJSON ausente ou inválida.",
+    };
+  }
+  const { polygons, invalidReason } = extractClipPolygons(input);
+  if (invalidReason) {
+    return {
+      status: "invalid",
+      polygons: null,
+      reason: invalidReason,
+    };
+  }
+  if (polygons.length === 0) {
+    return {
+      status: "empty",
+      polygons: null,
+      reason: "Nenhum polígono carregado para o cenário selecionado.",
+    };
+  }
+  return {
+    status: "valid",
+    polygons,
+  };
+}
 
 export type DissolvedPolygonsResult =
   | {
