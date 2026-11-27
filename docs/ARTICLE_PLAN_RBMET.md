@@ -112,21 +112,31 @@ DEM + conectividade + manchas SGB + bairros + validação espacial.
 
 A decisão deverá ser tomada com a professora após a auditoria real de dados.
 
-## Estrutura preliminar do manuscrito
+## Estrutura editorial do manuscrito
 
-1. Introdução
-2. Área de estudo
-3. Dados
-4. Métodos
-   - monitoramento;
-   - modelos temporais;
-   - validação temporal;
-   - tradução espacial;
-   - validação espacial, se aplicável.
-5. Resultados e Discussão
-6. Conclusões
-7. Agradecimentos
-8. Referências
+Conforme o roteiro fornecido pela professora e as [instruções da RBMET](https://www.scielo.br/journal/rbmet/about/) consultadas em 27/11/2026:
+
+- Página 1: título em inglês, Abstract e Keywords.
+- Página 2: título em português, Resumo e Palavras-chave. Resumen em espanhol conforme roteiro complementar da professora.
+- 1. Introdução — contextualização, literatura, problema e objetivos.
+- 2. Material e Métodos — área de estudo, fontes, normalização, qualidade, modelos, validação, representação espacial, conforme recorte.
+- 3. Resultados e Discussão — evidências documentadas e limitações, sem converter hipóteses em resultados.
+- 4. Conclusões — limitadas às evidências e ao recorte executado.
+- 5. Agradecimentos.
+- 6. Referências Bibliográficas.
+
+### Formatação
+
+A4, Times New Roman 11, espaço duplo, margens laterais de 3 cm e superior/inferior de 2,5 cm, numeração superior direita desde a primeira página, resumos de até 200 palavras e 1–6 palavras-chave. Adotar o limite conservador de 20 páginas no total (incluindo referências, tabelas e figuras) solicitado pela professora. Referências ABNT em ordem alfabética; tabelas editáveis e indicação de posição no texto; figuras separadas com resolução adequada (300 dpi). Antes de submissão, conferir requisitos vigentes de anonimização, declaração de IA, contribuições, financiamento, conflitos e Ciência Aberta.
+
+## Organização editorial — 27/11/2026
+
+- **Prévia para a professora:** Avaliação de Dados Hidrológicos e Visualização de Cenários de Inundação do Rio Pomba em Santo Antônio de Pádua, RJ. Versão de 27/11/2026, 12 páginas, 9 referências e 2 tabelas. DOCX e PDF entregues ao mantenedor no chat; importação nativa no Google Docs ainda não concluída.
+- **Manuscrito único:** Google Docs quando importado e conferido pelo mantenedor; não sobrescrever o relatório de fundamentação existente nem manter versões concorrentes.
+- **ChatGPT do projeto:** estruturação acadêmica, redação e revisão com autorização humana. **Sauron:** coordenação operacional, acompanhamento de experimentos e publicação de evidências com fonte, versão, parâmetros, validação e limitações; não reescrever o manuscrito autonomamente.
+- **Notion:** planejamento editorial e registro de decisões. **GitHub:** fonte de verdade técnica para código, metodologia e evidências. Autoria, recorte definitivo e submissão dependem de decisão humana e orientação.
+- **Evidência atual:** EXP-2026-001 é exploratório, com reprodução independente condicionada aos dados originais; EXP-2026-002 não executado. A [verificação das áreas SGB](research/SGB_AREA_VALIDATION_2026-11-25.md) valida numericamente o cálculo de área dos polígonos de referência, não sua acurácia hidráulica. Sem crosswalk INEA–SGB, sem previsão pública. Não tratar período de 2026 já explorado como holdout intocado. A [issue #46](https://github.com/krrozino/padua-floodsim/issues/46) permanece como tarefa científica de reprodução e validação; não duplicar.
+- A prévia não é submissão nem conclusão definitiva; não incluir campos vazios ou notas editoriais internas no documento encaminhado, mantendo as limitações científicas reais.
 
 ## Regra contra viés de confirmação
 
